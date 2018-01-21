@@ -15,13 +15,16 @@ client.on('message', message => {
   	if (message.content === '$BTC') {
        console.log('received BTC command');
        //let price = getCoinPrice('BTC');
-       getCoinPrice('BTC');
        message.reply('request received, output in console');
+       getCoinPrice('BTC');
   	}
 });
 
 function reqListener () {
-  console.log(this.responseText);
+  let data = JSON.parse(this.responseText);
+  let coinData = data.RAW.BTC.EUR;
+  let price = coinData.PRICE;
+  console.log(price);
 }
 
 
