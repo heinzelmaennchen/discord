@@ -22,8 +22,6 @@ async def on_message(message):
     elif message.content.startswith('$'):
         response = getCurrentValues(message.content[1:4])
         await client.send_message(message.channel, response)
-    else:
-        await client.send_message(message.channel, 'Command not supported')
     
 def getCurrentValues(coin):
     """Grabs current values for a coin from Cryptocompare."""
