@@ -35,7 +35,7 @@ def getCurrentValues(coin):
 
 def buildResponse(coinStats, coin):
     """Builds response string which will be printed to the channel."""
-    r = ('**' + coin + ':** Current price: ' + str(coinStats['PRICE']) + ' EUR (' + 
+    r = ('**' + coin + ':** ' + str(coinStats['PRICE']) + ' EUR (' + 
          str(round(coinStats['CHANGEPCT24HOUR'],2)) + '%)\n')
     return r
 
