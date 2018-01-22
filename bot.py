@@ -13,7 +13,6 @@ async def on_ready():
     print(client.user.name)
     print(client.user.id)
     print('Let\'s go!')
-    print('------')
 
 @client.event
 async def on_message(message):
@@ -37,8 +36,8 @@ def getCurrentValues(coin):
 def buildResponse(coinStats, coin):
     """Builds response string which will be printed to the channel."""
     r = '**' + coin + '**\n'
-    r += 'Current price: ' + str(coinStats['PRICE']) + ' EUR\n'
-    r += 'Change in 24h: ' + str(round(coinStats['CHANGEPCT24HOUR'],2)) + '%\n'
+    r += ('Current price: ' + str(coinStats['PRICE']) + ' EUR (' + 
+          str(round(coinStats['CHANGEPCT24HOUR'],2)) + '%)\n')
     return r
 
 client.run(os.environ['BOT_TOKEN'])
