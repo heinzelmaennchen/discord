@@ -21,6 +21,7 @@ async def on_message(message):
         await client.send_message(message.channel, 'Pong!')
     elif message.content.startswith('$'):
         response = getCurrentValues(message.content[1:4])
+        print(response)
         await client.send_message(message.channel, response)
     
 def getCurrentValues(coin):
