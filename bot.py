@@ -20,8 +20,9 @@ async def on_message(message):
     if message.content.startswith('!ping'):
         await client.send_message(message.channel, 'Pong!')
     elif message.content.startswith('$'):
-        response = getCurrentValues(message.content[1:4])
-        print(response)
+        coin = message.content[1:4]
+        coinStats = getCurrentValues(coin)
+        response = buildResponse(coinStats, coin)
         await client.send_message(message.channel, response)
     
 def getCurrentValues(coin):
@@ -31,7 +32,7 @@ def getCurrentValues(coin):
         + coin + 
         '&tsyms=EUR').json()
     values = apiRequest['RAW'][coin]['EUR']
-    buildResponse(values, coin)
+    return values
 
 def buildResponse(coinStats, coin):
     """Builds response string which will be printed to the channel."""
