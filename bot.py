@@ -30,9 +30,9 @@ def getCurrentValues(coin):
         + coin + 
         '&tsyms=EUR').json()
     values = apiRequest['RAW'][coin]['EUR']
-    buildResponse(values)
+    buildResponse(values, coin)
 
-def buildResponse(coinStats):
+def buildResponse(coinStats, coin):
     """Builds response string which will be printed to the channel."""
     r = coin + '\n'
     r += 'Current price: ' + str(coinStats['PRICE']) + ' EUR\n'
