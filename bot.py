@@ -16,12 +16,12 @@ async def on_ready():
 
 @client.event
 async def on_message(message):
-    if message.content.startswith('!ping'):
-        await client.send_message(message.channel, 'Pong!')
-    elif message.content.startswith('$'):
-        coin = message.content[1:5].upper().strip()
-        response = getCurrentValues(coin)
-        await client.send_message(message.channel, response)
+	if message.content.startswith('!ping'):
+		await client.send_message(message.channel, 'Pong!')
+	elif message.content.startswith('$'):
+		coin = message.content[1:5].upper().strip()
+		response = getCurrentValues(coin)
+		await client.send_message(message.channel, response)
     
 def getCurrentValues(coin):
 	"""Grabs current values for a coin from Cryptocompare."""
@@ -46,6 +46,6 @@ def getCurrentValues(coin):
 		r += '**' + coins[i] + ':** ' + str(values[i]) + ' EUR (' + str(change[i]) + '%)\n'
 		
 	r += '```'
-    return r
+	return r
 
 client.run(os.environ['BOT_TOKEN'])
