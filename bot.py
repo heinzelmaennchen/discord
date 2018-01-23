@@ -20,8 +20,7 @@ async def on_message(message):
         await client.send_message(message.channel, 'Pong!')
     elif message.content.startswith('$'):
         coin = message.content[1:5].upper().strip()
-        coinStats = getCurrentValues(coin)
-        response = buildResponse(coinStats, coin)
+        response = getCurrentValues(coin)
         await client.send_message(message.channel, response)
     
 def getCurrentValues(coin):
@@ -30,13 +29,22 @@ def getCurrentValues(coin):
         'https://min-api.cryptocompare.com/data/pricemultifull?fsyms=' 
         + coin + 
         '&tsyms=EUR').json()
-    values = apiRequest['RAW'][coin]['EUR']
-    return values
-
-def buildResponse(coinStats, coin):
-    """Builds response string which will be printed to the channel."""
-    r = ('**' + coin + ':** ' + str(coinStats['PRICE']) + ' EUR (' + 
-         str(round(coinStats['CHANGEPCT24HOUR'],2)) + '%)\n')
+    
+    """Creating and initiating lists for coins, values and %change"""
+    coins = coin.split(',')
+	values = []
+	change = []
+	
+    """Building response"""
+	r = '```\n'
+	for x in coins:
+		coinStats = apiRequest['RAW'][x]['EUR']
+		values.append(coinStats['PRICE'])
+		change.append(round(coinStats['CHANGEPCT24HOUR'],2))
+	
+	    i = len(values)-1
+	    r += '**' + coins[i] + ':** ' + str(values[i]) + ' EUR (' + str(change[i]) + '%)\n'
+    r += '```'
     return r
 
 client.run(os.environ['BOT_TOKEN'])
