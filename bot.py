@@ -24,27 +24,28 @@ async def on_message(message):
         await client.send_message(message.channel, response)
     
 def getCurrentValues(coin):
-    """Grabs current values for a coin from Cryptocompare."""
-    apiRequest = requests.get(
-        'https://min-api.cryptocompare.com/data/pricemultifull?fsyms=' 
-        + coin + 
-        '&tsyms=EUR').json()
+	"""Grabs current values for a coin from Cryptocompare."""
+	apiRequest = requests.get(
+		'https://min-api.cryptocompare.com/data/pricemultifull?fsyms=' 
+		+ coin + 
+		'&tsyms=EUR').json()
     
-    """Creating and initiating lists for coins, values and %change"""
-    coins = coin.split(',')
-    values = []
-    change = []
+	"""Creating and initiating lists for coins, values and %change"""
+	coins = coin.split(',')
+	values = []
+	change = []
 	
-    """Building response"""
+	"""Building response"""
 	r = '```\n'
 	for x in coins:
 		coinStats = apiRequest['RAW'][x]['EUR']
 		values.append(coinStats['PRICE'])
 		change.append(round(coinStats['CHANGEPCT24HOUR'],2))
-	
-	    i = len(values)-1
-	    r += '**' + coins[i] + ':** ' + str(values[i]) + ' EUR (' + str(change[i]) + '%)\n'
-    r += '```'
+		
+		i = len(values)-1
+		r += '**' + coins[i] + ':** ' + str(values[i]) + ' EUR (' + str(change[i]) + '%)\n'
+		
+	r += '```'
     return r
 
 client.run(os.environ['BOT_TOKEN'])
