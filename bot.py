@@ -19,7 +19,7 @@ async def on_message(message):
 	if message.content.startswith('!ping'):
 		await client.send_message(message.channel, 'Pong!')
 	elif message.content.startswith('$'):
-		coin = message.content[1:5].upper().strip()
+		coin = message.content[1:].upper().strip()
 		response = getCurrentValues(coin)
 		await client.send_message(message.channel, response)
     
@@ -34,7 +34,6 @@ def getCurrentValues(coin):
 	coins = coin.split(',')
 	values = []
 	change = []
-	print (coins)
 	"""Building response"""
 	r = '```\n'
 	for x in coins:
