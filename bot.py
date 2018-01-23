@@ -32,8 +32,8 @@ def getCurrentValues(coin):
     
     """Creating and initiating lists for coins, values and %change"""
     coins = coin.split(',')
-	values = []
-	change = []
+    values = []
+    change = []
 	
     """Building response"""
 	r = '```\n'
