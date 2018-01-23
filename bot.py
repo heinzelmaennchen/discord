@@ -9,10 +9,10 @@ client = discord.Client()
 
 @client.event
 async def on_ready():
-    print('Logged in as')
-    print(client.user.name)
-    print(client.user.id)
-    print('Let\'s go!')
+	print('Logged in as')
+	print(client.user.name)
+	print(client.user.id)
+	print('Let\'s go!')
 
 @client.event
 async def on_message(message):
@@ -34,7 +34,7 @@ def getCurrentValues(coin):
 	coins = coin.split(',')
 	values = []
 	change = []
-	
+	print (coins)
 	"""Building response"""
 	r = '```\n'
 	for x in coins:
@@ -43,7 +43,7 @@ def getCurrentValues(coin):
 		change.append(round(coinStats['CHANGEPCT24HOUR'],2))
 		
 		i = len(values)-1
-		r += '**' + coins[i] + ':** ' + str(values[i]) + ' EUR (' + str(change[i]) + '%)\n'
+		r += coins[i] + ': ' + str(values[i]) + ' EUR (' + str(change[i]) + '%)\n'
 		
 	r += '```'
 	return r
