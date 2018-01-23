@@ -19,7 +19,7 @@ async def on_message(message):
     if message.content.startswith('!ping'):
         await client.send_message(message.channel, 'Pong!')
     elif message.content.startswith('$'):
-        coin = message.content[1:5].upper()
+        coin = message.content[1:5].upper().strip()
         coinStats = getCurrentValues(coin)
         response = buildResponse(coinStats, coin)
         await client.send_message(message.channel, response)
