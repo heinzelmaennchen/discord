@@ -18,6 +18,9 @@ async def on_ready():
 async def on_message(message):
 	if message.content.startswith('!ping'):
 		await client.send_message(message.channel, 'Pong!')
+	elif message.content.startswith('€zk'):
+		response = getEzkValue()
+		await client.send_message(message.channel, response)
 	elif message.content.startswith('$'):
 		coin = message.content[1:].upper().strip(' ,')
 		response = getCurrentValues(coin)
@@ -49,6 +52,16 @@ def getCurrentValues(coin):
 		r += coins[i] + ': ' + str(values[i]) + ' EUR (' + str(change[i]) + '%)\n'
 		
 	r += '```'
+	return r
+
+def getEzkValue():
+	amountBTC = 0.0280071
+	amountETH = 0.38042397
+	apiRequest = requests.get('https://min-api.cryptocompare.com/data/pricemulti?fsyms=BTC,ETH&tsyms=EUR').json()
+	valueBTC = float(apiRequest['BTC']['EUR'])
+	valueETH = float(apiRequest['ETH']['EUR'])
+	value = round(amountBTC * valueBTC + amountETH * valueETH,2)
+	r = 'EK: ' + str(value) + ' (' + str(round(value/220*100,2)) + '%)'
 	return r
 
 client.run(os.environ['BOT_TOKEN'])
