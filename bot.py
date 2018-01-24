@@ -47,10 +47,7 @@ def getCurrentValues(coin):
 			return r            
 		values.append(coinStats['PRICE'])
 		change.append(round(coinStats['CHANGEPCT24HOUR'],2))
-		
-		i = len(values)-1
-		r += coins[i] + ': ' + str(values[i]) + ' EUR (' + str(change[i]) + '%)\n'
-		
+		r += coins[coins.index(x)] + ': '+ str(values[coins.index(x)]) + ' EUR (' + str(change[coins.index(x)]) + '%)\n'
 	r += '```'
 	return r
 
