@@ -40,7 +40,7 @@ def getCurrentValues(coin):
 		try:
 			coinStats = apiRequest['RAW'][x]['EUR']
 		except KeyError:
-			r = 'Heast du elelelendige Scheißkreatur, schau amoi wos du für an Bledsinn gschrieben host.'
+			r = 'Heast du elelelendige Scheißkreatur, schau amoi wos du für an Bledsinn gschrieben host. Oida!'
 			return r            
 		values.append(coinStats['PRICE'])
 		change.append(round(coinStats['CHANGEPCT24HOUR'],2))
