@@ -61,7 +61,7 @@ def getEzkValue():
 	valueBTC = float(apiRequest['BTC']['EUR'])
 	valueETH = float(apiRequest['ETH']['EUR'])
 	value = round(amountBTC * valueBTC + amountETH * valueETH,2)
-	r = 'EK: ' + str(value) + ' (' + str(round(value/220*100,2)) + '%)'
+	r = 'EK: ' + str(value) + 'EUR (' + str(round(value/220*100,2)) + '%)'
 	return r
 
 client.run(os.environ['BOT_TOKEN'])
