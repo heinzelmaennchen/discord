@@ -18,6 +18,9 @@ async def on_ready():
 async def on_message(message):
 	if message.content.startswith('!ping'):
 		await client.send_message(message.channel, 'Pong!')
+	elif message.content.startswith('€zk'):
+		response = getEzkValue()
+		await client.send_message(message.channel, response)
 	elif message.content.startswith('$'):
 		coin = message.content[1:].upper().strip(' ,')
 		response = getCurrentValues(coin)
@@ -37,13 +40,26 @@ def getCurrentValues(coin):
 	"""Building response"""
 	r = '```\n'
 	for x in coins:
-		coinStats = apiRequest['RAW'][x]['EUR']
+		try:
+			coinStats = apiRequest['RAW'][x]['EUR']
+		except KeyError:
+			r = 'Heast du elelelendige Scheißkreatur, schau amoi wos du für an Bledsinn gschrieben host. Oida!'
+			return r            
 		values.append(coinStats['PRICE'])
 		change.append(round(coinStats['CHANGEPCT24HOUR'],2))
-		
-		i = len(values)-1
-		r += coins[i] + ': ' + str(values[i]) + ' EUR (' + str(change[i]) + '%)\n'
-		
+		r += coins[coins.index(x)] + ': '+ str(values[coins.index(x)]) + ' EUR (' + str(change[coins.index(x)]) + '%)\n'
+	r += '```'
+	return r
+
+def getEzkValue():
+	amountBTC = 0.0280071
+	amountETH = 0.38042397
+	apiRequest = requests.get('https://min-api.cryptocompare.com/data/pricemulti?fsyms=BTC,ETH&tsyms=EUR').json()
+	valueBTC = float(apiRequest['BTC']['EUR'])
+	valueETH = float(apiRequest['ETH']['EUR'])
+	value = round(amountBTC * valueBTC + amountETH * valueETH,2)
+	r = '```'
+	r += str(value) + ' EUR (' + str(round(value/220*100,2)) + '%)'
 	r += '```'
 	return r
 
