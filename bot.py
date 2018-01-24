@@ -15,7 +15,7 @@ async def on_ready():
 	print('Let\'s go!')
 
 @client.event
-async def on_message(message):
+async def on_message(message):    
 	if message.content.startswith('!ping'):
 		await client.send_message(message.channel, 'Pong!')
 	elif message.content.startswith('$'):
@@ -37,7 +37,11 @@ def getCurrentValues(coin):
 	"""Building response"""
 	r = '```\n'
 	for x in coins:
-		coinStats = apiRequest['RAW'][x]['EUR']
+		try:
+            coinStats = apiRequest['RAW'][x]['EUR']
+		except KeyError:
+			r = 'Heast du elelelendige Scheißkreatur, schau amoi wos du für an Bledsinn gschrieben host.'
+			return r            
 		values.append(coinStats['PRICE'])
 		change.append(round(coinStats['CHANGEPCT24HOUR'],2))
 		
