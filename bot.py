@@ -25,6 +25,11 @@ async def on_message(message):
 		coin = message.content[1:].upper().strip(' ,')
 		response = getCurrentValues(coin)
 		await client.send_message(message.channel, response)
+	elif message.content.startswith('!top'):
+		""" Hier die coins für !top eintragen """
+		coin = 'BTC,ETH,ICN,XLM,SAN'
+		response = getCurrentValues(coin)
+		await client.send_message(message.channel, response)
     
 def getCurrentValues(coin):
 	"""Grabs current values for a coin from Cryptocompare."""
