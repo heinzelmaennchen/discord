@@ -28,7 +28,7 @@ async def on_message(message):
 		await client.send_message(message.channel, response)
 	elif message.content.startswith('!top'):
 		""" Hier die coins für !top eintragen """
-		coin = 'BTC,ETH,ICN,XLM,SAN'
+		coin = 'BTC,ETH,ICN,XLM,XMR,LSK,SAN'
 		response = getCurrentValues(coin)
 		await client.send_message(message.channel, response)
     
