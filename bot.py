@@ -31,6 +31,9 @@ async def on_message(message):
 		coin = 'BTC,ETH,ICN,XLM,XMR,LSK,SAN'
 		response = getCurrentValues(coin)
 		await client.send_message(message.channel, response)
+	elif message.content.startswith('!buffet'):
+		response = 'https://imgur.com/02Bxkye'
+		await client.send_message(message.channel, response)
     
 def getCurrentValues(coin):
   """Grabs current values for a coin from Cryptocompare."""
