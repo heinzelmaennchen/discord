@@ -34,6 +34,9 @@ async def on_message(message):
 	elif message.content.startswith('!buffet'):
 		response = 'https://imgur.com/02Bxkye'
 		await client.send_message(message.channel, response)
+    elif messaage.content.startswith('!rip'):
+        response = ':meat_on_bone: :meat_on_bone: :meat_on_bone:'
+        await client.send_message(message.channel, response)
     
 def getCurrentValues(coin):
   """Grabs current values for a coin from Cryptocompare."""
