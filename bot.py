@@ -35,7 +35,7 @@ async def on_message(message):
 		response = 'https://imgur.com/02Bxkye'
 		await client.send_message(message.channel, response)
     elif message.content.startswith('!rip'):
-        response = ':meat_on_bone: :meat_on_bone: :meat_on_bone:'
+        response = ':meat_on_bone::meat_on_bone::meat_on_bone:'
         await client.send_message(message.channel, response)
     
 def getCurrentValues(coin):
