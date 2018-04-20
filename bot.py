@@ -83,7 +83,7 @@ def getEzkValue():
   valueETH = float(apiRequest['ETH']['EUR'])
   value = round(amountBTC * valueBTC + amountETH * valueETH,2)
   r = '```'
-  r += str(value) + ' EUR (' + '{:+}%'.format(round((value/220-1)*100,2)) + ')'
+  r += str(value) + ' EUR | ' + '{:+}%'.format(round((value/220-1)*100,2))
   r += '```'
   return r
 
