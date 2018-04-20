@@ -61,13 +61,7 @@ def getCurrentValues(coin):
       r = 'Heast du elelelendige Scheißkreatur, schau amoi wos du für an Bledsinn gschrieben host. Oida!'
       return r
     
-    dpcnt = 2
-    if coinStats['PRICE'] < 10:
-      dpcnt = 4
-    elif coinStats['PRICE'] < 100:
-      dpcnt = 3
-      
-    values.append(round(coinStats['PRICE'],dpcnt))
+    values.append(str(coinStats['PRICE'])[:6])
     change.append(round(coinStats['CHANGEPCT24HOUR'],2))
     r += coins[coins.index(x)] + ': '+ str(values[coins.index(x)]) + ' EUR (' + str(change[coins.index(x)]) + '%)\n'
   r += '```'
