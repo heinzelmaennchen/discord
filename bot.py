@@ -67,7 +67,7 @@ def getCurrentValues(coin):
     
   """Dynamic indent width"""
   valuewidth = len(max(map(str, values), key=len))
-  changewidth = len(max(map(str, change), key=len))
+  changewidth = len(max(map(str, change), key=len)) + 1
   
   r = '```\n'
   for x in coins:  
