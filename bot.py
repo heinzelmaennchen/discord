@@ -42,17 +42,19 @@ async def on_message(message):
     await client.send_message(message.channel, response)
     
 def getCurrentValues(coin):
-  """Grabs current values for a coin from Cryptocompare."""
+  """Grab current values for a coin from Cryptocompare."""
   apiRequest = requests.get(
     'https://min-api.cryptocompare.com/data/pricemultifull?fsyms='
     + coin +
     '&tsyms=EUR').json()
 
-  """Creating and initiating lists for coins, values and %change"""
+  """Create and initiate lists for coins, values and %change"""
   coins = coin.split(',')
   values = []
   change = []
-  """Building response"""
+  changewidth = 4
+  valuewidth = 7
+  """Build response"""
   r = '```\n'
   for x in coins:
     try:
@@ -61,9 +63,15 @@ def getCurrentValues(coin):
       r = 'Heast du elelelendige Scheißkreatur, schau amoi wos du für an Bledsinn gschrieben host. Oida!'
       return r
     
+    """Dynamically adjust string width"""
+    valuewidth += len(str(round(coinStats['PRICE'],2))) - valuewidth
+    changewidth += len(str(round(coinStats['CHANGEPCT24HOUR'],2))) - changewidth
+    
+    """Build string"""
     values.append(round(coinStats['PRICE'],2))
     change.append(round(coinStats['CHANGEPCT24HOUR'],2))
-    r += coins[coins.index(x)] + ': '+ ('%.2f' % (values[coins.index(x)])).rjust(7) + ' EUR |' + ('%.2f' % (change[coins.index(x)])).rjust(7) + '%\n'
+    r += (coins[coins.index(x)] + ': '+ ('%.2f' % (values[coins.index(x)])).rjust(valuewidth) 
+          + ' EUR |' + ('%.2f' % (change[coins.index(x)])).rjust(changewidth) + '%\n')
   r += '```'
   return r
 
