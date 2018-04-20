@@ -52,8 +52,6 @@ def getCurrentValues(coin):
   coins = coin.split(',')
   values = []
   change = []
-  changewidth = 4
-  valuewidth = 7
   """Build response"""
   r = '```\n'
   for x in coins:
@@ -63,14 +61,17 @@ def getCurrentValues(coin):
       r = 'Heast du elelelendige Scheißkreatur, schau amoi wos du für an Bledsinn gschrieben host. Oida!'
       return r
     
-    """Dynamically adjust string width"""
-    valuewidth += len(str(round(coinStats['PRICE'],2))) - valuewidth
-    changewidth += len(str(round(coinStats['CHANGEPCT24HOUR'],2))) - changewidth
-    
-    """Build string"""
+    """Build arrays"""
     values.append(round(coinStats['PRICE'],2))
     change.append(round(coinStats['CHANGEPCT24HOUR'],2))
-    r += coins[coins.index(x)] + ': '+ ('%.2f' % (values[coins.index(x)])).rjust(valuewidth) + ' EUR |' + ('%.2f' % (change[coins.index(x)])).rjust(changewidth) + '%\n' + valuewidth + ' ' + changewidth
+    
+  """Dynamic indent width"""
+  valuewidth = len(max(values, key=len))
+  changewidth = len(max(change, key=len))
+  
+  r = '```\n'
+  for x in coins:  
+    r += coins[coins.index(x)] + ': '+ ('%.2f' % (values[coins.index(x)])).rjust(valuewidth) + ' EUR |' + ('%.2f' % (change[coins.index(x)])).rjust(changewidth) + '%\n'
   r += '```'
   return r
 
