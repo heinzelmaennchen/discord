@@ -17,6 +17,8 @@ async def on_ready():
 @client.event
 async def on_message(message):
 
+  response = False
+ 
   if message.content.startswith('€zk'):
     response = getEzkValue()
   elif message.content.startswith('$'):
@@ -33,7 +35,8 @@ async def on_message(message):
   elif message.content.startswith('!moon'):
     response = ':rocket: :full_moon:'
 
-  await client.send_message(message.channel, response)
+  if response:
+    await client.send_message(message.channel, response)
 
 def getCurrentValues(coin):
   """Grab current values for a coin from Cryptocompare."""
