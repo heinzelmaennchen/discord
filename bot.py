@@ -69,8 +69,8 @@ def getCurrentValues(coin):
 
   r = '```\n'
   for x in coins:
-      r += coins[coins.index(x)] + ': ' + (values[coins.index(x)]).rjust(valuewidth) 
-           + ' EUR | ' + (change[coins.index(x)]).rjust(changewidth) + '%\n'
+      r += (coins[coins.index(x)] + ': ' + (values[coins.index(x)]).rjust(valuewidth) 
+            + ' EUR | ' + (change[coins.index(x)]).rjust(changewidth) + '%\n')
   r += '```'
   return r
 
