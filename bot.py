@@ -53,7 +53,7 @@ def getCurrentValues(coin):
       coinStats = apiRequest['RAW'][x]['EUR']
     except KeyError:
       r = ('Heast du elelelendige Scheißkreatur, schau amoi wos du für an'
-           + 'Bledsinn gschrieben host. Oida!')
+           + ' Bledsinn gschrieben host. Oida!')
       return r
 
     """Build arrays"""
