@@ -64,8 +64,8 @@ def getCurrentValues(coin):
     change.append('%.2f' % round(coinStats['CHANGEPCT24HOUR'],2))
 
   """Dynamic indent width"""
-  valuewidth = len(max(values key=len))
-  changewidth = len(max(change key=len))
+  valuewidth = len(max(values, key=len))
+  changewidth = len(max(change, key=len))
 
   r = '```\n'
   for x in coins:
