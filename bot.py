@@ -60,18 +60,17 @@ def getCurrentValues(coin):
       return r
 
     """Build arrays"""
-    values.append(round(coinStats['PRICE'],2))
-    change.append(round(coinStats['CHANGEPCT24HOUR'],2))
+    values.append('%.2f' % round(coinStats['PRICE'],2))
+    change.append('%.2f' % round(coinStats['CHANGEPCT24HOUR'],2))
 
   """Dynamic indent width"""
-  valuewidth = len(max(map(str, values), key=len))
-  changewidth = len(max(map(str, change), key=len))
+  valuewidth = len(max(values key=len))
+  changewidth = len(max(change key=len))
 
   r = '```\n'
   for x in coins:
-      r += coins[coins.index(x)] + ': ' + ('%.2f'
-            % values[coins.index(x)]).rjust(valuewidth) + ' EUR | ' \
-          + ('%.2f' % change[coins.index(x)]).rjust(changewidth) + '%\n'
+      r += coins[coins.index(x)] + ': ' + (values[coins.index(x)]).rjust(valuewidth) 
+           + ' EUR | ' + (change[coins.index(x)]).rjust(changewidth) + '%\n'
   r += '```'
   return r
 
