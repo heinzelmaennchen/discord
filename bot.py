@@ -61,7 +61,7 @@ def getCurrentValues(coin):
       r = 'Heast du elelelendige Scheißkreatur, schau amoi wos du für an Bledsinn gschrieben host. Oida!'
       return r
     
-    values.append(coinStats['PRICE'])
+    values.append(round(coinStats['PRICE'],2))
     change.append(round(coinStats['CHANGEPCT24HOUR'],2))
     r += coins[coins.index(x)] + ': '+ ('%.2f' % (values[coins.index(x)])).rjust(7) + ' EUR (' + str(change[coins.index(x)]) + '%)\n'
   r += '```'
