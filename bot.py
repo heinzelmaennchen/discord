@@ -70,7 +70,7 @@ def getCurrentValues(coin):
     """Build string"""
     values.append(round(coinStats['PRICE'],2))
     change.append(round(coinStats['CHANGEPCT24HOUR'],2))
-    r += coins[coins.index(x)] + ': '+ ('%.2f' % (values[coins.index(x)])).rjust(valuewidth) + ' EUR |' + ('%.2f' % (change[coins.index(x)])).rjust(changewidth) + '%\n'
+    r += coins[coins.index(x)] + ': '+ ('%.2f' % (values[coins.index(x)])).rjust(valuewidth) + ' EUR |' + ('%.2f' % (change[coins.index(x)])).rjust(changewidth) + '%\n' + valuewidth + ' ' + changewidth
   r += '```'
   return r
 
