@@ -17,29 +17,29 @@ async def on_ready():
 @client.event
 async def on_message(message):
 
-	if message.content.startswith('!ping'):
-		await client.send_message(message.channel, 'Pong!')
-	elif message.content.startswith('€zk'):
-		response = getEzkValue()
-		await client.send_message(message.channel, response)
-	elif message.content.startswith('$'):
-		coin = message.content[1:].upper().strip(' ,')
-		response = getCurrentValues(coin)
-		await client.send_message(message.channel, response)
-	elif message.content.startswith('!top'):
-		""" Hier die coins für !top eintragen """
-		coin = 'BTC,ETH,ICN,XLM,XMR,LSK,SAN'
-		response = getCurrentValues(coin)
-		await client.send_message(message.channel, response)
-	elif message.content.startswith('!buffet'):
-		response = 'https://imgur.com/02Bxkye'
-		await client.send_message(message.channel, response)
-	elif message.content.startswith('!rip'):
-		response = ':meat_on_bone: :meat_on_bone: :meat_on_bone:'
-		await client.send_message(message.channel, response)
-	elif message.content.startswith('!moon'):
-		response = ':rocket: :full_moon:'
-		await client.send_message(message.channel, response)
+  if message.content.startswith('!ping'):
+    await client.send_message(message.channel, 'Pong!')
+  elif message.content.startswith('€zk'):
+    response = getEzkValue()
+    await client.send_message(message.channel, response)
+  elif message.content.startswith('$'):
+    coin = message.content[1:].upper().strip(' ,')
+    response = getCurrentValues(coin)
+    await client.send_message(message.channel, response)
+  elif message.content.startswith('!top'):
+    """ Hier die coins für !top eintragen """
+    coin = 'BTC,ETH,ICN,XLM,XMR,LSK,SAN'
+    response = getCurrentValues(coin)
+    await client.send_message(message.channel, response)
+  elif message.content.startswith('!buffet'):
+    response = 'https://imgur.com/02Bxkye'
+    await client.send_message(message.channel, response)
+  elif message.content.startswith('!rip'):
+    response = ':meat_on_bone: :meat_on_bone: :meat_on_bone:'
+    await client.send_message(message.channel, response)
+  elif message.content.startswith('!moon'):
+    response = ':rocket: :full_moon:'
+    await client.send_message(message.channel, response)
     
 def getCurrentValues(coin):
   """Grabs current values for a coin from Cryptocompare."""
@@ -75,15 +75,15 @@ def getCurrentValues(coin):
 
 def getEzkValue():
 
-	amountBTC = 0.0280071
-	amountETH = 0.38042397
-	apiRequest = requests.get('https://min-api.cryptocompare.com/data/pricemulti?fsyms=BTC,ETH&tsyms=EUR').json()
-	valueBTC = float(apiRequest['BTC']['EUR'])
-	valueETH = float(apiRequest['ETH']['EUR'])
-	value = round(amountBTC * valueBTC + amountETH * valueETH,2)
-	r = '```'
-	r += str(value) + ' EUR (' + '{:+}%'.format(round((value/220-1)*100,2)) + ')'
-	r += '```'
-	return r
+  amountBTC = 0.0280071
+  amountETH = 0.38042397
+  apiRequest = requests.get('https://min-api.cryptocompare.com/data/pricemulti?fsyms=BTC,ETH&tsyms=EUR').json()
+  valueBTC = float(apiRequest['BTC']['EUR'])
+  valueETH = float(apiRequest['ETH']['EUR'])
+  value = round(amountBTC * valueBTC + amountETH * valueETH,2)
+  r = '```'
+  r += str(value) + ' EUR (' + '{:+}%'.format(round((value/220-1)*100,2)) + ')'
+  r += '```'
+  return r
 
 client.run(os.environ['BOT_TOKEN'])
