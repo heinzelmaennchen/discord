@@ -51,7 +51,7 @@ def getCurrentValues(coin):
       'https://api.coinmarketcap.com/v1/global/?convert=EUR'
   ).json()
 
-  totalMarketEUR = str(apiRequestCap['total_market_cap_eur'])
+  totalMarketCapEUR = str(apiRequestCap['total_market_cap_eur'])
   totalVolumeEUR = str(apiRequestCap['total_24h_volume_eur'])
   btcDominance = str(apiRequestCap['bitcoin_percentage_of_market_cap'])
 
@@ -80,7 +80,7 @@ def getCurrentValues(coin):
   for x in coins:
       r += (coins[coins.index(x)] + ': ' + (values[coins.index(x)]).rjust(valuewidth)
             + ' EUR | ' + (change[coins.index(x)]).rjust(changewidth) + '%\n')
-  r += ('\nMarket Cap: ' + totalMarketCap + ' EUR')
+  r += ('\nMarket Cap: ' + totalMarketCapEUR + ' EUR')
   r += ('\nVolume 24h: ' + totalVolumeEUR + ' EUR')
   r += ('\nBTC dominance: ' + btcDominance + ' %')
   r += '```'
