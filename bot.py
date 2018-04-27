@@ -18,16 +18,18 @@ async def on_ready():
 async def on_message(message):
 
   response = False
- 
+
   if message.content.startswith('€zk'):
     response = getEzkValue()
   elif message.content.startswith('$'):
     coin = message.content[1:].upper().strip(' ,')
     response = getCurrentValues(coin)
-  elif message.content.startswith('!top'):
+  elif message.content == '!top':
     """ Hier die coins für !top eintragen """
     coin = 'BTC,ETH,ICN,XLM,XMR,LSK,SAN'
     response = getCurrentValues(coin)
+  elif message.content == '!topvol':
+    response = getTopVolume()
   elif message.content.startswith('!buffet'):
     response = 'https://imgur.com/02Bxkye'
   elif message.content.startswith('!rip'):
@@ -40,20 +42,25 @@ async def on_message(message):
 
 def getCurrentValues(coin):
   """Grab current values for a coin from Cryptocompare."""
-  apiRequest = requests.get(
+  apiRequestCoins = requests.get(
     'https://min-api.cryptocompare.com/data/pricemultifull?fsyms='
     + coin +
     '&tsyms=EUR').json()
+
+  apiRequestCap = requests.get(
+      'https://api.coinmarketcap.com/v1/global/?convert=EUR'
+  ).json()
+
+  totalMarketCap = str(apiRequestCap['total_24h_volume_eur'])
 
   """Create and initiate lists for coins, values and %change"""
   coins = coin.split(',')
   values = []
   change = []
   """Build response"""
-  r = '```\n'
   for x in coins:
     try:
-      coinStats = apiRequest['RAW'][x]['EUR']
+      coinStats = apiRequestCoins['RAW'][x]['EUR']
     except KeyError:
       r = ('Heast du elelelendige Scheißkreatur, schau amoi wos du für an'
            + ' Bledsinn gschrieben host. Oida!')
@@ -69,8 +76,9 @@ def getCurrentValues(coin):
 
   r = '```\n'
   for x in coins:
-      r += (coins[coins.index(x)] + ': ' + (values[coins.index(x)]).rjust(valuewidth) 
+      r += (coins[coins.index(x)] + ': ' + (values[coins.index(x)]).rjust(valuewidth)
             + ' EUR | ' + (change[coins.index(x)]).rjust(changewidth) + '%\n')
+  r += ('\nMarket Cap: ' + totalMarketCap + ' EUR')
   r += '```'
   return r
 
