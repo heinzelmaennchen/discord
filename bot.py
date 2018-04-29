@@ -75,13 +75,15 @@ def getCurrentValues(coin, globalStats):
     change.append('%.2f' % round(coinStats['CHANGEPCT24HOUR'],2))
 
   """Dynamic indent width"""
+  coinwidth = len(max(coins, key=len))
   valuewidth = len(max(values, key=len))
   changewidth = len(max(change, key=len))
 
   r = '```\n'
   for x in coins:
-    r += (coins[coins.index(x)] + ': ' + (values[coins.index(x)]).rjust(valuewidth)
-      + ' EUR | ' + (change[coins.index(x)]).rjust(changewidth) + '%\n')
+    r += ((coins[coins.index(x)]).rjust(coinwidth) + ': '
+          + (values[coins.index(x)]).rjust(valuewidth) + ' EUR | '
+          + (change[coins.index(x)]).rjust(changewidth) + '%\n')
   if globalStats:  
     r += ('\nMarket Cap: ' + totalMarketCapEUR + ' Mrd. EUR')
     r += ('\nVolume 24h: ' + totalVolumeEUR + ' Mrd. EUR')
