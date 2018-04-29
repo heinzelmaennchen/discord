@@ -18,16 +18,18 @@ async def on_ready():
 async def on_message(message):
 
   response = False
+  globalStats = False
 
   if message.content.startswith('€zk'):
     response = getEzkValue()
   elif message.content.startswith('$'):
     coin = message.content[1:].upper().strip(' ,')
-    response = getCurrentValues(coin)
+    response = getCurrentValues(coin, globalStats)
   elif message.content == '!top':
+    globalStats = True
     """ Hier die coins für !top eintragen """
     coin = 'BTC,ETH,ICN,XLM,XMR,LSK,SAN'
-    response = getCurrentValues(coin)
+    response = getCurrentValues(coin, globalStats)
   elif message.content == '!topvol':
     response = getTopVolume()
   elif message.content.startswith('!buffet'):
@@ -40,20 +42,20 @@ async def on_message(message):
   if response:
     await client.send_message(message.channel, response)
 
-def getCurrentValues(coin):
+def getCurrentValues(coin, globalStats):
   """Grab current values for a coin from Cryptocompare."""
   apiRequestCoins = requests.get(
     'https://min-api.cryptocompare.com/data/pricemultifull?fsyms='
     + coin +
     '&tsyms=EUR').json()
 
-  apiRequestMarket = requests.get(
+  apiRequestGlobal = requests.get(
       'https://api.coinmarketcap.com/v1/global/?convert=EUR'
   ).json()
   
-  totalMarketCapEUR = str(round(apiRequestMarket['total_market_cap_eur'] / 10**9,1))
-  totalVolumeEUR = str(round(apiRequestMarket['total_24h_volume_eur'] / 10**9,1))
-  btcDominance = str(apiRequestMarket['bitcoin_percentage_of_market_cap'])
+  totalMarketCapEUR = str(round(apiRequestGlobal['total_market_cap_eur'] / 10**9,1))
+  totalVolumeEUR = str(round(apiRequestGlobal['total_24h_volume_eur'] / 10**9,1))
+  btcDominance = str(apiRequestGlobal['bitcoin_percentage_of_market_cap'])
 
   """Create and initiate lists for coins, values and %change"""
   coins = coin.split(',')
@@ -78,11 +80,12 @@ def getCurrentValues(coin):
 
   r = '```\n'
   for x in coins:
-      r += (coins[coins.index(x)] + ': ' + (values[coins.index(x)]).rjust(valuewidth)
-            + ' EUR | ' + (change[coins.index(x)]).rjust(changewidth) + '%\n')
-  r += ('\nMarket Cap: ' + totalMarketCapEUR + ' Mrd. EUR')
-  r += ('\nVolume 24h: ' + totalVolumeEUR + ' Mrd. EUR')
-  r += ('\nBTC dominance: ' + btcDominance + ' %')
+    r += (coins[coins.index(x)] + ': ' + (values[coins.index(x)]).rjust(valuewidth)
+      + ' EUR | ' + (change[coins.index(x)]).rjust(changewidth) + '%\n')
+  if globalStats:  
+    r += ('\nMarket Cap: ' + totalMarketCapEUR + ' Mrd. EUR')
+    r += ('\nVolume 24h: ' + totalVolumeEUR + ' Mrd. EUR')
+    r += ('\nBTC dominance: ' + btcDominance + ' %')
   r += '```'
   return r
 
