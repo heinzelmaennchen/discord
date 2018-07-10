@@ -38,6 +38,8 @@ async def on_message(message):
     response = ':meat_on_bone: :meat_on_bone: :meat_on_bone:'
   elif message.content.startswith('!moon'):
     response = ':rocket: :full_moon:'
+  elif message.content.startswith('!earth'):
+    response = ':airplane_arriving: :earth_africa:'
 
   if response:
     await client.send_message(message.channel, response)
