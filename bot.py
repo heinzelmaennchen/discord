@@ -28,7 +28,7 @@ async def on_message(message):
   elif message.content == '!top':
     globalStats = True
     """ Hier die coins für !top eintragen """
-    coin = 'BTC,ETH,ICN,XLM,XMR,LSK,SAN'
+    coin = 'BTC,ETH,XLM,XMR,LSK,SAN'
     response = getCurrentValues(coin, globalStats)
   elif message.content == '!topvol':
     response = getTopVolume()
