@@ -28,7 +28,7 @@ async def on_message(message):
   elif message.content == '!top':
     globalStats = True
     """ Hier die coins für !top eintragen """
-    coin = 'BTC,ETH,XLM,XMR,LSK,SAN'
+    coin = 'BTC,ETH,XTZ,XLM,XMR,LSK,SAN'
     response = getCurrentValues(coin, globalStats)
   elif message.content == '!topvol':
     response = getTopVolume()
@@ -45,19 +45,18 @@ async def on_message(message):
     await client.send_message(message.channel, response)
 
 def getCurrentValues(coin, globalStats):
-  """Grab current values for a coin from Cryptocompare."""
+  """Grab current values for a coin from Coinlib."""
   apiRequestCoins = requests.get(
-    'https://min-api.cryptocompare.com/data/pricemultifull?fsyms='
-    + coin +
-    '&tsyms=EUR').json()
+    'https://coinlib.io/api/v1/coin?key=d5c3df07c52c2c14&pref=EUR&symbol='
+    + coin).json()
 
   apiRequestGlobal = requests.get(
-      'https://api.coinmarketcap.com/v1/global/?convert=EUR'
+      'https://coinlib.io/api/v1/global?key=d5c3df07c52c2c14&pref=EUR'
   ).json()
   
-  totalMarketCapEUR = str(round(apiRequestGlobal['total_market_cap_eur'] / 10**9,1))
-  totalVolumeEUR = str(round(apiRequestGlobal['total_24h_volume_eur'] / 10**9,1))
-  btcDominance = str(apiRequestGlobal['bitcoin_percentage_of_market_cap'])
+  totalMarketCap = str(round(apiRequestGlobal['total_market_cap'] / 10**9,1))
+  totalVolume = str(round(apiRequestGlobal['total_24h_volume'] / 10**9,1))
+  """btcDominance = str(apiRequestGlobal['bitcoin_percentage_of_market_cap'])"""
 
   """Create and initiate lists for coins, values and %change"""
   coins = coin.split(',')
@@ -66,15 +65,15 @@ def getCurrentValues(coin, globalStats):
   """Build response"""
   for x in coins:
     try:
-      coinStats = apiRequestCoins['RAW'][x]['EUR']
+      coinStats = apiRequestCoins['coins'][x]
     except KeyError:
       r = ('Heast du elelelendige Scheißkreatur, schau amoi wos du für an'
            + ' Bledsinn gschrieben host. Oida!')
       return r
 
     """Build arrays"""
-    values.append('%.2f' % round(coinStats['PRICE'],2))
-    change.append('%.2f' % round(coinStats['CHANGEPCT24HOUR'],2))
+    values.append('%.2f' % round(coinStats['price'],2))
+    change.append('%.2f' % round(coinStats['delta_24h'],2))
 
   """Dynamic indent width"""
   coinwidth = len(max(coins, key=len))
@@ -87,9 +86,9 @@ def getCurrentValues(coin, globalStats):
           + (values[coins.index(x)]).rjust(valuewidth) + ' EUR | '
           + (change[coins.index(x)]).rjust(changewidth) + '%\n')
   if globalStats:  
-    r += ('\nMarket Cap: ' + totalMarketCapEUR + ' Mrd. EUR')
-    r += ('\nVolume 24h: ' + totalVolumeEUR + ' Mrd. EUR')
-    r += ('\nBTC dominance: ' + btcDominance + ' %')
+    r += ('\nMarket Cap: ' + totalMarketCap + ' Mrd. EUR')
+    r += ('\nVolume 24h: ' + totalVolume + ' Mrd. EUR')
+    """r += ('\nBTC dominance: ' + btcDominance + ' %')"""
   r += '```'
   return r
 
@@ -98,10 +97,10 @@ def getEzkValue():
   amountBTC = 0.0280071
   amountETH = 0.38042397
   apiRequest = \
-    requests.get('https://min-api.cryptocompare.com/data/pricemulti?fsyms='
-                 + 'BTC,ETH&tsyms=EUR').json()
-  valueBTC = float(apiRequest['BTC']['EUR'])
-  valueETH = float(apiRequest['ETH']['EUR'])
+    requests.get('https://coinlib.io/api/v1/coin?key=d5c3df07c52c2c14&pref=EUR&symbol='
+                 + 'BTC,ETH').json()
+  valueBTC = float(apiRequest['coins']['0']['price'])
+  valueETH = float(apiRequest['coins']['1']['price'])
   value = round(amountBTC * valueBTC + amountETH * valueETH,2)
   r = '```'
   r += '€zk: ' + str(value) + ' EUR | ' + '{:+}%'.format(round((value/220-1)*100,2))
