@@ -7,6 +7,8 @@ from discord.ext.commands import Bot
 
 client = discord.Client()
 
+api_key = os.environ['API_KEY']
+
 @client.event
 async def on_ready():
   print('Logged in as')
@@ -50,13 +52,13 @@ async def on_message(message):
 def getCurrentValues(coin, globalStats):
   """Grab current values for a coin from Coinlib."""
   apiRequestCoins = requests.get(
-    'https://coinlib.io/api/v1/coin?key=d5c3df07c52c2c14&pref=EUR&symbol='
+    'https://coinlib.io/api/v1/coin?key=' + api_key + '&pref=EUR&symbol='
     + coin).json()
   
   """Grab global stats if requested."""
   if globalStats:
     apiRequestGlobal = requests.get(
-    'https://coinlib.io/api/v1/global?key=d5c3df07c52c2c14&pref=EUR'
+    'https://coinlib.io/api/v1/global?key=' + api_key + '&pref=EUR'
     ).json()
     
     totalMarketCap = str(round(float(apiRequestGlobal['total_market_cap']) / 10**9,1))
@@ -115,7 +117,7 @@ def getEzkValue():
   amountBTC = 0.0280071
   amountETH = 0.38042397
   apiRequest = \
-    requests.get('https://coinlib.io/api/v1/coin?key=d5c3df07c52c2c14&pref=EUR&symbol='
+    requests.get('https://coinlib.io/api/v1/coin?key=' + api_key + '&pref=EUR&symbol='
                  + 'BTC,ETH').json()
   valueBTC = float(apiRequest['coins'][0]['price'])
   valueETH = float(apiRequest['coins'][1]['price'])
