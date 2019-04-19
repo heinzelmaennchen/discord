@@ -61,7 +61,9 @@ def getCurrentValues(coin, globalStats):
   """Create and initiate lists for coins, values and %change"""
   coins = coin.split(',')
   values = []
-  change = []
+  change_24h = []
+  change_7d = []
+  change_30d = []
   """Build response"""
   for num, coin in enumerate(coins, start=0):
     try:
