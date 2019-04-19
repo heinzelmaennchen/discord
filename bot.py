@@ -55,7 +55,7 @@ def getCurrentValues(coin, globalStats):
   ).json()
   
   totalMarketCap = str(round(float(apiRequestGlobal['total_market_cap']) / 10**9,1))
-  totalVolume = str(round(float(apiRequestGlobal['total_24h_volume']) / 10**9,1))
+  totalVolume = str(round(float(apiRequestGlobal['total_volume_24h']) / 10**9,1))
   """btcDominance = str(apiRequestGlobal['bitcoin_percentage_of_market_cap'])"""
 
   """Create and initiate lists for coins, values and %change"""
