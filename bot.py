@@ -21,22 +21,28 @@ async def on_ready():
 async def on_message(message):
 
   response = False
-  globalStats = False
   toplist = False
-
+  """ Hier die coins für !top und !topBTC eintragen. """
+  ourCoins = 'BTC,ETH,XTZ,XLM,XMR,LSK,SAN'
+  
   if message.content.startswith('€zk'):
     response = getEzkValue()
   elif message.content.startswith('$'):
     coin = message.content[1:].upper().strip(' ,')
-    response = getCurrentValues(coin, globalStats)
+    response = getCurrentValues(coin)
   elif message.content == '!top':
     globalStats = True
-    """ Hier die coins für !top eintragen """
-    coins = 'BTC,ETH,XTZ,XLM,XMR,LSK,SAN'
-    response = getCurrentValues(coins, globalStats)
+    response = getCurrentValues(ourCoins, globalStats)
+  elif message.content == '!topBTC':
+    currency = 'BTC'
+    response = getCurrentValues(ourCoins, currency)
   elif message.content == '!topten':
     coins = getTopTenCoins()
-    response = getCurrentValues(coins, globalStats)
+    response = getCurrentValues(coins)
+  elif message.content == '!toptenBTC':
+    currency = 'BTC'
+    coins = getTopTenCoins(currency)
+    response = getCurrentValues(coins)
   elif message.content.startswith('!buffet'):
     response = 'https://imgur.com/02Bxkye'
   elif message.content.startswith('!rip'):
@@ -50,10 +56,10 @@ async def on_message(message):
     channel = message.channel
     await channel.send(response)
 
-def getCurrentValues(coin, globalStats):
+def getCurrentValues(coin, globalStats = False, curr = 'EUR'):
   """Grab current values for a coin from Coinlib."""
   apiRequestCoins = requests.get(
-    'https://coinlib.io/api/v1/coin?key=' + api_key + '&pref=EUR&symbol='
+    'https://coinlib.io/api/v1/coin?key=' + api_key + '&pref=' + curr + '&symbol='
     + coin).json()
   
   """Grab global stats if requested."""
@@ -102,7 +108,7 @@ def getCurrentValues(coin, globalStats):
   r = '```\n'
   for x in coins:
     r += ((coins[coins.index(x)]).rjust(coinwidth) + ': '
-          + (values[coins.index(x)]).rjust(valuewidth) + ' EUR | '
+          + (values[coins.index(x)]).rjust(valuewidth) + curr + ' | '
           + (change_24h[coins.index(x)]).rjust(changewidth_24h) + '% | '
           + (change_7d[coins.index(x)]).rjust(changewidth_7d) + '% | '
           + (change_30d[coins.index(x)]).rjust(changewidth_30d) + '%\n')
@@ -127,9 +133,9 @@ def getEzkValue():
   r += '```'
   return r
 
-def getTopTenCoins():
+def getTopTenCoins(curr = 'EUR'):
   topTenList = requests.get(
-    'https://coinlib.io/api/v1/coinlist?key=' + api_key + '&pref=EUR&page=1&order=rank_asc'
+    'https://coinlib.io/api/v1/coinlist?key=' + api_key + '&pref=' + curr + '&page=1&order=rank_asc'
     ).json()
   
   topTenCoins = []
