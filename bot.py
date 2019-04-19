@@ -54,8 +54,8 @@ def getCurrentValues(coin, globalStats):
       'https://coinlib.io/api/v1/global?key=d5c3df07c52c2c14&pref=EUR'
   ).json()
   
-  totalMarketCap = str(round(apiRequestGlobal['total_market_cap'] / 10**9,1))
-  totalVolume = str(round(apiRequestGlobal['total_24h_volume'] / 10**9,1))
+  totalMarketCap = str(round(float(apiRequestGlobal['total_market_cap']) / 10**9,1))
+  totalVolume = str(round(float(apiRequestGlobal['total_24h_volume']) / 10**9,1))
   """btcDominance = str(apiRequestGlobal['bitcoin_percentage_of_market_cap'])"""
 
   """Create and initiate lists for coins, values and %change"""
@@ -72,8 +72,8 @@ def getCurrentValues(coin, globalStats):
       return r
 
     """Build arrays"""
-    values.append('%.2f' % round(coinStats['price'],2))
-    change.append('%.2f' % round(coinStats['delta_24h'],2))
+    values.append('%.2f' % round(float(coinStats['price']),2))
+    change.append('%.2f' % round(float(coinStats['delta_24h']),2))
 
   """Dynamic indent width"""
   coinwidth = len(max(coins, key=len))
