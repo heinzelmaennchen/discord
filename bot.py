@@ -34,15 +34,14 @@ async def on_message(message):
     globalStats = True
     response = getCurrentValues(ourCoins, globalStats)
   elif message.content == '!topBTC':
-    currency = 'BTC'
-    response = getCurrentValues(ourCoins, currency)
+    response = getCurrentValues(ourCoins, currency = 'BTC')
   elif message.content == '!topten':
     coins = getTopTenCoins()
     response = getCurrentValues(coins)
   elif message.content == '!toptenBTC':
     currency = 'BTC'
-    coins = getTopTenCoins(currency)
-    response = getCurrentValues(coins)
+    coins = getTopTenCoins()
+    response = getCurrentValues(coins, currency = 'BTC')
   elif message.content.startswith('!buffet'):
     response = 'https://imgur.com/02Bxkye'
   elif message.content.startswith('!rip'):
@@ -56,10 +55,10 @@ async def on_message(message):
     channel = message.channel
     await channel.send(response)
 
-def getCurrentValues(coin, globalStats = False, curr = 'EUR'):
+def getCurrentValues(coin, globalStats = False, currency = 'EUR'):
   """Grab current values for a coin from Coinlib."""
   apiRequestCoins = requests.get(
-    'https://coinlib.io/api/v1/coin?key=' + api_key + '&pref=' + curr + '&symbol='
+    'https://coinlib.io/api/v1/coin?key=' + api_key + '&pref=' + currency + '&symbol='
     + coin).json()
   
   """Grab global stats if requested."""
@@ -133,9 +132,9 @@ def getEzkValue():
   r += '```'
   return r
 
-def getTopTenCoins(curr = 'EUR'):
+def getTopTenCoins():
   topTenList = requests.get(
-    'https://coinlib.io/api/v1/coinlist?key=' + api_key + '&pref=' + curr + '&page=1&order=rank_asc'
+    'https://coinlib.io/api/v1/coinlist?key=' + api_key + '&pref=EUR&page=1&order=rank_asc'
     ).json()
   
   topTenCoins = []
