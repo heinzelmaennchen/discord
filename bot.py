@@ -117,8 +117,8 @@ def getEzkValue():
   apiRequest = \
     requests.get('https://coinlib.io/api/v1/coin?key=d5c3df07c52c2c14&pref=EUR&symbol='
                  + 'BTC,ETH').json()
-  valueBTC = float(apiRequest['coins']['0']['price'])
-  valueETH = float(apiRequest['coins']['1']['price'])
+  valueBTC = float(apiRequest['coins'][0]['price'])
+  valueETH = float(apiRequest['coins'][1]['price'])
   value = round(amountBTC * valueBTC + amountETH * valueETH,2)
   r = '```'
   r += '€zk: ' + str(value) + ' EUR | ' + '{:+}%'.format(round((value/220-1)*100,2))
