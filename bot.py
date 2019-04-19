@@ -63,28 +63,33 @@ def getCurrentValues(coin, globalStats):
   values = []
   change = []
   """Build response"""
-  for x in coins:
+  for num, coin in enumerate(coins, start=0):
     try:
-      coinStats = apiRequestCoins['coins'][x]
+      coinStats = apiRequestCoins['coins'][num]
+      """Build arrays"""
+      values.append('%.2f' % round(float(coinStats['price']),2))
+      change_24h.append('%.2f' % round(float(coinStats['delta_24h']),2))
+      change_7d.append('%.2f' % round(float(coinStats['delta_7d']),2))
+      change_30d.append('%.2f' % round(float(coinStats['delta_30d']),2))
     except KeyError:
       r = ('Heast du elelelendige Scheißkreatur, schau amoi wos du für an'
            + ' Bledsinn gschrieben host. Oida!')
       return r
 
-    """Build arrays"""
-    values.append('%.2f' % round(float(coinStats['price']),2))
-    change.append('%.2f' % round(float(coinStats['delta_24h']),2))
-
   """Dynamic indent width"""
   coinwidth = len(max(coins, key=len))
   valuewidth = len(max(values, key=len))
-  changewidth = len(max(change, key=len))
+  changewidth_24h = len(max(change_24h, key=len))
+  changewidth_7d = len(max(change_7d, key=len))
+  changewidth_30d = len(max(change_30d, key=len))
 
   r = '```\n'
   for x in coins:
     r += ((coins[coins.index(x)]).rjust(coinwidth) + ': '
           + (values[coins.index(x)]).rjust(valuewidth) + ' EUR | '
-          + (change[coins.index(x)]).rjust(changewidth) + '%\n')
+          + (change_24h[coins.index(x)]).rjust(changewidth_24h) + ' | '
+          + (change_7d[coins.index(x)]).rjust(changewidth_7d) + ' | '
+          + (change_30d[coins.index(x)]).rjust(changewidth_30d) + '%\n')
   if globalStats:  
     r += ('\nMarket Cap: ' + totalMarketCap + ' Mrd. EUR')
     r += ('\nVolume 24h: ' + totalVolume + ' Mrd. EUR')
