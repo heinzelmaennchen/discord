@@ -21,7 +21,6 @@ async def on_ready():
 async def on_message(message):
 
   response = False
-  toplist = False
   """ Hier die coins für !top und !topBTC eintragen. """
   ourCoins = 'BTC,ETH,XTZ,XLM,XMR,LSK,SAN'
   
