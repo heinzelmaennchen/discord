@@ -32,10 +32,11 @@ async def on_message(message):
   elif message.content == '!top':
     globalStats = True
     """ Hier die coins für !top eintragen """
-    coin = 'BTC,ETH,XTZ,XLM,XMR,LSK,SAN'
-    response = getCurrentValues(coin, globalStats)
-  elif message.content == '!topvol':
-    response = getTopVolume()
+    coins = 'BTC,ETH,XTZ,XLM,XMR,LSK,SAN'
+    response = getCurrentValues(coins, globalStats)
+  elif message.content == '!topten':
+    coins = getTopTenCoins()
+    response = getCurrentValues(coins, globalStats)
   elif message.content.startswith('!buffet'):
     response = 'https://imgur.com/02Bxkye'
   elif message.content.startswith('!rip'):
@@ -113,7 +114,6 @@ def getCurrentValues(coin, globalStats):
   return r
 
 def getEzkValue():
-
   amountBTC = 0.0280071
   amountETH = 0.38042397
   apiRequest = \
@@ -126,5 +126,17 @@ def getEzkValue():
   r += '€zk: ' + str(value) + ' EUR | ' + '{:+}%'.format(round((value/220-1)*100,2))
   r += '```'
   return r
+
+def getTopTenCoins():
+  topTenList = requests.get(
+    'https://coinlib.io/api/v1/coinlist?key=' + api_key + '&pref=EUR&page=1&order=rank_asc'
+    ).json()
+  
+  topTenCoins = []
+  for i in range(10):
+    topTenCoins.append(topTenList['coins'][i]['symbol'])
+    
+  return topTenCoins
+
 
 client.run(os.environ['BOT_TOKEN'])
