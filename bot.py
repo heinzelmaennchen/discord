@@ -89,8 +89,8 @@ def getCurrentValues(coin, globalStats):
   for x in coins:
     r += ((coins[coins.index(x)]).rjust(coinwidth) + ': '
           + (values[coins.index(x)]).rjust(valuewidth) + ' EUR | '
-          + (change_24h[coins.index(x)]).rjust(changewidth_24h) + ' | '
-          + (change_7d[coins.index(x)]).rjust(changewidth_7d) + ' | '
+          + (change_24h[coins.index(x)]).rjust(changewidth_24h) + '% | '
+          + (change_7d[coins.index(x)]).rjust(changewidth_7d) + '% | '
           + (change_30d[coins.index(x)]).rjust(changewidth_30d) + '%\n')
   if globalStats:  
     r += ('\nMarket Cap: ' + totalMarketCap + ' Mrd. EUR')
