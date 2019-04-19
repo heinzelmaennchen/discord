@@ -105,7 +105,7 @@ def getCurrentValues(coin, globalStats = False, currency = 'EUR'):
   r = '```\n'
   for x in coins:
     r += ((coins[coins.index(x)]).rjust(coinwidth) + ': '
-          + (values[coins.index(x)]).rjust(valuewidth) + currency + ' | '
+          + (values[coins.index(x)]).rjust(valuewidth) + ' ' + currency + ' | '
           + (change_24h[coins.index(x)]).rjust(changewidth_24h) + '% | '
           + (change_7d[coins.index(x)]).rjust(changewidth_7d) + '% | '
           + (change_30d[coins.index(x)]).rjust(changewidth_30d) + '%\n')
