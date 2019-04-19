@@ -136,7 +136,7 @@ def getTopTenCoins():
   for i in range(10):
     topTenCoins.append(topTenList['coins'][i]['symbol'])
     
-  return topTenCoins
+  return topTenCoins.join()
 
 
 client.run(os.environ['BOT_TOKEN'])
