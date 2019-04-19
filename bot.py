@@ -58,7 +58,10 @@ def getCurrentValues(coin, globalStats):
   
   totalMarketCap = str(round(float(apiRequestGlobal['total_market_cap']) / 10**9,1))
   totalVolume = str(round(float(apiRequestGlobal['total_volume_24h']) / 10**9,1))
-  """btcDominance = str(apiRequestGlobal['bitcoin_percentage_of_market_cap'])"""
+  """This only works as long as BTC is the first coin in the response"""
+  btcDominance = '{0:.2f}%'.format(
+    float(apiRequestCoins['coins'][0]['market_cap'])/
+    float(apiRequestGlobal['total_market_cap']) * 100)
 
   """Create and initiate lists for coins, values and %change"""
   coins = coin.split(',')
@@ -97,7 +100,7 @@ def getCurrentValues(coin, globalStats):
   if globalStats:  
     r += ('\nMarket Cap: ' + totalMarketCap + ' Mrd. EUR')
     r += ('\nVolume 24h: ' + totalVolume + ' Mrd. EUR')
-    """r += ('\nBTC dominance: ' + btcDominance + ' %')"""
+    r += ('\nBTC dominance: ' + btcDominance)
   r += '```'
   return r
 
