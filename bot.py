@@ -7,10 +7,13 @@ from discord.ext.commands import Bot
 
 client = discord.Client()
 
+api_key = os.environ['API_KEY']
+
 @client.event
 async def on_ready():
   print('Logged in as')
   print(client.user.name)
+  print(discord.__version__)
   print(client.user.id)
   print('Let\'s go!')
 
@@ -18,20 +21,26 @@ async def on_ready():
 async def on_message(message):
 
   response = False
-  globalStats = False
-
+  toplist = False
+  """ Hier die coins für !top und !topBTC eintragen. """
+  ourCoins = 'BTC,ETH,XTZ,XLM,XMR,LSK,SAN'
+  
   if message.content.startswith('€zk'):
     response = getEzkValue()
   elif message.content.startswith('$'):
     coin = message.content[1:].upper().strip(' ,')
-    response = getCurrentValues(coin, globalStats)
+    response = getCurrentValues(coin)
   elif message.content == '!top':
     globalStats = True
-    """ Hier die coins für !top eintragen """
-    coin = 'BTC,ETH,XLM,XMR,LSK,SAN'
-    response = getCurrentValues(coin, globalStats)
-  elif message.content == '!topvol':
-    response = getTopVolume()
+    response = getCurrentValues(ourCoins, globalStats)
+  elif message.content == '!topBTC':
+    response = getCurrentValues(ourCoins, currency = 'BTC')
+  elif message.content == '!topten':
+    coins = getTopTenCoins()
+    response = getCurrentValues(coins)
+  elif message.content == '!toptenBTC':
+    coins = getTopTenCoins()
+    response = getCurrentValues(coins, currency = 'BTC')
   elif message.content.startswith('!buffet'):
     response = 'https://imgur.com/02Bxkye'
   elif message.content.startswith('!rip'):
@@ -42,70 +51,96 @@ async def on_message(message):
     response = ':airplane_arriving: :earth_africa:'
 
   if response:
-    await client.send_message(message.channel, response)
+    channel = message.channel
+    await channel.send(response)
 
-def getCurrentValues(coin, globalStats):
-  """Grab current values for a coin from Cryptocompare."""
+def getCurrentValues(coin, globalStats = False, currency = 'EUR'):
+  """Grab current values for a coin from Coinlib."""
   apiRequestCoins = requests.get(
-    'https://min-api.cryptocompare.com/data/pricemultifull?fsyms='
-    + coin +
-    '&tsyms=EUR').json()
-
-  apiRequestGlobal = requests.get(
-      'https://api.coinmarketcap.com/v1/global/?convert=EUR'
-  ).json()
+    'https://coinlib.io/api/v1/coin?key=' + api_key + '&pref=' + currency + '&symbol='
+    + coin).json()
   
-  totalMarketCapEUR = str(round(apiRequestGlobal['total_market_cap_eur'] / 10**9,1))
-  totalVolumeEUR = str(round(apiRequestGlobal['total_24h_volume_eur'] / 10**9,1))
-  btcDominance = str(apiRequestGlobal['bitcoin_percentage_of_market_cap'])
+  """Grab global stats if requested."""
+  if globalStats:
+    apiRequestGlobal = requests.get(
+    'https://coinlib.io/api/v1/global?key=' + api_key + '&pref=EUR'
+    ).json()
+    
+    totalMarketCap = str(round(float(apiRequestGlobal['total_market_cap']) / 10**9,1))
+    totalVolume = str(round(float(apiRequestGlobal['total_volume_24h']) / 10**9,1))
+    """This only works as long as BTC is the first coin in the response."""
+    btcDominance = '{0:.2f}%'.format(
+      float(apiRequestCoins['coins'][0]['market_cap'])/
+      float(apiRequestGlobal['total_market_cap']) * 100)
 
-  """Create and initiate lists for coins, values and %change"""
+  """Create and initiate lists for coins, values and %change."""
   coins = coin.split(',')
   values = []
-  change = []
-  """Build response"""
-  for x in coins:
+  change_24h = []
+  change_7d = []
+  change_30d = []
+  """Build response."""
+  for num, coin in enumerate(coins, start=0):
     try:
-      coinStats = apiRequestCoins['RAW'][x]['EUR']
+      if len(coins) > 1:
+        coinStats = apiRequestCoins['coins'][num]
+      else:
+        coinStats = apiRequestCoins
+      """Build arrays."""
+      values.append('%.2f' % round(float(coinStats['price']),2))
+      change_24h.append('%.2f' % round(float(coinStats['delta_24h']),2))
+      change_7d.append('%.2f' % round(float(coinStats['delta_7d']),2))
+      change_30d.append('%.2f' % round(float(coinStats['delta_30d']),2))
     except KeyError:
       r = ('Heast du elelelendige Scheißkreatur, schau amoi wos du für an'
            + ' Bledsinn gschrieben host. Oida!')
       return r
 
-    """Build arrays"""
-    values.append('%.2f' % round(coinStats['PRICE'],2))
-    change.append('%.2f' % round(coinStats['CHANGEPCT24HOUR'],2))
-
-  """Dynamic indent width"""
+  """Dynamic indent width."""
   coinwidth = len(max(coins, key=len))
   valuewidth = len(max(values, key=len))
-  changewidth = len(max(change, key=len))
+  changewidth_24h = len(max(change_24h, key=len))
+  changewidth_7d = len(max(change_7d, key=len))
+  changewidth_30d = len(max(change_30d, key=len))
 
   r = '```\n'
   for x in coins:
     r += ((coins[coins.index(x)]).rjust(coinwidth) + ': '
-          + (values[coins.index(x)]).rjust(valuewidth) + ' EUR | '
-          + (change[coins.index(x)]).rjust(changewidth) + '%\n')
+          + (values[coins.index(x)]).rjust(valuewidth) + currency + ' | '
+          + (change_24h[coins.index(x)]).rjust(changewidth_24h) + '% | '
+          + (change_7d[coins.index(x)]).rjust(changewidth_7d) + '% | '
+          + (change_30d[coins.index(x)]).rjust(changewidth_30d) + '%\n')
   if globalStats:  
-    r += ('\nMarket Cap: ' + totalMarketCapEUR + ' Mrd. EUR')
-    r += ('\nVolume 24h: ' + totalVolumeEUR + ' Mrd. EUR')
-    r += ('\nBTC dominance: ' + btcDominance + ' %')
+    r += ('\nMarket Cap: ' + totalMarketCap + ' Mrd. EUR')
+    r += ('\nVolume 24h: ' + totalVolume + ' Mrd. EUR')
+    r += ('\nBTC dominance: ' + btcDominance)
   r += '```'
   return r
 
 def getEzkValue():
-
   amountBTC = 0.0280071
   amountETH = 0.38042397
   apiRequest = \
-    requests.get('https://min-api.cryptocompare.com/data/pricemulti?fsyms='
-                 + 'BTC,ETH&tsyms=EUR').json()
-  valueBTC = float(apiRequest['BTC']['EUR'])
-  valueETH = float(apiRequest['ETH']['EUR'])
+    requests.get('https://coinlib.io/api/v1/coin?key=' + api_key + '&pref=EUR&symbol='
+                 + 'BTC,ETH').json()
+  valueBTC = float(apiRequest['coins'][0]['price'])
+  valueETH = float(apiRequest['coins'][1]['price'])
   value = round(amountBTC * valueBTC + amountETH * valueETH,2)
   r = '```'
   r += '€zk: ' + str(value) + ' EUR | ' + '{:+}%'.format(round((value/220-1)*100,2))
   r += '```'
   return r
+
+def getTopTenCoins():
+  topTenList = requests.get(
+    'https://coinlib.io/api/v1/coinlist?key=' + api_key + '&pref=EUR&page=1&order=rank_asc'
+    ).json()
+  
+  topTenCoins = []
+  for i in range(10):
+    topTenCoins.append(topTenList['coins'][i]['symbol'])
+    
+  return ', '.join(topTenCoins)
+
 
 client.run(os.environ['BOT_TOKEN'])
