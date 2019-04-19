@@ -11,6 +11,7 @@ client = discord.Client()
 async def on_ready():
   print('Logged in as')
   print(client.user.name)
+  print(discord.__version__)
   print(client.user.id)
   print('Let\'s go!')
 
