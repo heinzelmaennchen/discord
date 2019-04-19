@@ -42,7 +42,7 @@ async def on_message(message):
     response = ':airplane_arriving: :earth_africa:'
 
   if response:
-    await client.send_message(message.channel, response)
+    await message.channel.send(message.channel, response)
 
 def getCurrentValues(coin, globalStats):
   """Grab current values for a coin from Coinlib."""
