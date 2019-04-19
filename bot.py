@@ -20,6 +20,7 @@ async def on_message(message):
 
   response = False
   globalStats = False
+  toplist = False
 
   if message.content.startswith('€zk'):
     response = getEzkValue()
@@ -51,29 +52,31 @@ def getCurrentValues(coin, globalStats):
   apiRequestCoins = requests.get(
     'https://coinlib.io/api/v1/coin?key=d5c3df07c52c2c14&pref=EUR&symbol='
     + coin).json()
-
-  apiRequestGlobal = requests.get(
-      'https://coinlib.io/api/v1/global?key=d5c3df07c52c2c14&pref=EUR'
-  ).json()
   
-  totalMarketCap = str(round(float(apiRequestGlobal['total_market_cap']) / 10**9,1))
-  totalVolume = str(round(float(apiRequestGlobal['total_volume_24h']) / 10**9,1))
-  """This only works as long as BTC is the first coin in the response"""
-  btcDominance = '{0:.2f}%'.format(
-    float(apiRequestCoins['coins'][0]['market_cap'])/
-    float(apiRequestGlobal['total_market_cap']) * 100)
+  """Grab global stats if requested."""
+  if globalStats:
+    apiRequestGlobal = requests.get(
+    'https://coinlib.io/api/v1/global?key=d5c3df07c52c2c14&pref=EUR'
+    ).json()
+    
+    totalMarketCap = str(round(float(apiRequestGlobal['total_market_cap']) / 10**9,1))
+    totalVolume = str(round(float(apiRequestGlobal['total_volume_24h']) / 10**9,1))
+    """This only works as long as BTC is the first coin in the response."""
+    btcDominance = '{0:.2f}%'.format(
+      float(apiRequestCoins['coins'][0]['market_cap'])/
+      float(apiRequestGlobal['total_market_cap']) * 100)
 
-  """Create and initiate lists for coins, values and %change"""
+  """Create and initiate lists for coins, values and %change."""
   coins = coin.split(',')
   values = []
   change_24h = []
   change_7d = []
   change_30d = []
-  """Build response"""
+  """Build response."""
   for num, coin in enumerate(coins, start=0):
     try:
       coinStats = apiRequestCoins['coins'][num]
-      """Build arrays"""
+      """Build arrays."""
       values.append('%.2f' % round(float(coinStats['price']),2))
       change_24h.append('%.2f' % round(float(coinStats['delta_24h']),2))
       change_7d.append('%.2f' % round(float(coinStats['delta_7d']),2))
@@ -83,7 +86,7 @@ def getCurrentValues(coin, globalStats):
            + ' Bledsinn gschrieben host. Oida!')
       return r
 
-  """Dynamic indent width"""
+  """Dynamic indent width."""
   coinwidth = len(max(coins, key=len))
   valuewidth = len(max(values, key=len))
   changewidth_24h = len(max(change_24h, key=len))
