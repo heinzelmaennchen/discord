@@ -75,7 +75,10 @@ def getCurrentValues(coin, globalStats):
   """Build response."""
   for num, coin in enumerate(coins, start=0):
     try:
-      coinStats = apiRequestCoins['coins'][num]
+      if len(coins) > 1:
+        coinStats = apiRequestCoins['coins'][num]
+      else:
+        coinStats = apiRequestCoins
       """Build arrays."""
       values.append('%.2f' % round(float(coinStats['price']),2))
       change_24h.append('%.2f' % round(float(coinStats['delta_24h']),2))
