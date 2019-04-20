@@ -50,7 +50,7 @@ async def on_message(message):
     response = ':airplane_arriving: :earth_africa:'
   elif message.content.startswith('!calc '):
     calcStr = message.content.split(' ', 1)
-    respone = doCalculate(calcStr[1])       
+    response = doCalculate(calcStr[1])       
 
   if response:
     channel = message.channel
