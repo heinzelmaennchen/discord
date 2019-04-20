@@ -146,7 +146,7 @@ def getTopTenCoins():
 
 def doCalculate(calcStr):
   try:
-    r = eval(calcStr, {})
+    r = eval(calcStr, {'__builtins__': None})
   except:
     r = False
   return r
