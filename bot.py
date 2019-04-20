@@ -146,7 +146,11 @@ def getTopTenCoins():
 
 def doCalculate(calcStr):
   try:
-    r = float(eval(calcStr, {'__builtins__': None}))
+    result = eval(calcStr, {'__builtins__': None})
+    if result % 1 == 0:
+      r = int(result)
+    else:
+      r = float(result)
   except:
     r = False
   return r
