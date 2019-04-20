@@ -48,6 +48,9 @@ async def on_message(message):
     response = ':rocket: :full_moon:'
   elif message.content.startswith('!earth'):
     response = ':airplane_arriving: :earth_africa:'
+  elif message.content.startswith('!calc '):
+    calcStr = message.content.split(' ', 1)
+    response = doCalculate(calcStr[1])       
 
   if response:
     channel = message.channel
@@ -141,5 +144,15 @@ def getTopTenCoins():
     
   return ', '.join(topTenCoins)
 
+def doCalculate(calcStr):
+  try:
+    result = eval(calcStr, {'__builtins__': None})
+    if result % 1 == 0:
+      r = int(result)
+    else:
+      r = float(result)
+  except:
+    r = False
+  return r
 
 client.run(os.environ['BOT_TOKEN'])
