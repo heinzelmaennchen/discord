@@ -45,7 +45,7 @@ async def on_message(message):
   elif message.content.startswith('!rip'):
     response = ':meat_on_bone: :meat_on_bone: :meat_on_bone:'
   elif message.content.startswith('!pray'):
-    response = ':pray: :pray: :pray: :pray:'
+    response = ':pray: :pray: :pray: :pray: :pray:'
   elif message.content.startswith('!moon'):
     response = ':rocket: :full_moon:'
   elif message.content.startswith('!earth'):
