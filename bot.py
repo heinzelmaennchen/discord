@@ -80,12 +80,13 @@ def getCurrentValues(coin, globalStats = False, currency = 'EUR'):
       float(apiRequestCoins['coins'][0]['market_cap'])/
       float(apiRequestGlobal['total_market_cap']) * 100)
 
-  """Create and initiate lists for coins, values and %change."""
+  """Create and initiate lists for coins, values, %change and rating."""
   coins = coin.split(',')
   values = []
   change_24h = []
   change_7d = []
   change_30d = []
+  rating = ''
   """Build response."""
   for num, coin in enumerate(coins, start=0):
     try:
@@ -163,11 +164,12 @@ def doCalculate(calcStr):
   return r
 
 def calculateRating(change):
-  rating = ':cucumber: :cucumber: :cucumber:'
   if change < -5:
     rating = ':meat_on_bone: :meat_on_bone: :meat_on_bone:'
   elif change > 5:
     rating = ':rocket: :full_moon:'
+  else:
+    rating = ':cucumber: :cucumber: :cucumber:'
   return rating
 
 client.run(os.environ['BOT_TOKEN'])
