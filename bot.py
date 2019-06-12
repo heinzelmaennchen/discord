@@ -90,11 +90,12 @@ def getCurrentValues(coin, globalStats = False, currency = 'EUR'):
         coinStats = apiRequestCoins['coins'][num]
       else:
         coinStats = apiRequestCoins
-      """Build arrays."""
-      values.append('%.2f' % round(float(coinStats['price']),2))
-      change_24h.append('%.2f' % round(float(coinStats['delta_24h']),2))
-      change_7d.append('%.2f' % round(float(coinStats['delta_7d']),2))
-      change_30d.append('%.2f' % round(float(coinStats['delta_30d']),2))
+        rating = calculateRating(round(float(coinStats['delta_24h']),2))
+        """Build arrays."""
+        values.append('%.2f' % round(float(coinStats['price']),2))
+        change_24h.append('%.2f' % round(float(coinStats['delta_24h']),2))
+        change_7d.append('%.2f' % round(float(coinStats['delta_7d']),2))
+        change_30d.append('%.2f' % round(float(coinStats['delta_30d']),2))
     except KeyError:
       r = ('Heast du elelelendige Scheißkreatur, schau amoi wos du für an'
            + ' Bledsinn gschrieben host. Oida!')
@@ -119,6 +120,7 @@ def getCurrentValues(coin, globalStats = False, currency = 'EUR'):
     r += ('\nVolume 24h: ' + totalVolume + ' Mrd. EUR')
     r += ('\nBTC dominance: ' + btcDominance)
   r += '```'
+  r += rating
   return r
 
 def getEzkValue():
@@ -156,5 +158,13 @@ def doCalculate(calcStr):
   except:
     r = False
   return r
+
+def calculateRating(change):
+  rating = "!gurkerl"
+  if change < -5:
+    rating = "!ripperl"
+  elif change > 5:
+    rating = "!moon"
+  return rating
 
 client.run(os.environ['BOT_TOKEN'])
