@@ -73,6 +73,7 @@ def getCurrentValues(coin, globalStats = False, currency = 'EUR'):
     totalMarketCap = str(round(float(apiRequestGlobal['total_market_cap']) / 10**9,1))
     totalVolume = str(round(float(apiRequestGlobal['total_volume_24h']) / 10**9,1))
     """This only works as long as BTC is the first coin in the response."""
+    rating = calculateRating(round(float(apiRequestCoins['coins'][0]['delta_24h']),2))
     btcDominance = '{0:.2f}%'.format(
       float(apiRequestCoins['coins'][0]['market_cap'])/
       float(apiRequestGlobal['total_market_cap']) * 100)
@@ -90,12 +91,12 @@ def getCurrentValues(coin, globalStats = False, currency = 'EUR'):
         coinStats = apiRequestCoins['coins'][num]
       else:
         coinStats = apiRequestCoins
-        rating = calculateRating(round(float(coinStats['delta_24h']),2))
-        """Build arrays."""
-        values.append('%.2f' % round(float(coinStats['price']),2))
-        change_24h.append('%.2f' % round(float(coinStats['delta_24h']),2))
-        change_7d.append('%.2f' % round(float(coinStats['delta_7d']),2))
-        change_30d.append('%.2f' % round(float(coinStats['delta_30d']),2))
+
+      """Build arrays."""
+      values.append('%.2f' % round(float(coinStats['price']),2))
+      change_24h.append('%.2f' % round(float(coinStats['delta_24h']),2))
+      change_7d.append('%.2f' % round(float(coinStats['delta_7d']),2))
+      change_30d.append('%.2f' % round(float(coinStats['delta_30d']),2))
     except KeyError:
       r = ('Heast du elelelendige Scheißkreatur, schau amoi wos du für an'
            + ' Bledsinn gschrieben host. Oida!')
