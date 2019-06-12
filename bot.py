@@ -22,7 +22,7 @@ async def on_message(message):
 
   response = False
   """ Hier die coins für !top und !topBTC eintragen. """
-  ourCoins = 'BTC,ETH,XTZ,XLM,XMR,LSK,SAN'
+  ourCoins = os.environ['OUR_COINS']
   
   if message.content.startswith('€zk'):
     response = getEzkValue()
@@ -127,8 +127,8 @@ def getCurrentValues(coin, globalStats = False, currency = 'EUR'):
   return r
 
 def getEzkValue():
-  amountBTC = 0.0280071
-  amountETH = 0.38042397
+  amountBTC = float(os.environ['AMOUNT_BTC'])
+  amountETH = float(os.environ['AMOUNT_ETH'])
   apiRequest = \
     requests.get('https://coinlib.io/api/v1/coin?key=' + api_key + '&pref=EUR&symbol='
                  + 'BTC,ETH').json()
