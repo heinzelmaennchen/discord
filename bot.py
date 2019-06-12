@@ -42,17 +42,19 @@ async def on_message(message):
     response = getCurrentValues(coins, currency = 'BTC')
   elif message.content.startswith('!buffet'):
     response = 'https://imgur.com/02Bxkye'
-  elif message.content.startswith('!rip'):
-    response = ':meat_on_bone: :meat_on_bone: :meat_on_bone:'
-  elif message.content.startswith('!pray'):
-    response = ':pray: :pray: :pray: :pray: :pray:'
-  elif message.content.startswith('!moon'):
-    response = ':rocket: :full_moon:'
-  elif message.content.startswith('!earth'):
-    response = ':airplane_arriving: :earth_africa:'
   elif message.content.startswith('!calc '):
     calcStr = message.content.split(' ', 1)
-    response = doCalculate(calcStr[1])       
+    response = doCalculate(calcStr[1])
+  elif message.content.startswith('!earth'):
+    response = ':airplane_arriving: :earth_africa:'
+  elif message.content.startswith('!gurkerl'):
+    response = ':cucumber: :cucumber: :cucumber:'
+  elif message.content.startswith('!moon'):
+    response = ':rocket: :full_moon:'
+  elif message.content.startswith('!pray'):
+    response = ':pray: :pray: :pray: :pray: :pray:'
+  elif message.content.startswith('!rip'):
+    response = ':meat_on_bone: :meat_on_bone: :meat_on_bone:'
 
   if response:
     channel = message.channel
@@ -161,11 +163,11 @@ def doCalculate(calcStr):
   return r
 
 def calculateRating(change):
-  rating = "!gurkerl"
+  rating = ':cucumber: :cucumber: :cucumber:'
   if change < -5:
-    rating = "!ripperl"
+    rating = ':meat_on_bone: :meat_on_bone: :meat_on_bone:'
   elif change > 5:
-    rating = "!moon"
+    rating = ':rocket: :full_moon:'
   return rating
 
 client.run(os.environ['BOT_TOKEN'])
