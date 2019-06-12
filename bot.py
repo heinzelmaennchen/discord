@@ -66,6 +66,9 @@ def getCurrentValues(coin, globalStats = False, currency = 'EUR'):
     'https://coinlib.io/api/v1/coin?key=' + api_key + '&pref=' + currency + '&symbol='
     + coin).json()
   
+  """Inititalize rating variable."""
+  rating = ''
+  
   """Grab global stats if requested."""
   if globalStats:
     apiRequestGlobal = requests.get(
@@ -86,7 +89,6 @@ def getCurrentValues(coin, globalStats = False, currency = 'EUR'):
   change_24h = []
   change_7d = []
   change_30d = []
-  rating = ''
   """Build response."""
   for num, coin in enumerate(coins, start=0):
     try:
