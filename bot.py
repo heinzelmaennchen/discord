@@ -23,6 +23,9 @@ async def on_message(message):
   response = False
   """ Hier die coins für !top und !topBTC eintragen. """
   ourCoins = os.environ['OUR_COINS']
+  gurkerl_string = ':cucumber: :cucumber: :cucumber:'
+  moon_string = ':full_moon: :full_moon: :full_moon:'
+  ripperl_string = ':meat_on_bone: :meat_on_bone: :meat_on_bone:'
   
   if message.content.startswith('€zk'):
     response = getEzkValue()
@@ -48,13 +51,13 @@ async def on_message(message):
   elif message.content.startswith('!earth'):
     response = ':airplane_arriving: :earth_africa:'
   elif message.content.startswith('!gurkerl'):
-    response = ':cucumber: :cucumber: :cucumber:'
+    response = gurkerl_string
   elif message.content.startswith('!moon'):
-    response = ':rocket: :full_moon:'
+    response = moon_string
   elif message.content.startswith('!pray'):
     response = ':pray: :pray: :pray: :pray: :pray:'
   elif message.content.startswith('!rip'):
-    response = ':meat_on_bone: :meat_on_bone: :meat_on_bone:'
+    response = ripperl_string
 
   if response:
     channel = message.channel
@@ -77,8 +80,11 @@ def getCurrentValues(coin, globalStats = False, currency = 'EUR'):
     
     totalMarketCap = str(round(float(apiRequestGlobal['total_market_cap']) / 10**9,1))
     totalVolume = str(round(float(apiRequestGlobal['total_volume_24h']) / 10**9,1))
+    """Calculate the rating for emoji madness."""
+    rating_24h = calculateRating(round(float(apiRequestCoins['coins'][0]['delta_24h']),2))
+    rating_7d = calculateRating(round(float(apiRequestCoins['coins'][0]['delta_7d']),2))
+    rating_30d = calculateRating(round(float(apiRequestCoins['coins'][0]['delta_30d']),2))
     """This only works as long as BTC is the first coin in the response."""
-    rating = calculateRating(round(float(apiRequestCoins['coins'][0]['delta_24h']),2))
     btcDominance = '{0:.2f}%'.format(
       float(apiRequestCoins['coins'][0]['market_cap'])/
       float(apiRequestGlobal['total_market_cap']) * 100)
@@ -126,7 +132,7 @@ def getCurrentValues(coin, globalStats = False, currency = 'EUR'):
     r += ('\nVolume 24h: ' + totalVolume + ' Mrd. EUR')
     r += ('\nBTC dominance: ' + btcDominance)
   r += '```'
-  r += rating
+  r += rating_24h + rating_7d + rating_30d 
   return r
 
 def getEzkValue():
@@ -167,11 +173,11 @@ def doCalculate(calcStr):
 
 def calculateRating(change):
   if change < -5:
-    rating = ':meat_on_bone: :meat_on_bone: :meat_on_bone:'
+    rating = ripperl_string
   elif change > 5:
-    rating = ':rocket: :full_moon:'
+    rating = moon_string
   else:
-    rating = ':cucumber: :cucumber: :cucumber:'
+    rating = gurkerl_string
   return rating
 
 client.run(os.environ['BOT_TOKEN'])
