@@ -23,9 +23,12 @@ async def on_message(message):
   response = False
   """ Hier die coins für !top und !topBTC eintragen. """
   ourCoins = os.environ['OUR_COINS']
-  nonlocal gurkerl_string = ':cucumber: :cucumber: :cucumber:'
-  nonlocal moon_string = ':full_moon: :full_moon: :full_moon:'
-  nonlocal ripperl_string = ':meat_on_bone: :meat_on_bone: :meat_on_bone:'
+  global gurkerl_string
+  gurkerl_string = ':cucumber: :cucumber: :cucumber:'
+  global moon_string
+  moon_string = ':full_moon: :full_moon: :full_moon:'
+  global ripperl_string
+  ripperl_string = ':meat_on_bone: :meat_on_bone: :meat_on_bone:'
   
   if message.content.startswith('€zk'):
     response = getEzkValue()
