@@ -134,8 +134,10 @@ def getCurrentValues(coin, globalStats = False, currency = 'EUR'):
     r += ('\nMarket Cap: ' + totalMarketCap + ' Mrd. EUR')
     r += ('\nVolume 24h: ' + totalVolume + ' Mrd. EUR')
     r += ('\nBTC dominance: ' + btcDominance)
-  r += '```'
-  r += rating_24h + ' ' + rating_7d + ' ' + rating_30d 
+    r += '```'
+    r += rating_24h + ' ' + rating_7d + ' ' + rating_30d 
+  else:
+    r += '```'
   return r
 
 def getEzkValue():
