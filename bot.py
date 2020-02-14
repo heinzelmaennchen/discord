@@ -69,7 +69,7 @@ async def on_message(message):
 def getCurrentValues(coin, globalStats = False, currency = 'EUR'):
   
   headers = {
-    "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8",
+    "accept": "application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8",
     "accept-language":	"de,en-US;q=0.7,en;q=0.3",
     "Connection": "keep-alive",
     "Host":	"coinlib.io",
