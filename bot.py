@@ -73,9 +73,9 @@ def getCurrentValues(coin, globalStats = False, currency = 'EUR'):
     'https://coinlib.io/api/v1/coin?key=' + api_key + '&pref=' + currency + '&symbol='
     + coin)
   if apiRequestCoins.history:
-    print("Request was redirected")
+    print('Request was redirected')
     for resp in apiRequestCoins.history:
-        print(resp.status_code + ", " + resp.url)
+        print(resp.status_code + ', ' + resp.url)
   apiRequestCoins = apiRequestCoins.json()
   
   """Inititalize rating variable."""
