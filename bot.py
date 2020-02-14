@@ -75,14 +75,19 @@ def getCurrentValues(coin, globalStats = False, currency = 'EUR'):
   if apiRequestCoins.history:
     print('Request was redirected')
     for resp in apiRequestCoins.history:
-        print(resp.url)
-        print(resp.status_code)
-        print(resp.headers['Set-Cookie'])
-        headerCookie = str(resp.headers['Set-Cookie'])
-        sessionIDstart = headerCookie.find('SESSIONID=')
-        sessionIDend = headerCookie.find(';', 151)
-        sessionID = headerCookie[sessionIDstart:sessionIDend]
-        print(sessionID)
+      print(resp.url)
+      print(resp.status_code)
+      print(resp.headers['Set-Cookie'])
+      headerCookie = str(resp.headers['Set-Cookie'])
+      sessionIDstart = headerCookie.find('SESSIONID=')
+      sessionIDend = headerCookie.find(';', 151)
+      sessionID = headerCookie[sessionIDstart:sessionIDend]
+      print(sessionID)
+    header = {
+      "cookie": sessionID }
+    apiRequestCoins = requests.get(
+    'https://coinlib.io/api/v1/coin?key=' + api_key + '&pref=' + currency + '&symbol='
+    + coin, headers = header)
   apiRequestCoins = apiRequestCoins.json()
   
   """Inititalize rating variable."""
