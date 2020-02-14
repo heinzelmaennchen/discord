@@ -67,10 +67,19 @@ async def on_message(message):
     await channel.send(response)
 
 def getCurrentValues(coin, globalStats = False, currency = 'EUR'):
+  
+  headers = {
+    "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8",
+    "accept-language":	"de,en-US;q=0.7,en;q=0.3",
+    "Connection": "keep-alive",
+    "Host":	"coinlib.io",
+    "Upgrade-Insecure-Requests":	"1"
+  }
+  
   """Grab current values for a coin from Coinlib."""
   apiRequestCoins = requests.get(
     'https://coinlib.io/api/v1/coin?key=' + api_key + '&pref=' + currency + '&symbol='
-    + coin)
+    + coin, headers = headers)
   print(apiRequestCoins.headers)
   print('####### START #######')
   print(apiRequestCoins.content)
