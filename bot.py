@@ -73,7 +73,7 @@ def getCurrentValues(coin, globalStats = False, currency = 'EUR'):
     + coin)
   print(apiRequestCoins.headers)
   print('####### START #######')
-  print(apiRequestCoins)
+  print(apiRequestCoins.content)
   print('####### END #######')
   apiRequestCoins = apiRequestCoins.json()
   
