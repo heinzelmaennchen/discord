@@ -67,13 +67,13 @@ async def on_message(message):
     await channel.send(response)
 
 def getCurrentValues(coin, globalStats = False, currency = 'EUR'):
+  headers = {
+    "Cache-Control":  "no-cache" }
+  
   """Grab current values for a coin from Coinlib."""
   apiRequestCoins = requests.get(
     'https://coinlib.io/api/v1/coin?key=' + api_key + '&pref=' + currency + '&symbol='
-    + coin)
-  apiRequestCoins = requests.get(
-    'https://coinlib.io/api/v1/coin?key=' + api_key + '&pref=' + currency + '&symbol='
-    + coin).json
+    + coin, headers = headers)
     
   """Inititalize rating variable."""
   rating = ''
