@@ -67,25 +67,11 @@ async def on_message(message):
     await channel.send(response)
 
 def getCurrentValues(coin, globalStats = False, currency = 'EUR'):
-    
+  """Grab Coinlib SessionID."""
+  header = getCoinlibSessionID()
+  
   """Grab current values for a coin from Coinlib."""
   apiRequestCoins = requests.get(
-    'https://coinlib.io/api/v1/coin?key=' + api_key + '&pref=' + currency + '&symbol='
-    + coin)
-  if apiRequestCoins.history:
-    print('Request was redirected')
-    for resp in apiRequestCoins.history:
-      print(resp.url)
-      print(resp.status_code)
-      print(resp.headers['Set-Cookie'])
-      headerCookie = str(resp.headers['Set-Cookie'])
-      sessionIDstart = headerCookie.find('SESSIONID=')
-      sessionIDend = headerCookie.find(';', 151)
-      sessionID = headerCookie[sessionIDstart:sessionIDend]
-      print(sessionID)
-    header = {
-      "cookie": sessionID }
-    apiRequestCoins = requests.get(
     'https://coinlib.io/api/v1/coin?key=' + api_key + '&pref=' + currency + '&symbol='
     + coin, headers = header)
   apiRequestCoins = apiRequestCoins.json()
@@ -159,11 +145,14 @@ def getCurrentValues(coin, globalStats = False, currency = 'EUR'):
   return r
 
 def getEzkValue():
+  """Grab Coinlib SessionID."""
+  header = getCoinlibSessionID()
+  
   amountBTC = float(os.environ['AMOUNT_BTC'])
   amountETH = float(os.environ['AMOUNT_ETH'])
   apiRequest = \
     requests.get('https://coinlib.io/api/v1/coin?key=' + api_key + '&pref=EUR&symbol='
-                 + 'BTC,ETH').json()
+                 + 'BTC,ETH', headers = header).json()
   valueBTC = float(apiRequest['coins'][0]['price'])
   valueETH = float(apiRequest['coins'][1]['price'])
   value = round(amountBTC * valueBTC + amountETH * valueETH,2)
@@ -173,8 +162,11 @@ def getEzkValue():
   return r
 
 def getTopTenCoins():
+  """Grab Coinlib SessionID."""
+  header = getCoinlibSessionID()
+  
   topTenList = requests.get(
-    'https://coinlib.io/api/v1/coinlist?key=' + api_key + '&pref=EUR&page=1&order=rank_asc'
+    'https://coinlib.io/api/v1/coinlist?key=' + api_key + '&pref=EUR&page=1&order=rank_asc', headers = header
     ).json()
   
   topTenCoins = []
@@ -202,5 +194,22 @@ def calculateRating(change):
   else:
     rating = gurkerl_string
   return rating
+
+def getCoinlibSessionID():
+  header = {
+  }
+  apiRequestSessionId = requests.get(
+    'https://coinlib.io/api/v1/global?key=' + api_key + '&pref=EUR', headers = header)
+  if apiRequestSessionId.history:
+    print('Request was redirected')
+    for resp in apiRequestSessionId.history:
+      headerCookie = str(resp.headers['Set-Cookie'])
+      sessionIDstart = headerCookie.find('SESSIONID=')
+      sessionIDend = headerCookie.find(';', 151)
+      sessionID = headerCookie[sessionIDstart:sessionIDend]
+      sessionID =  {
+        "cookie": sessionID
+      }
+  return sessionID
 
 client.run(os.environ['BOT_TOKEN'])
