@@ -78,6 +78,8 @@ def getCurrentValues(coin, globalStats = False, currency = 'EUR'):
         print(resp.url)
         print(resp.status_code)
         print(resp.headers['Set-Cookie'])
+        sessionID = str(resp.headers['Set-Cookie']).find('SESSIONID=')
+        print(sessionID)
   apiRequestCoins = apiRequestCoins.json()
   
   """Inititalize rating variable."""
