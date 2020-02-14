@@ -78,7 +78,10 @@ def getCurrentValues(coin, globalStats = False, currency = 'EUR'):
         print(resp.url)
         print(resp.status_code)
         print(resp.headers['Set-Cookie'])
-        sessionID = str(resp.headers['Set-Cookie']).find('SESSIONID=')
+        headerCookie = str(resp.headers['Set-Cookie'])
+        sessionIDstart = headerCookie.find('SESSIONID=')
+        sessionIDend = headerCookie.find(';', 151)
+        sessionID = headerCookie[sessionIDstart:sessionIDend]
         print(sessionID)
   apiRequestCoins = apiRequestCoins.json()
   
