@@ -72,7 +72,9 @@ def getCurrentValues(coin, globalStats = False, currency = 'EUR'):
     + coin)
   apiRequestCoins = requests.get(
     'https://coinlib.io/api/v1/coin?key=' + api_key + '&pref=' + currency + '&symbol='
-    + coin).json()
+    + coin)
+  print(apiRequestCoins.status_code)
+  apiRequestCoins = apiRequestCoins.json()
     
   """Inititalize rating variable."""
   rating = ''
