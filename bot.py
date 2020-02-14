@@ -96,7 +96,7 @@ def getCurrentValues(coin, globalStats = False, currency = 'EUR'):
   """Grab global stats if requested."""
   if globalStats:
     apiRequestGlobal = requests.get(
-    'https://coinlib.io/api/v1/global?key=' + api_key + '&pref=EUR'
+    'https://coinlib.io/api/v1/global?key=' + api_key + '&pref=EUR', headers = header
     ).json()
     
     totalMarketCap = str(round(float(apiRequestGlobal['total_market_cap']) / 10**9,1))
