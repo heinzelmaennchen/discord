@@ -68,13 +68,15 @@ async def on_message(message):
 
 def getCurrentValues(coin, globalStats = False, currency = 'EUR'):
   """Grab current values for a coin from Coinlib."""
-  print('https://coinlib.io/api/v1/coin?key=' + api_key + '&pref=' + currency + '&symbol='
-    + coin)
   apiRequestCoins = requests.get(
     'https://coinlib.io/api/v1/coin?key=' + api_key + '&pref=' + currency + '&symbol='
     + coin)
   print(apiRequestCoins.headers)
+  print('####### START #######')
+  print(apiRequestCoins)
+  print('####### END #######')
   apiRequestCoins = apiRequestCoins.json()
+  
     
   """Inititalize rating variable."""
   rating = ''
