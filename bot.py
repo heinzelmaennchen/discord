@@ -67,14 +67,17 @@ async def on_message(message):
     await channel.send(response)
 
 def getCurrentValues(coin, globalStats = False, currency = 'EUR'):
-  headers = {
-    "Cache-Control":  "no-cache" }
-  
+    
   """Grab current values for a coin from Coinlib."""
   apiRequestCoins = requests.get(
     'https://coinlib.io/api/v1/coin?key=' + api_key + '&pref=' + currency + '&symbol='
-    + coin, headers = headers)
-    
+    + coin)
+  if apiRequestCoins.history:
+    print "Request was redirected"
+    for resp in apiRequestCoins.history:
+        print resp.status_code, resp.url
+  apiRequestCoins = apiRequestCoins.json()
+  
   """Inititalize rating variable."""
   rating = ''
   
