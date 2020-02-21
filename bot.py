@@ -146,7 +146,7 @@ def getCurrentValues(coin, globalStats = False, currency = 'EUR'):
 
 def getEzkValue():
   """Grab Coinlib SessionID."""
-  header = getCoinlibSessionID()
+  """header = getCoinlibSessionID()"""
   
   amountBTC = float(os.environ['AMOUNT_BTC'])
   amountETH = float(os.environ['AMOUNT_ETH'])
