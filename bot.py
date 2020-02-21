@@ -68,12 +68,12 @@ async def on_message(message):
 
 def getCurrentValues(coin, globalStats = False, currency = 'EUR'):
   """Grab Coinlib SessionID."""
-  header = getCoinlibSessionID()
+  """header = getCoinlibSessionID()"""
   
   """Grab current values for a coin from Coinlib."""
   apiRequestCoins = requests.get(
     'https://coinlib.io/api/v1/coin?key=' + api_key + '&pref=' + currency + '&symbol='
-    + coin, headers = header)
+    + coin)
   apiRequestCoins = apiRequestCoins.json()
   
   """Inititalize rating variable."""
@@ -82,7 +82,7 @@ def getCurrentValues(coin, globalStats = False, currency = 'EUR'):
   """Grab global stats if requested."""
   if globalStats:
     apiRequestGlobal = requests.get(
-    'https://coinlib.io/api/v1/global?key=' + api_key + '&pref=EUR', headers = header
+    'https://coinlib.io/api/v1/global?key=' + api_key + '&pref=EUR'
     ).json()
     
     totalMarketCap = str(round(float(apiRequestGlobal['total_market_cap']) / 10**9,1))
@@ -152,7 +152,7 @@ def getEzkValue():
   amountETH = float(os.environ['AMOUNT_ETH'])
   apiRequest = \
     requests.get('https://coinlib.io/api/v1/coin?key=' + api_key + '&pref=EUR&symbol='
-                 + 'BTC,ETH', headers = header).json()
+                 + 'BTC,ETH').json()
   valueBTC = float(apiRequest['coins'][0]['price'])
   valueETH = float(apiRequest['coins'][1]['price'])
   value = round(amountBTC * valueBTC + amountETH * valueETH,2)
@@ -166,7 +166,7 @@ def getTopTenCoins():
   header = getCoinlibSessionID()
   
   topTenList = requests.get(
-    'https://coinlib.io/api/v1/coinlist?key=' + api_key + '&pref=EUR&page=1&order=rank_asc', headers = header
+    'https://coinlib.io/api/v1/coinlist?key=' + api_key + '&pref=EUR&page=1&order=rank_asc'
     ).json()
   
   topTenCoins = []
