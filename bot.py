@@ -163,7 +163,7 @@ def getEzkValue():
 
 def getTopTenCoins():
   """Grab Coinlib SessionID."""
-  header = getCoinlibSessionID()
+  """header = getCoinlibSessionID()"""
   
   topTenList = requests.get(
     'https://coinlib.io/api/v1/coinlist?key=' + api_key + '&pref=EUR&page=1&order=rank_asc'
