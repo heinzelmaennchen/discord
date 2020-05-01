@@ -2,6 +2,9 @@ import discord
 import asyncio
 import os
 import requests
+
+from quote import randomQuote
+
 from discord.ext import commands
 from discord.ext.commands import Bot
 from dotenv import load_dotenv
@@ -63,6 +66,8 @@ async def on_message(message):
     response = ':pray: :pray: :pray: :pray: :pray:'
   elif message.content.startswith('!rip'):
     response = ripperl_string
+  elif message.content.startswith('!quote'):
+    response = randomQuote()
 
   if response:
     channel = message.channel
