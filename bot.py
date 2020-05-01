@@ -4,6 +4,8 @@ import os
 import requests
 from discord.ext import commands
 from discord.ext.commands import Bot
+from dotenv import load_dotenv
+load_dotenv()
 
 client = discord.Client()
 
@@ -67,17 +69,11 @@ async def on_message(message):
     await channel.send(response)
 
 def getCurrentValues(coin, globalStats = False, currency = 'EUR'):
-  """Grab Coinlib SessionID."""
-  """header = getCoinlibSessionID()"""
-  
   """Grab current values for a coin from Coinlib."""
   apiRequestCoins = requests.get(
     'https://coinlib.io/api/v1/coin?key=' + api_key + '&pref=' + currency + '&symbol='
     + coin)
   apiRequestCoins = apiRequestCoins.json()
-  
-  """Inititalize rating variable."""
-  rating = ''
   
   """Grab global stats if requested."""
   if globalStats:
@@ -145,9 +141,7 @@ def getCurrentValues(coin, globalStats = False, currency = 'EUR'):
   return r
 
 def getEzkValue():
-  """Grab Coinlib SessionID."""
-  """header = getCoinlibSessionID()"""
-  
+  """Grab secret values from environment variables."""
   amountBTC = float(os.environ['AMOUNT_BTC'])
   amountETH = float(os.environ['AMOUNT_ETH'])
   apiRequest = \
@@ -162,9 +156,6 @@ def getEzkValue():
   return r
 
 def getTopTenCoins():
-  """Grab Coinlib SessionID."""
-  """header = getCoinlibSessionID()"""
-  
   topTenList = requests.get(
     'https://coinlib.io/api/v1/coinlist?key=' + api_key + '&pref=EUR&page=1&order=rank_asc'
     ).json()
