@@ -48,7 +48,7 @@ class crypto(commands.Cog):
 
   @commands.command(aliases=['buffett'])
   async def buffet(self, ctx):
-    await ctx.send(embed = 'https://imgur.com/02Bxkye')
+    await ctx.send('https://imgur.com/02Bxkye')
 
   # Real crypto commands
   @commands.command()
