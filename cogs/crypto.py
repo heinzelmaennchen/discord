@@ -13,8 +13,7 @@ class crypto(commands.Cog):
     self.ourCoins = os.environ['OUR_COINS']
     self.api_key = os.environ['API_KEY']
   
-  #ON MESSAGE EVENT, WENN COMMAND NICHT MÖGLICH IST
-
+  # Use on_message if command isn't possible
   @commands.Cog.listener()
   async def on_message(self, message):
     if message.author == self.client.user or message.author.bot:
@@ -26,8 +25,7 @@ class crypto(commands.Cog):
     elif message.content == '€zk':
       await message.channel.send(self.getEzkValue())
 
-  #FUN CRYPTO COMMANDS
-
+  # Fun crypto commands
   @commands.command()
   async def moon(self, ctx):
     await ctx.send(self.moon_string)
@@ -52,8 +50,7 @@ class crypto(commands.Cog):
   async def buffet(self, ctx):
     await ctx.send('https://imgur.com/02Bxkye')
 
-  #REAL CRYPTO COMMANDS
-
+  # Real crypto commands
   @commands.command()
   async def top(self, ctx):
     globalStats = True
@@ -73,8 +70,7 @@ class crypto(commands.Cog):
     coins = self.getTopTenCoins()
     await ctx.send(self.getCurrentValues(coins, currency = 'BTC'))
 
-  #CRYPTO FUNCTIONS
-
+  # Crypto helper functions
   def getCurrentValues(self, coin, globalStats = False, currency = 'EUR'):
     """Grab current values for a coin from Coinlib."""
     apiRequestCoins = requests.get(
