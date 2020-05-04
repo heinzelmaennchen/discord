@@ -23,10 +23,6 @@ class fun(commands.Cog):
     await ctx.send('läuft\nläuft\nlohnt')
 
   @commands.command()
-  async def assfuck(self, ctx):
-    await ctx.send(':eggplant: :peach: :sweat_drops:') 
-  
-  @commands.command()
   async def gehackt(self, ctx):
     await ctx.send(':boom: GESPRENGT :boom:')
   
@@ -34,7 +30,7 @@ class fun(commands.Cog):
   async def billig(self, ctx):
     await ctx.send('Billig? Ja.\nMisstrauisch? Ja.\nBerechtigt? Ja')
 
-  # Marblelympics
+  # Marblelympics commands
   @commands.command()
   async def ducks(self, ctx):
     await ctx.send('<:gd_marble:571396561045684224> <:ducks:571352498590318592> <:gd_marble:571396561045684224> **#QUACKATTACK** <:gd_marble:571396561045684224> <:ducks:571352498590318592> <:gd_marble:571396561045684224>')

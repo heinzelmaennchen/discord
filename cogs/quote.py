@@ -14,6 +14,7 @@ class quote(commands.Cog):
 
   @commands.command()
   async def quote(self, ctx):
+    '''returns a random quote from our history'''
     await ctx.send(embed = randomQuote())
 
 def randomQuote():
