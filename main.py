@@ -1,16 +1,18 @@
 import discord
 import os
 import requests
+import random
 
-from discord.ext import commands
+from discord.ext import commands, tasks
 from discord.ext.commands import Bot
 from dotenv import load_dotenv
+
 from config.cogs import __cogs__
+from config.botactivity import __activities__, __activityTimer__
 
 load_dotenv()
 
 client = commands.Bot(command_prefix = '!')
-
 api_key = os.environ['API_KEY']
 
 @client.event
@@ -19,7 +21,6 @@ async def on_ready():
   print(client.user.name)
   print(discord.__version__)
   print(client.user.id)
-  await client.change_presence(activity=discord.Game('with Cryptos'))
   print('Loading cogs...')
   for cog in __cogs__:
         try:
@@ -29,6 +30,12 @@ async def on_ready():
             print(f'Couldn\'t load cog {cog}')
   print('Loading cogs finished')
   print('Let\'s go!')
+  change_status.start()
+
+@tasks.loop(seconds = __activityTimer__)
+async def change_status():
+  rndStatus = random.choice(__activities__)
+  await client.change_presence(activity=discord.Activity(type=rndStatus[0], name=rndStatus[1]))
 
 @client.command(hidden = 'True')
 async def reload(ctx, extension):
