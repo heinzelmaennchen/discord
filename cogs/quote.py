@@ -27,7 +27,7 @@ def randomQuote():
     r += ('[' + str(datetime.fromtimestamp(row[2])) + '] ' + row[1] + ': ' + row[3] + '\n')
     embedQuote = discord.Embed(
       colour = discord.Colour.from_rgb(22, 136, 173),
-      description = f'{row[3]}\n - {row[1]}'
+      description = f'{row[3]}\n *- {row[1]}*'
     )
     embedQuote.set_footer(text = str(datetime.fromtimestamp(row[2])))
 
