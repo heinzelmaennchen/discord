@@ -34,8 +34,8 @@ class crypto(commands.Cog):
   async def gurkerl(self, ctx):
     await ctx.send(self.gurkerl_string)
     
-  @commands.command(aliases=['ripperl'])
-  async def rip(self, ctx):
+  @commands.command()
+  async def ripperl(self, ctx):
     await ctx.send(self.ripperl_string)
 
   @commands.command()
