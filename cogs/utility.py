@@ -2,6 +2,8 @@ import discord
 from discord.ext import commands
 import random
 
+repeat_dict = {}
+
 class utility(commands.Cog):
 
   def __init__(self, client):
@@ -57,6 +59,28 @@ class utility(commands.Cog):
     except:
       r = False
     return r
+
+  @commands.Cog.listener()
+  async def on_message(self, message):
+    if message.author == self.client.user:
+        return
+   
+    author_list = []
+    global repeat_dict
+
+    if message.channel.id in repeat_dict:
+      comparison_message = str(repeat_dict[message.channel.id][0])
+      author_list = repeat_dict[message.channel.id][1]
+      if message.content.lower() == comparison_message.lower():
+        if message.author.id not in author_list:
+          author_list.append(message.author.id)
+          if len(author_list) == 3:
+            await message.channel.send(message.content)
+            repeat_dict.pop(message.channel.id, None)
+      else:
+        repeat_dict.update({message.channel.id : [message.content,[message.author.id]]})
+    else:
+      repeat_dict.update({message.channel.id : [message.content,[message.author.id]]})
 
 def setup(client):
   client.add_cog(utility(client))
