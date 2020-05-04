@@ -30,6 +30,17 @@ class fun(commands.Cog):
   async def billig(self, ctx):
     await ctx.send('Billig? Ja.\nMisstrauisch? Ja.\nBerechtigt? Ja')
 
+  @commands.command()
+  async def rip(self, ctx, *, arg):
+    embedRip = discord.Embed(
+      colour = discord.Colour.darker_grey(),
+      title = f'RIP {arg}',
+      description = ':pray: :coffin: :pray:'
+    )
+    embedRip.set_footer(text = f'prayed by {ctx.message.author.display_name}')
+    embedRip.set_image(url = 'https://media.tenor.com/images/29ed9c8ea3a979f3628c23a13ea9366a/tenor.gif')
+    await ctx.send(embed = embedRip)
+
   # Marblelympics commands
   @commands.command()
   async def ducks(self, ctx):
