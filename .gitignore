@@ -97,3 +97,6 @@ tempAva.*
 *.db
 debug.html
 .vscode/
+
+# Dockerignore
+.dockerignore
