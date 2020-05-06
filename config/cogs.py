@@ -3,5 +3,6 @@ __cogs__ = [
     'cogs.crypto',
     'cogs.fun',
     'cogs.quote',
-    'cogs.utility'
+    'cogs.skills',
+    'cogs.api_requests'
     ]
