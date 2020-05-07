@@ -4,5 +4,4 @@ __cogs__ = [
     'cogs.fun',
     'cogs.quote',
     'cogs.skills',
-    'cogs.api_requests'
     ]
