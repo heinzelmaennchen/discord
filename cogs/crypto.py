@@ -16,7 +16,7 @@ class crypto(commands.Cog):
   # Use on_message if command isn't possible
   @commands.Cog.listener()
   async def on_message(self, message):
-    if message.author == self.client.user or message.author.bot:
+    if message.author == self.client.user or message.author.bot or message.channel.type == "private":
         return
     
     if message.content.startswith('$'):
@@ -27,45 +27,55 @@ class crypto(commands.Cog):
 
   # Fun crypto commands
   @commands.command()
+  @commands.guild_only()
   async def moon(self, ctx):
     await ctx.send(self.moon_string)
 
   @commands.command()
+  @commands.guild_only()
   async def gurkerl(self, ctx):
     await ctx.send(self.gurkerl_string)
     
   @commands.command()
+  @commands.guild_only()
   async def ripperl(self, ctx):
     await ctx.send(self.ripperl_string)
 
   @commands.command()
+  @commands.guild_only()
   async def earth(self, ctx):
     await ctx.send(':airplane_arriving: :earth_africa:')
 
   @commands.command()
+  @commands.guild_only()
   async def pray(self, ctx):
     await ctx.send(':pray: :pray: :pray: :pray: :pray:')
 
   @commands.command(aliases=['buffett'])
+  @commands.guild_only()
   async def buffet(self, ctx):
     await ctx.send('https://imgur.com/02Bxkye')
 
   # Real crypto commands
   @commands.command()
+  @commands.guild_only()
   async def top(self, ctx):
     globalStats = True
     await ctx.send(self.getCurrentValues(self.ourCoins, globalStats))
 
   @commands.command(aliases=['topbtc', 'topBtc'])
+  @commands.guild_only()
   async def topBTC(self, ctx):
     await ctx.send(self.getCurrentValues(self.ourCoins, currency = 'BTC'))
 
   @commands.command(aliases=['top10'])
+  @commands.guild_only()
   async def topten(self, ctx):
     coins = self.getTopTenCoins()
     await ctx.send(self.getCurrentValues(coins))
 
   @commands.command(aliases=['toptenbtc', 'toptenBtc', 'top10BTC', 'top10Btc', 'top10btc'])
+  @commands.guild_only()
   async def toptenBTC(self, ctx):
     coins = self.getTopTenCoins()
     await ctx.send(self.getCurrentValues(coins, currency = 'BTC'))

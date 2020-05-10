@@ -13,6 +13,7 @@ class quote(commands.Cog):
     self.client = client
 
   @commands.command()
+  @commands.guild_only()
   async def quote(self, ctx):
     '''returns a random quote from our history'''
     await ctx.send(embed = randomQuote())
