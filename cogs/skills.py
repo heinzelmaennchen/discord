@@ -27,7 +27,7 @@ class skills(commands.Cog):
     result = self.doCalculate(calcString)
     if result:
       await ctx.send(result)
-
+  
   def doCalculate(self, calcStr):
     try:
       result = eval(calcStr.replace(",","."), {'__builtins__': None})
@@ -70,7 +70,7 @@ class skills(commands.Cog):
         start = int(arg[0])
         end = int(arg[1])
       await ctx.send('**:arrows_counterclockwise:** ({0} - {1}): {2}'.format(start, end, random.randint(start, end)))
-
+    
   # Triple repeat
   @commands.Cog.listener()
   async def on_message(self, message):
@@ -128,7 +128,7 @@ class skills(commands.Cog):
     '''returns a gif related to the search string'''
     if searchterm is None:
       await ctx.send("Und wonach soll ich jetzt suchen, du Heisl?")
-    else:
+    else: 
       await ctx.send(f'{self.searchGif(searchterm)} [via Tenor]')
 
   def searchGif(self, searchterm):

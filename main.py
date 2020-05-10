@@ -2,6 +2,7 @@ import discord
 import os
 import requests
 import random
+import json
 
 from discord.ext import commands, tasks
 from discord.ext.commands import Bot
@@ -14,6 +15,7 @@ load_dotenv()
 
 client = commands.Bot(command_prefix = '!')
 api_key = os.environ['API_KEY']
+taskDict = {} # used in cog 'skills' for saving the Timer Tasks, but saved in main, if cog gets reloaded
 
 @client.event
 async def on_ready():
@@ -29,8 +31,11 @@ async def on_ready():
         except Exception:
             print(f'Couldn\'t load cog {cog}')
   print('Loading cogs finished')
-  print('Let\'s go!')
+  initTimerJSON()
+  from cogs.timers import restartTimersOnBoot
+  await restartTimersOnBoot(client)
   change_status.start()
+  print('Let\'s go!')
 
 @tasks.loop(seconds = __activityTimer__)
 async def change_status():
@@ -41,6 +46,33 @@ async def change_status():
 async def reload(ctx, extension):
   client.unload_extension(f'cogs.{extension}')
   client.load_extension(f'cogs.{extension}')
+
+@client.command(hidden = 'True')
+async def load(ctx, extension):
+  client.load_extension(f'cogs.{extension}')
+
+def initTimerJSON():
+  try:
+    with open('timer.json') as json_file:
+      jsonTimerData = json.load(json_file)  
+
+    if "counter" in jsonTimerData and "timers" in jsonTimerData:
+      print('Checking timer.json ... OK')
+      return
+    else:
+      raise FileNotFoundError
+  
+  except FileNotFoundError:
+    print('Checking timer.json ... somthing wrong > Initializing timer.json')
+    newTimerJSON = {
+      "counter" : 0,
+      "timers" : {}
+    }
+    try:
+      with open('timer.json', 'w') as json_file:
+        json.dump(newTimerJSON, json_file, indent = 4, ensure_ascii=False)
+    except IOError:
+      print('timer.json not accessable')
 
 if __name__ == '__main__':
   client.run(os.environ['BOT_TOKEN'])

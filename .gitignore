@@ -100,3 +100,6 @@ debug.html
 
 # Dockerignore
 .dockerignore
+
+# project specfiic
+timer.json
