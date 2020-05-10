@@ -129,7 +129,7 @@ class skills(commands.Cog):
     if searchterm is None:
       await ctx.send("Und wonach soll ich jetzt suchen, du Heisl?")
     else:
-      await ctx.send(self.searchGif(searchterm))
+      await ctx.send(f'{self.searchGif(searchterm)} [via Tenor]')
 
   def searchGif(self, searchterm):
       url = "https://api.tenor.com/v1/search"
