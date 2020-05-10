@@ -1,1 +1,0 @@
-from config.cogs import __cogs__
