@@ -14,11 +14,14 @@ class skills(commands.Cog):
     self.tenor_key = os.environ['TENOR_KEY']
 
   @commands.command()
+  @commands.guild_only()
   async def asdf(self, ctx):
     '''1337!!!'''
     await ctx.send('@everyone Verachtung!!! Guade lupe uiuiui')
   
+  # Calculator
   @commands.command()
+  @commands.guild_only()
   async def calc(self, ctx, *, calcString):
     '''calculates the result of your expression'''
     result = self.doCalculate(calcString)
@@ -26,6 +29,7 @@ class skills(commands.Cog):
       await ctx.send(result)
 
   @commands.command(aliases=['rand', 'dice', 'roll'])
+  @commands.guild_only()
   async def random(self, ctx, *arg):
     '''returns a random number
     instructions:
@@ -55,23 +59,11 @@ class skills(commands.Cog):
         end = int(arg[1])
       await ctx.send('**:arrows_counterclockwise:** ({0} - {1}): {2}'.format(start, end, random.randint(start, end)))
 
-  # Calculator
-  def doCalculate(self, calcStr):
-    try:
-      result = eval(calcStr.replace(",","."), {'__builtins__': None})
-      if result % 1 == 0:
-        r = int(result)
-      else:
-        r = float(result)
-    except:
-      r = False
-    return r
-  
   # Triple repeat
   @commands.Cog.listener()
   async def on_message(self, message):
     '''repeats the message if the same message was sent three times in a row by unique authors'''
-    if message.author == self.client.user or message.author.bot:
+    if message.author == self.client.user or message.author.bot or message.channel.type == "private":
         return
    
     author_list = []
@@ -93,6 +85,7 @@ class skills(commands.Cog):
 
   # Youtube video search
   @commands.command()
+  @commands.guild_only()
   async def yt(self, ctx, *, searchterm=None):
     '''returns a youtube video related to the search string'''
     if searchterm is None:
@@ -118,6 +111,7 @@ class skills(commands.Cog):
 
   # Tenor GIF search
   @commands.command()
+  @commands.guild_only()
   async def gif(self, ctx, *, searchterm=None):
     '''returns a gif related to the search string'''
     if searchterm is None:
