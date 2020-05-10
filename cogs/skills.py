@@ -28,6 +28,18 @@ class skills(commands.Cog):
     if result:
       await ctx.send(result)
 
+  def doCalculate(self, calcStr):
+    try:
+      result = eval(calcStr.replace(",","."), {'__builtins__': None})
+      if result % 1 == 0:
+        r = int(result)
+      else:
+        r = float(result)
+    except:
+      r = False
+    return r
+
+  # Dice Roll
   @commands.command(aliases=['rand', 'dice', 'roll'])
   @commands.guild_only()
   async def random(self, ctx, *arg):
