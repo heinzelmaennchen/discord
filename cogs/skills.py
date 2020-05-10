@@ -3,8 +3,12 @@ from discord.ext import commands
 import random
 import os
 import requests
+from datetime import datetime
+from pytz import timezone
 
 repeat_dict = {}
+DISCORD_EPOCH = 1420070400000
+
 
 class skills(commands.Cog):
 
@@ -146,5 +150,56 @@ class skills(commands.Cog):
         gif_url = 'I find\' nix!'
       return gif_url
 
+    # Message recap with miliseconds timestamp
+    '''returns x last messages filtered by specified content and miliseconds timestamp
+     or a message by id with its timestamp
+    '''
+    @commands.command()
+    async def recap(self, ctx, depth=5, *, filter=None):
+        async with ctx.channel.typing():
+          if depth > 100000:
+            message = await ctx.channel.fetch_message(depth)
+            ms = (message.id >> 22) + DISCORD_EPOCH
+            time = datetime.fromtimestamp(
+                ms / 1000, timezone('Europe/Vienna')).strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
+            author = message.author.name
+            content = message.content
+            r = (f'```\n[{time}] {author}: {content}```')
+            await ctx.send(r)
+            return
+
+        if depth > 30 and filter is None:
+            await ctx.send("Na. Zu viel, zu zach.")
+            return
+
+        r = '```\n'
+        
+        messages = await ctx.channel.history(limit=depth+1).flatten()
+        result_found = False
+
+        for message in reversed(messages[1:]):
+            if filter is not None:
+                if filter.lower() not in message.content.lower():
+                    continue
+            ms = (message.id >> 22) + DISCORD_EPOCH
+            time = datetime.fromtimestamp(
+                ms / 1000, timezone('Europe/Vienna')).strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
+            author = message.author.name
+            content = message.content
+            if '```' in content:
+                content = content.replace('```', '')
+                content = content.replace('[', '--- [')
+                r += (f'[{time}] {author}: {content}\n')
+                continue
+
+            r += (f'[{time}] {author}: {content}\n')
+            result_found = True
+
+        r += '```'
+        if result_found:
+            await ctx.send(r)
+        else:
+            await ctx.send("Das Nichts nichtet.")
+
 def setup(client):
-  client.add_cog(skills(client))
+    client.add_cog(skills(client))
