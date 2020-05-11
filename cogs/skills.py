@@ -155,6 +155,7 @@ class skills(commands.Cog):
     or a message by id with its timestamp
   '''
   @commands.command()
+  @commands.guild_only()
   async def recap(self, ctx, depth=5, *, filter=None):
     async with ctx.channel.typing():
       if depth > 100000:
