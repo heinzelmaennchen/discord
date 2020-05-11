@@ -63,7 +63,7 @@ def initTimerJSON():
       raise FileNotFoundError
   
   except FileNotFoundError:
-    print('Checking timer.json ... somthing wrong > Initializing timer.json')
+    print('Checking timer.json ... something wrong > Initializing timer.json')
     newTimerJSON = {
       "counter" : 0,
       "timers" : {}
