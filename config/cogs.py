@@ -2,6 +2,7 @@
 __cogs__ = [
     'cogs.crypto',
     'cogs.fun',
+    'cogs.hltb',
     'cogs.quote',
     'cogs.skills',
     'cogs.timers'
