@@ -155,7 +155,7 @@ def saveTimerToJSON(timer):
   jsonTimerData['timers'].update(newTimer)
 
   with open('timer.json', 'w') as json_file:
-    json.dump(jsonTimerData, json_file, indent = 4, ensure_ascii=False)
+    json.dump(jsonTimerData, json_file, indent = 4, ensure_ascii=True)
   return timerCounter
     
 def removeTimerFromJSON(tId):
@@ -163,7 +163,7 @@ def removeTimerFromJSON(tId):
     jsonTimerData = json.load(json_file)
     jsonTimerData['timers'].pop(str(tId))      
   with open('timer.json', 'w') as json_file:
-    json.dump(jsonTimerData, json_file, indent = 4, ensure_ascii=False)
+    json.dump(jsonTimerData, json_file, indent = 4, ensure_ascii=True)
  
 async def restartTimersOnBoot(self):
   with open('timer.json') as f:
