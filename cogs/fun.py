@@ -24,7 +24,9 @@ class fun(commands.Cog):
   @commands.command()
   @commands.guild_only()
   async def läuft(self, ctx):
-    await ctx.send('läuft\nläuft\nlohnt')
+    await ctx.send('läuft')
+    await ctx.send('läuft')
+    await ctx.send('lohnt')
 
   @commands.command()
   @commands.guild_only()
