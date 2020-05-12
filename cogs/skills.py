@@ -156,7 +156,22 @@ class skills(commands.Cog):
   '''
   @commands.command()
   @commands.guild_only()
-  async def recap(self, ctx, depth=5, *, filter=None):
+  async def recap(self, ctx, *args):
+    
+    if not args:
+      depth = 5
+      filter = None
+    else: 
+      try:
+        depth = int(args[0])
+        if (len(args) > 1):
+          filter = ' '.join(args[1:len(args)])
+        else:
+          filter = None
+      except:
+        filter = ' '.join(args)
+        depth = 5
+
     async with ctx.channel.typing():
       if depth > 100000:
         message = await ctx.channel.fetch_message(depth)
@@ -170,7 +185,7 @@ class skills(commands.Cog):
         return
 
     if depth > 30 and filter is None:
-        await ctx.send("Na. Zu viel, zu zach.")
+        await ctx.send("Na. Zu viel, zu zach. :meh:")
         return
 
     r = '```\n'
@@ -198,9 +213,12 @@ class skills(commands.Cog):
 
     r += '```'
     if result_found:
-      await ctx.send(r)
+      try:
+        await ctx.send(r)
+      except:
+        await ctx.send("pls no - das sind mehr als 2000 Zeichen. :weary:")
     else:
-      await ctx.send("Das Nichts nichtet.")
+      await ctx.send("Das Nichts nichtet. <:affenkaktus:709677325846839346>")
 
 def setup(client):
     client.add_cog(skills(client))
