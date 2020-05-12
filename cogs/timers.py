@@ -81,7 +81,7 @@ class timers(commands.Cog):
   async def timer_list(self, ctx):
     response = ''
     count = 0
-    with open('timer.json') as json_file:
+    with open('storage/timer.json') as json_file:
       jsonTimerData = json.load(json_file)
     for timer in jsonTimerData['timers']:
       if jsonTimerData['timers'][timer]['author'] == ctx.author.id and jsonTimerData['timers'][timer]['channel'] == ctx.channel.id:
@@ -98,7 +98,7 @@ class timers(commands.Cog):
   @timer.command(name='cancel')
   @commands.guild_only()
   async def timer_cancel(self, ctx, tId):
-    with open('timer.json') as json_file:
+    with open('storage/timer.json') as json_file:
       jsonTimerData = json.load(json_file)
     #check if it's your own timer
     tId = tId.lstrip('#')
@@ -132,7 +132,7 @@ async def createTimer(bot, timer):
   removeTimerFromJSON(timer[5])
 
 def saveTimerToJSON(timer):
-  with open('timer.json') as json_file:
+  with open('storage/timer.json') as json_file:
     jsonTimerData = json.load(json_file)
 
   timerCounter = jsonTimerData['counter'] + 1
@@ -154,19 +154,19 @@ def saveTimerToJSON(timer):
   }
   jsonTimerData['timers'].update(newTimer)
 
-  with open('timer.json', 'w') as json_file:
+  with open('storage/timer.json', 'w') as json_file:
     json.dump(jsonTimerData, json_file, indent = 4, ensure_ascii=True)
   return timerCounter
     
 def removeTimerFromJSON(tId):
-  with open('timer.json') as json_file:
+  with open('storage/timer.json') as json_file:
     jsonTimerData = json.load(json_file)
     jsonTimerData['timers'].pop(str(tId))      
-  with open('timer.json', 'w') as json_file:
+  with open('storage/timer.json', 'w') as json_file:
     json.dump(jsonTimerData, json_file, indent = 4, ensure_ascii=True)
  
 async def restartTimersOnBoot(self):
-  with open('timer.json') as f:
+  with open('storage/timer.json') as f:
     jsonTimerData = json.load(f)
     for jsontimer in jsonTimerData['timers']:
       tId = jsontimer
