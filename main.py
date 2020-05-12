@@ -53,7 +53,7 @@ async def load(ctx, extension):
 
 def initTimerJSON():
   try:
-    with open('timer.json') as json_file:
+    with open('storage/timer.json') as json_file:
       jsonTimerData = json.load(json_file)  
 
     if "counter" in jsonTimerData and "timers" in jsonTimerData:
@@ -69,7 +69,7 @@ def initTimerJSON():
       "timers" : {}
     }
     try:
-      with open('timer.json', 'w') as json_file:
+      with open('storage/timer.json', 'w') as json_file:
         json.dump(newTimerJSON, json_file, indent = 4, ensure_ascii=False)
     except IOError:
       print('timer.json not accessable')
