@@ -220,5 +220,12 @@ class skills(commands.Cog):
     else:
       await ctx.send("Das Nichts nichtet. <:affenkaktus:709677325846839346>")
 
+  # Wrap a code block around the input text
+  @commands.command()
+  @commands.guild_only()
+  async def cb(self, ctx):
+    await ctx.send(f'```{ctx.message.content[4:len(ctx.message.content)]}```')
+    await ctx.message.delete()
+
 def setup(client):
     client.add_cog(skills(client))
