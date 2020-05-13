@@ -224,7 +224,7 @@ class skills(commands.Cog):
   @commands.command()
   @commands.guild_only()
   async def cb(self, ctx):
-    await ctx.send(f'```{ctx.message.author.nick}: {ctx.message.content[4:len(ctx.message.content)]}```')
+    await ctx.send(f'```{ctx.message.author.name}: {ctx.message.content[4:len(ctx.message.content)]}```')
     await ctx.message.delete()
 
 def setup(client):
