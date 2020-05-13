@@ -80,6 +80,8 @@ class fun(commands.Cog):
       await message.channel.send(':F')
     elif 'thx bot' in message.content.lower():
       await message.channel.send('<a:meh:563687194351501340>')
+    elif 'conan' in message.content.lower():
+      await message.channel.send('https://youtube.com/watch?v=Oo9buo9Mtos') 
 
 
 def setup(client):
