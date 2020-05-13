@@ -74,11 +74,11 @@ class fun(commands.Cog):
     if message.author == self.client.user or message.author.bot or message.channel.type == "private":
         return
     
-    if message.content == 'good bot':
+    if 'good bot' in message.content.lower():
       await message.channel.send(':smiling_face_with_3_hearts:')
-    elif message.content == 'bad bot':
+    elif 'bad bot' in message.content.lower():
       await message.channel.send(':F')
-    elif message.content == 'thx bot':
+    elif 'thx bot' in message.content.lower():
       await message.channel.send('<a:meh:563687194351501340>')
 
 
