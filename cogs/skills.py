@@ -145,7 +145,7 @@ class skills(commands.Cog):
 
       r = requests.get(url, params=payload).json()
       try:
-        gif_url = r['results'][0]['url']
+        gif_url = r['results'][0]['media'][0]['gif']['url']
       except:
         gif_url = 'I find\' nix!'
       return gif_url

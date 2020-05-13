@@ -68,5 +68,19 @@ class fun(commands.Cog):
   async def tg(self, ctx):
     await ctx.send('<:galacticballs:572766585593266206><:galactic2:572764693203124224>#ReachForTheStars<:galactic2:572764693203124224><:galacticballs:572766585593266206>')
     
+  # Good bot, bad bot, thx bot
+  @commands.Cog.listener()
+  async def on_message(self, message):
+    if message.author == self.client.user or message.author.bot or message.channel.type == "private":
+        return
+    
+    if message.content == 'good bot':
+      await message.channel.send(':smiling_face_with_3_hearts:')
+    elif message.content == 'bad bot':
+      await message.channel.send(':F')
+    elif message.content == 'thx bot':
+      await message.channel.send('<a:meh:563687194351501340>')
+
+
 def setup(client):
     client.add_cog(fun(client))
