@@ -223,8 +223,17 @@ class skills(commands.Cog):
   # Wrap a code block around the input text
   @commands.command()
   @commands.guild_only()
-  async def cb(self, ctx):
-    await ctx.send(f'```{ctx.message.author.name}: {ctx.message.content[4:len(ctx.message.content)]}```')
+  async def cb(self, ctx, *, arg):
+    embed = discord.Embed(
+      colour = discord.Colour.orange(),
+      description = f'```{arg}```'
+    )
+    if ctx.author.nick == None:
+      name = ctx.author.name
+    else:
+      name = ctx.author.nick
+    embed.set_author(name=name, icon_url=ctx.author.avatar_url)
+    await ctx.send(embed = embed)
     await ctx.message.delete()
 
 def setup(client):
