@@ -169,7 +169,7 @@ async def restartTimersOnBoot(self):
   with open('storage/timer.json') as f:
     jsonTimerData = json.load(f)
     for jsontimer in jsonTimerData['timers']:
-      tId = jsontimer
+      tId = int(jsontimer)
       tAuthor = jsonTimerData['timers'][jsontimer]['author']
       tChannel = jsonTimerData['timers'][jsontimer]['channel']
       endtime = jsonTimerData['timers'][jsontimer]['endtime']
