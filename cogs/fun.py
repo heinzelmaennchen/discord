@@ -81,7 +81,9 @@ class fun(commands.Cog):
     elif 'thx bot' in message.content.lower():
       await message.channel.send('<a:meh:563687194351501340>')
     elif 'conan' in message.content.lower():
-      await message.channel.send('https://youtube.com/watch?v=Oo9buo9Mtos') 
+      await message.channel.send('https://youtube.com/watch?v=Oo9buo9Mtos')
+    elif 'antrag' in message.content.lower() and not 'antrag abgelehnt' in message.content.lower():
+      await message.channel.send('Antrag ... abgelehnt! ❌')
 
 
 def setup(client):
