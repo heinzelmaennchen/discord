@@ -102,4 +102,5 @@ debug.html
 .dockerignore
 
 # project specfiic
-timer.json
+storage/timer.json
+storage/asdf.json

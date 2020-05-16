@@ -3,10 +3,16 @@ from discord.ext import commands
 import random
 import os
 import requests
+import json
+import asyncio
 from datetime import datetime
 from pytz import timezone
 
 repeat_dict = {}
+asdfMention = False
+asdfCombo = False
+asdfReset = False
+asdfList = []
 DISCORD_EPOCH = 1420070400000
 
 
@@ -75,13 +81,29 @@ class skills(commands.Cog):
         end = int(arg[1])
       await ctx.send('**:arrows_counterclockwise:** ({0} - {1}): {2}'.format(start, end, random.randint(start, end)))
     
-  # Triple repeat
+  # On Message Listener
   @commands.Cog.listener()
   async def on_message(self, message):
     '''repeats the message if the same message was sent three times in a row by unique authors'''
     if message.author == self.client.user or message.author.bot or message.channel.type == "private":
-        return
-   
+      return
+
+    # ASDF check
+    if message.channel.id == 405433814547169301 or message.channel.id == 705617951440633877 or message.channel.id == 156040097819525120:
+      # BOT DEV Channels und #wlc
+      time = self.getMessageTime(message)
+      global asdfMention
+      global asdfCombo
+      global asdfReset
+      if time.hour == 13 and time.minute >= 35 and time.minute <= 38:
+        #CHECK AKTIV
+        if asdfReset == False:
+          asdfReset = True
+          resetTask = asyncio.create_task(self.startReset(time.minute))
+          await resetTask
+        await self.checkHolyRules(message, time.minute)
+
+    # Triple repeat
     author_list = []
     global repeat_dict
 
@@ -99,6 +121,119 @@ class skills(commands.Cog):
     else:
       repeat_dict.update({message.channel.id : [message.content,[message.author.id]]})
 
+  async def startReset(self, minute):
+    dt = (39 - minute) * 60
+    await asyncio.sleep(dt)
+    global asdfMention
+    global asdfCombo
+    global asdfReset
+    global asdfList
+    asdfMention = False
+    asdfCombo = False
+    asdfReset = False
+    asdfList.clear()
+  
+  def getMessageTime(self, message):
+    ms = (message.id >> 22) + DISCORD_EPOCH
+    time = datetime.fromtimestamp(ms/1000, timezone('Europe/Vienna'))
+    return time
+  
+  async def checkHolyRules(self, message, minute):
+    global asdfMention
+    global asdfCombo
+    global asdfList
+    # !ASDF
+    if message.content.lower() == '!asdf':
+      if minute == 36 or minute == 37:
+        if asdfCombo == True:
+          await self.enforceRules(message)
+        else:
+          asdfMention = True
+      else:
+        await self.enforceRules(message)
+    # ASDF
+    elif message.content.lower() == 'asdf':
+      if  minute != 37:
+        await self.enforceRules(message)
+      elif asdfMention == False:
+        asdfMention = True
+        asdfCombo = True
+        if message.author.id not in asdfList:
+          asdfList.append(message.author.id)
+          self.addAsdfPoint(str(message.author.id))
+        await self.enforceRules(message)
+      elif asdfMention == True:
+        asdfCombo = True
+        if message.author.id not in asdfList:
+          asdfList.append(message.author.id)
+          self.addAsdfPoint(str(message.author.id))
+    # ALLES ANDERE
+    else:
+      if minute == 37 and asdfCombo == True:
+        await self.enforceRules(message)
+
+  async def enforceRules(self, message):
+    await message.add_reaction('🥚')
+    await message.add_reaction('👏')
+    self.addFailPoint(str(message.author.id))
+
+  def addFailPoint(self, user):
+    with open('storage/asdf.json') as json_file:
+      jsonAsdfData = json.load(json_file)
+    if user in jsonAsdfData['fails']['user']:
+      jsonAsdfData['fails']['user'][user] = int(jsonAsdfData['fails']['user'][user]) + 1
+    else:
+      jsonAsdfData['fails']['user'][user] = 1
+    with open('storage/asdf.json', 'w') as json_file:
+      json.dump(jsonAsdfData, json_file, indent = 4, ensure_ascii=True)
+
+  def addAsdfPoint(self, user):
+    global asdfList
+    with open('storage/asdf.json') as json_file:
+      jsonAsdfData = json.load(json_file)
+    if user in jsonAsdfData['asdf']['user']:
+      jsonAsdfData['asdf']['user'][user] = int(jsonAsdfData['asdf']['user'][user]) + 1
+    else:
+      jsonAsdfData['asdf']['user'][user] = 1
+    with open('storage/asdf.json', 'w') as json_file:
+      json.dump(jsonAsdfData, json_file, indent = 4, ensure_ascii=True)
+  
+  @commands.command(aliases = ['lf'])
+  @commands.guild_only()
+  async def listfails(self, ctx):
+    with open('storage/asdf.json') as json_file:
+      jsonAsdfData = json.load(json_file)
+    fails = 0
+    r = ''
+    for u, f in jsonAsdfData['fails']['user'].items():
+      fails += f
+      user = ctx.guild.get_member(int(u))
+      if user.nick == None:
+        user = user.name
+      else:
+        user = user.nick
+      r = f'\n{user}: {f}'
+    r = f'```FAILs gesamt: {fails}' + r + '```'
+    await ctx.send(r)
+
+  @commands.command(aliases = ['la'])
+  @commands.guild_only()
+  async def listasdf(self, ctx):
+    with open('storage/asdf.json') as json_file:
+      jsonAsdfData = json.load(json_file)
+    asdf = 0
+    r = ''
+    for u, a in jsonAsdfData['asdf']['user'].items():
+      asdf += a
+      user = ctx.guild.get_member(int(u))
+      if user.nick == None:
+        user = user.name
+      else:
+        user = user.nick
+      r = f'\n{user}: {a}'
+    r = f'```ASDFs gesamt: {asdf}' + r + '```'
+    await ctx.send(r)
+  
   # Youtube video search
   @commands.command()
   @commands.guild_only()
