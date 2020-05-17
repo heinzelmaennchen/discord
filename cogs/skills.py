@@ -205,7 +205,7 @@ class skills(commands.Cog):
       jsonAsdfData = json.load(json_file)
     fails = 0
     r = ''
-    for u, f in jsonAsdfData['fails']['user'].items():
+    for u, f in sorted(jsonAsdfData['fails']['user'].items(), key=lambda item: item[1], reverse=True):
       fails += f
       user = ctx.guild.get_member(int(u))
       if user.nick == None:
@@ -223,7 +223,7 @@ class skills(commands.Cog):
       jsonAsdfData = json.load(json_file)
     asdf = 0
     r = ''
-    for u, a in jsonAsdfData['asdf']['user'].items():
+    for u, a in sorted(jsonAsdfData['asdf']['user'].items(), key=lambda item: item[1], reverse=True):
       asdf += a
       user = ctx.guild.get_member(int(u))
       if user.nick == None:
