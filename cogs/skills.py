@@ -92,15 +92,12 @@ class skills(commands.Cog):
     if message.channel.id == 405433814547169301 or message.channel.id == 705617951440633877 or message.channel.id == 156040097819525120:
       # BOT DEV Channels und #wlc
       time = self.getMessageTime(message)
-      global asdfMention
-      global asdfCombo
       global asdfReset
       if time.hour == 13 and time.minute >= 35 and time.minute <= 38:
         #CHECK AKTIV
         if asdfReset == False:
           asdfReset = True
-          resetTask = asyncio.create_task(self.startReset(time.minute))
-          await resetTask
+          asyncio.create_task(self.startReset(time.minute))
         await self.checkHolyRules(message, time.minute)
 
     # Triple repeat
