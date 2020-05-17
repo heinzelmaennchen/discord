@@ -212,7 +212,7 @@ class skills(commands.Cog):
         user = user.name
       else:
         user = user.nick
-      r = f'\n{user}: {f}'
+      r += f'\n{user}: {f}'
     r = f'```FAILs gesamt: {fails}' + r + '```'
     await ctx.send(r)
 
@@ -230,7 +230,7 @@ class skills(commands.Cog):
         user = user.name
       else:
         user = user.nick
-      r = f'\n{user}: {a}'
+      r += f'\n{user}: {a}'
     r = f'```ASDFs gesamt: {asdf}' + r + '```'
     await ctx.send(r)
   
