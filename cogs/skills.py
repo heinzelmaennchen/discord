@@ -84,7 +84,6 @@ class skills(commands.Cog):
   # On Message Listener
   @commands.Cog.listener()
   async def on_message(self, message):
-    '''repeats the message if the same message was sent three times in a row by unique authors'''
     if message.author == self.client.user or message.author.bot or message.channel.type == "private":
       return
 
@@ -101,6 +100,7 @@ class skills(commands.Cog):
         await self.checkHolyRules(message, time.minute)
 
     # Triple repeat
+    '''repeats the message if the same message was sent three times in a row by unique authors'''
     author_list = []
     global repeat_dict
 
@@ -213,6 +213,7 @@ class skills(commands.Cog):
     r = f'```FAILs gesamt: {fails}' + r + '```'
     await ctx.send(r)
 
+  # List asdf stats
   @commands.command(aliases = ['la'])
   @commands.guild_only()
   async def listasdf(self, ctx):
@@ -290,6 +291,7 @@ class skills(commands.Cog):
   @commands.guild_only()
   async def recap(self, ctx, *args):
     
+    # Set up search depth and filter keyword based on input
     if not args:
       depth = 5
       filter = None
@@ -304,18 +306,18 @@ class skills(commands.Cog):
         filter = ' '.join(args)
         depth = 5
 
+    # Recap for a single message by sending the id
     async with ctx.channel.typing():
       if depth > 100000:
         message = await ctx.channel.fetch_message(depth)
-        ms = (message.id >> 22) + DISCORD_EPOCH
-        time = datetime.fromtimestamp(
-            ms / 1000, timezone('Europe/Vienna')).strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
+        time = self.getMessageTime(message).strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
         author = message.author.name
         content = message.content
         r = (f'```\n[{time}] {author}: {content}```')
         await ctx.send(r)
         return
 
+    # Exit early if the result most likely be too long
     if depth > 30 and filter is None:
         await ctx.send("Na. Zu viel, zu zach. :meh:")
         return
@@ -325,13 +327,12 @@ class skills(commands.Cog):
     messages = await ctx.channel.history(limit=depth+1).flatten()
     result_found = False
 
+    # Loop through messages and build response string (based on filter)
     for message in reversed(messages[1:]):
       if filter is not None:
         if filter.lower() not in message.content.lower():
           continue
-      ms = (message.id >> 22) + DISCORD_EPOCH
-      time = datetime.fromtimestamp(
-        ms / 1000, timezone('Europe/Vienna')).strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
+      time = self.getMessageTime(message).strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
       author = message.author.name
       content = message.content
       if '```' in content:
@@ -359,7 +360,7 @@ class skills(commands.Cog):
     embed = discord.Embed(
       colour = discord.Colour.orange(),
       description = f'```{arg}```'
-    )
+      )
     if ctx.author.nick == None:
       name = ctx.author.name
     else:

@@ -5,5 +5,6 @@ __cogs__ = [
     'cogs.hltb',
     'cogs.quote',
     'cogs.skills',
-    'cogs.timers'
+    'cogs.timers',
+    'cogs.levels'
     ]
