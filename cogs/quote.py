@@ -1,42 +1,58 @@
 import discord
 from discord.ext import commands
 import os
-import psycopg2
 from datetime import datetime, timezone
-
-DATABASE_URL = os.environ['DATABASE_URL'] 
-conn = psycopg2.connect(DATABASE_URL, sslmode='require')
+import mysql.connector
+import random
 
 class quote(commands.Cog):
 
-  def __init__(self, client):
-    self.client = client
+    def __init__(self, client):
+        self.client = client
 
-  @commands.command()
-  @commands.guild_only()
-  async def quote(self, ctx):
-    '''returns a random quote from our history'''
-    await ctx.send(embed = randomQuote())
+        self.host = os.environ['DATABASE_HOST']
+        self.user = os.environ['DATABASE_USER']
+        self.passwd = os.environ['DATABASE_PW']
+        self.database = os.environ['DATABASE_DB']
 
-def randomQuote():
-  cur = conn.cursor()
-  sql = 'SELECT * FROM wlc_quotes ORDER BY RANDOM() LIMIT 1'
-  cur.execute(sql)
-  row = cur.fetchone()
-  r = ''
-  
-  while row is not None:
-    r += ('[' + str(datetime.fromtimestamp(row[2])) + '] ' + row[1] + ': ' + row[3] + '\n')
-    embedQuote = discord.Embed(
-      colour = discord.Colour.from_rgb(22, 136, 173),
-      description = f'{row[3]}\n *- {row[1]}*'
-    )
-    embedQuote.set_footer(text = str(datetime.fromtimestamp(row[2])))
+        self.cnx = mysql.connector.connect(
+            host=self.host,
+            user=self.user,
+            passwd=self.passwd,
+            database=self.database
+        )
+        self.cursor = self.cnx.cursor(buffered=True)
 
-    row = cur.fetchone()
-  
-  cur.close()
-  return embedQuote
+    @commands.command()
+    @commands.guild_only()
+    async def quote(self, ctx, offset=3):
+      '''returns a random quote from our history'''
+      randomNumber = random.randint(1, 1235)
+      query = (f"""SELECT number, `time`, author, message
+                FROM wlc_quotes WHERE number IN
+                (SELECT nr FROM
+                 (SELECT {randomNumber} AS nr""")
+      for i in range(1,offset):
+        query += f' UNION SELECT {randomNumber+i} AS nr'
+      query += ') AS result)'
+
+      self.cursor.execute(query)
+      if self.cursor.rowcount > 0:
+        rows = self.cursor.fetchall()
+        r = f'**#{rows[0][0]}**\n\n'
+        timestamp = rows[0][1]
+
+        for row in rows:
+          r += f'**{row[2]}**\n *- {row[3]}*\n'
+
+        embedQuote = discord.Embed(
+          colour=discord.Colour.from_rgb(22, 136, 173),
+          description=r
+          )
+        embedQuote.set_footer(text=timestamp)
+        await ctx.send(embed=embedQuote)
+      else:
+        await ctx.send("Kaputt.")
 
 def setup(client):
-  client.add_cog(quote(client))
+    client.add_cog(quote(client))
