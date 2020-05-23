@@ -27,7 +27,7 @@ class quote(commands.Cog):
     @commands.guild_only()
     async def quote(self, ctx, offset=3):
       '''returns a random quote from our history'''
-      randomNumber = random.randint(1, 1235)
+      randomNumber = random.randint(1, 368542)
       query = (f"""SELECT number, `time`, author, message
                 FROM wlc_quotes WHERE number IN
                 (SELECT nr FROM
