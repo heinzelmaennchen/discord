@@ -107,7 +107,7 @@ class levels(commands.Cog):
       self.cnx.commit()
     else:
       row = self.cursor.fetchone()
-      new_xp = row[1] + 50
+      new_xp = row[1] + 20
       level_current = row[2]
       loop_xp = 0
       # Calculate the level limits and check if there was a level-up
@@ -129,7 +129,7 @@ class levels(commands.Cog):
         self.cursor.execute(query)
         self.cnx.commit()
     # Wait for a minute and then remove the author from the active list to allow for new XP
-    await asyncio.sleep(10)
+    await asyncio.sleep(30)
     self.active_authors.remove(message.author.id)
 
 def setup(client):
