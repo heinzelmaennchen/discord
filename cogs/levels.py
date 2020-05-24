@@ -42,6 +42,7 @@ class levels(commands.Cog):
     # Grab the author's record
     query = (f'SELECT author, xp, level FROM levels WHERE author = {ctx.message.author.id}')
     self.cursor.execute(query)
+    self.cnx.commit()
     if self.cursor.rowcount == 0:
       await ctx.message.channel.send(f"Du hast noch keinen Rank, du Nudel!")
     # Build an embed with the current level and xp and send it
@@ -69,6 +70,7 @@ class levels(commands.Cog):
     # Grab all records
     query = (f'SELECT author, xp, level FROM levels ORDER BY xp DESC')
     self.cursor.execute(query)
+    self.cnx.commit()
     if self.cursor.rowcount == 0:
       await ctx.message.channel.send(f"Keiner da, keiner hat levels. :person_shrugging:")
     # Build an embed with all authors, current level and xp and send it
@@ -99,6 +101,7 @@ class levels(commands.Cog):
     # Grab the author's record
     query = (f'SELECT author, xp, level FROM levels WHERE author = {message.author.id}')
     self.cursor.execute(query)
+    self.cnx.commit()
     
     # If the author is new, create a row, give them 20xp and level 1
     if self.cursor.rowcount == 0:

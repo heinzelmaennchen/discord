@@ -37,6 +37,8 @@ class quote(commands.Cog):
       query += ') AS result)'
 
       self.cursor.execute(query)
+      self.cnx.commit()
+      
       if self.cursor.rowcount > 0:
         rows = self.cursor.fetchall()
         r = f'**#{rows[0][0]}**\n\n'
