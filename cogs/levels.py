@@ -3,7 +3,7 @@ from discord.ext import commands
 import os
 import mysql.connector
 import asyncio
-
+from helpers.levels import createRankcard
 
 class levels(commands.Cog):
 
@@ -51,19 +51,26 @@ class levels(commands.Cog):
       xp = row[1]
       level_current = row[2]
 
-      if ctx.author.nick == None:
-        name = ctx.author.name
-      else:
-        name = ctx.author.nick
+      nlvlxp = 5 * (level_current ** 2) + 50 * level_current + 100
+      rest_xp = xp
+      for i in range(0,500):
+        xp_needed = 5 * (i ** 2) + 50 * i + 100
+        rest_xp -= xp_needed
+        if rest_xp < 0:
+          rest_xp += xp_needed
+          break
 
-      embed = discord.Embed(
-        colour = discord.Colour.orange(),
-        description = f'{name}, du Heisl, du bist Level {level_current} mit {xp} XP!'
-        )
-      
-      await ctx.send(embed = embed)
+      query = ('SELECT author, xp FROM levels ORDER BY xp DESC')
+      self.cursor.execute(query)
+      rank = 0
+      for row in self.cursor.fetchall():
+        rank += 1
+        if ctx.author.id == row[0]:
+          break
 
-  
+      createRankcard(ctx.author.name, ctx.author.discriminator, ctx.author.avatar_url, rank, level_current, rest_xp, nlvlxp)
+      await ctx.send(file = discord.File(f"storage/levels/{ctx.author.name}.png"))
+
   @commands.command()
   @commands.guild_only()
   async def levels(self, ctx):

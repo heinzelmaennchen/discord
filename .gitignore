@@ -104,3 +104,5 @@ debug.html
 # project specfiic
 storage/timer.json
 storage/asdf.json
+storage/levels/*.png
+!storage/levels/example.png
