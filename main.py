@@ -75,4 +75,7 @@ def initTimerJSON():
       print('timer.json not accessable')
 
 if __name__ == '__main__':
-  client.run(os.environ['BOT_TOKEN'])
+  try:
+    client.run(os.environ['BOT_TOKEN'])
+  finally:
+    print("Shutting down ...")
