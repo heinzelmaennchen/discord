@@ -4,4 +4,4 @@ python-dotenv
 beautifulsoup4
 pytz
 mysql-connector
-Pillow
+Pillow 
