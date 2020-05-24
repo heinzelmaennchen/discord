@@ -4,4 +4,4 @@ COPY . /
 
 RUN pip install --requirement /requirements.txt
 
-CMD [ "python", "./main.py" ] 
+CMD [ "python", "-u", "./main.py" ]
