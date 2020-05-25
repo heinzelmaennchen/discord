@@ -18,7 +18,7 @@ def createRankcard(author, authornum, authorurl, rank, level, lvlxp, nlvlxp):
         strNlvlxp = f'{nlvlxp/1000}K'
     else:
         strNlvlxp = str(nlvlxp)
-    # Neues Image in 10x Vergrößerung erstellen - Farbe: Schwarz
+    # Neues Image in 8x Vergrößerung erstellen - Farbe: Schwarz
     img = Image.new('RGB', (886 * 8, 210 * 8), color='black')
     # Alpha Maske für kreisförmigen Ausschnitt des User Logos erstellen
     mask_im = Image.new('RGBA', (1280, 1280), color=(0, 0, 0, 0))
