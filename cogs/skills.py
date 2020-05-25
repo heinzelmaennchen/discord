@@ -209,6 +209,8 @@ class skills(commands.Cog):
             jsonAsdfData = json.load(json_file)
         fails = 0
         r = ''
+        asdfEmbed = discord.Embed(title='FAIL ranking',
+                                  colour=discord.Colour.from_rgb(125, 25, 25))
         for u, f in sorted(jsonAsdfData['fails']['user'].items(),
                            key=lambda item: item[1],
                            reverse=True):
@@ -218,9 +220,12 @@ class skills(commands.Cog):
                 user = user.name
             else:
                 user = user.nick
-            r += f'\n{user}: {f}'
-        r = f'```FAILs gesamt: {fails}' + r + '```'
-        await ctx.send(r)
+            r += f'{user}: {f}\n'
+        asdfEmbed.add_field(name=f'**Gesamt: {fails}**', value=r)
+        if fails == 0:
+            await ctx.send('```Noch keine fails ... bis jetzt.```')
+        else:
+            await ctx.send(embed=asdfEmbed)
 
     # List asdf stats
     @commands.command(aliases=['la'])
@@ -230,6 +235,8 @@ class skills(commands.Cog):
             jsonAsdfData = json.load(json_file)
         asdf = 0
         r = ''
+        asdfEmbed = discord.Embed(title='ASDF ranking',
+                                  colour=discord.Colour.from_rgb(25, 100, 25))
         for u, a in sorted(jsonAsdfData['asdf']['user'].items(),
                            key=lambda item: item[1],
                            reverse=True):
@@ -239,9 +246,13 @@ class skills(commands.Cog):
                 user = user.name
             else:
                 user = user.nick
-            r += f'\n{user}: {a}'
-        r = f'```ASDFs gesamt: {asdf}' + r + '```'
-        await ctx.send(r)
+            r += f'{user}: {a}\n'
+
+        asdfEmbed.add_field(name=f'**Gesamt: {asdf}**', value=r)
+        if asdf == 0:
+            await ctx.send('```Noch keine asdfs ... bis jetzt.```')
+        else:
+            await ctx.send(embed=asdfEmbed)
 
     # Youtube video search
     @commands.command()
