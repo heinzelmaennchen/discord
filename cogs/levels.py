@@ -151,7 +151,7 @@ class levels(commands.Cog):
                 )
                 self.cursor.execute(query)
                 self.cnx.commit()
-        # Wait for a minute and then remove the author from the active list to allow for new XP
+        # Wait for 30 seconds and then remove the author from the active list to allow for new XP
         await asyncio.sleep(30)
         self.active_authors.remove(message.author.id)
 
