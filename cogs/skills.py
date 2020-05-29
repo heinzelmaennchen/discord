@@ -341,35 +341,35 @@ class skills(commands.Cog):
                 await ctx.send(r)
                 return
 
-        # Exit early if the result most likely be too long
-        if depth > 30 and filter is None:
-            await ctx.send("Na. Zu viel, zu zach. :meh:")
-            return
+            # Exit early if the result most likely be too long
+            if depth > 30 and filter is None:
+                await ctx.send("Na. Zu viel, zu zach. :meh:")
+                return
 
-        r = '```\n'
+            r = '```\n'
 
-        messages = await ctx.channel.history(limit=depth + 1).flatten()
-        result_found = False
+            messages = await ctx.channel.history(limit=depth + 1).flatten()
+            result_found = False
 
-        # Loop through messages and build response string (based on filter)
-        for message in reversed(messages[1:]):
-            if filter is not None:
-                if filter.lower() not in message.content.lower():
+            # Loop through messages and build response string (based on filter)
+            for message in reversed(messages[1:]):
+                if filter is not None:
+                    if filter.lower() not in message.content.lower():
+                        continue
+                time = self.getMessageTime(message).strftime(
+                    "%Y-%m-%d %H:%M:%S.%f")[:-3]
+                author = message.author.name
+                content = message.content
+                if '```' in content:
+                    content = content.replace('```', '')
+                    content = content.replace('[', '--- [')
+                    r += (f'[{time}] {author}: {content}\n')
                     continue
-            time = self.getMessageTime(message).strftime(
-                "%Y-%m-%d %H:%M:%S.%f")[:-3]
-            author = message.author.name
-            content = message.content
-            if '```' in content:
-                content = content.replace('```', '')
-                content = content.replace('[', '--- [')
+
                 r += (f'[{time}] {author}: {content}\n')
-                continue
+                result_found = True
 
-            r += (f'[{time}] {author}: {content}\n')
-            result_found = True
-
-        r += '```'
+            r += '```'
         if result_found:
             try:
                 await ctx.send(r)
