@@ -260,6 +260,8 @@ class skills(commands.Cog):
     async def yt(self, ctx, *, searchterm=None):
         '''returns a youtube video related to the search string'''
         if searchterm is None:
+            await ctx.message.add_reaction('🥚')
+            await ctx.message.add_reaction('👏')
             await ctx.send("Und wonach soll ich jetzt suchen, du Heisl?")
         else:
             await ctx.send(self.searchVideo(searchterm))
@@ -286,9 +288,11 @@ class skills(commands.Cog):
     async def gif(self, ctx, *, searchterm=None):
         '''returns a gif related to the search string'''
         if searchterm is None:
+            await ctx.message.add_reaction('🥚')
+            await ctx.message.add_reaction('👏')
             await ctx.send("Und wonach soll ich jetzt suchen, du Heisl?")
         else:
-            await ctx.send(f'{self.searchGif(searchterm)} [via Tenor]')
+            await ctx.send(f'{self.searchGif(searchterm)}')
 
     def searchGif(self, searchterm):
         url = "https://api.tenor.com/v1/search"
@@ -343,6 +347,8 @@ class skills(commands.Cog):
 
             # Exit early if the result most likely be too long
             if depth > 30 and filter is None:
+                await ctx.message.add_reaction('🥚')
+                await ctx.message.add_reaction('👏')
                 await ctx.send("Na. Zu viel, zu zach. :meh:")
                 return
 
@@ -374,6 +380,8 @@ class skills(commands.Cog):
             try:
                 await ctx.send(r)
             except:
+                await ctx.message.add_reaction('🥚')
+                await ctx.message.add_reaction('👏')
                 await ctx.send(
                     "pls no - das sind mehr als 2000 Zeichen. :weary:")
         else:

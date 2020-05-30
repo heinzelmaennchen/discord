@@ -15,7 +15,7 @@ class levels(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message(self, message):
-        if message.author == self.client.user or message.author.bot or message.channel.type == "private" or self.client.user.id == 405465312570507264:
+        if message.author == self.client.user or message.author.bot or message.channel.type == "private" or self.client.user.id != 404467681387872257:
             return
 
         if message.author.id in self.active_authors:
