@@ -1,31 +1,21 @@
 import discord
 from discord.ext import commands
-import os
-import mysql.connector
 import asyncio
-from helpers.levels import createRankcard, createLeaderboard
+from utils.db import check_connection
+from utils.db import init_db
+from utils.levels import createRankcard, createLeaderboard
 
 
 class levels(commands.Cog):
     def __init__(self, client):
         self.client = client
-
-        self.host = os.environ['DATABASE_HOST']
-        self.user = os.environ['DATABASE_USER']
-        self.passwd = os.environ['DATABASE_PW']
-        self.database = os.environ['DATABASE_DB']
-
-        self.active_authors = []
-
-        self.cnx = mysql.connector.connect(host=self.host,
-                                           user=self.user,
-                                           passwd=self.passwd,
-                                           database=self.database)
+        self.cnx = init_db()
         self.cursor = self.cnx.cursor(buffered=True)
+        self.active_authors = []
 
     @commands.Cog.listener()
     async def on_message(self, message):
-        if message.author == self.client.user or message.author.bot or message.channel.type == "private" or message.guild.id != 156040097819525120:
+        if message.author == self.client.user or message.author.bot or message.channel.type == "private" or self.client.user.id == 405465312570507264:
             return
 
         if message.author.id in self.active_authors:
@@ -37,6 +27,9 @@ class levels(commands.Cog):
     @commands.command()
     @commands.guild_only()
     async def rank(self, ctx):
+        # Check DB connection
+        self.cnx = check_connection(self.cnx)
+        self.cursor = self.cnx.cursor(buffered=True)
         # Grab the author's record
         query = (
             f'SELECT author, xp, level FROM levels WHERE author = {ctx.message.author.id}'
@@ -79,13 +72,16 @@ class levels(commands.Cog):
     @commands.guild_only()
     async def levels(self, ctx):
         async with ctx.channel.typing():
+            # Check DB connection
+            self.cnx = check_connection(self.cnx)
+            self.cursor = self.cnx.cursor(buffered=True)
             # Grab all records
             query = (f'SELECT author, xp, level FROM levels ORDER BY xp DESC')
             self.cursor.execute(query)
             self.cnx.commit()
             if self.cursor.rowcount == 0:
                 await ctx.message.channel.send(
-                    f"Keiner da, keiner hat levels. :person_shrugging:")
+                    f'Keiner da, keiner hat levels. :person_shrugging:')
             # Build Lists with authors, author_urls, levels, xp, lvlxp and nlvlxp
             else:
                 author = []
@@ -124,6 +120,9 @@ class levels(commands.Cog):
 
     # Runs in its own thread and updates the author's XP in the database
     async def updateXp(self, message):
+        # Check DB connection
+        self.cnx = check_connection(self.cnx)
+        self.cursor = self.cnx.cursor(buffered=True)
         # Grab the author's record
         query = (
             f'SELECT author, xp, level FROM levels WHERE author = {message.author.id}'
@@ -152,7 +151,7 @@ class levels(commands.Cog):
                     break
 
             if level_reached > level_current:
-                # sendCongratsMessage(message.author.id) TODO: congrats message
+                # sendCongratsMessage(message.author.id)
                 query = (
                     f'UPDATE `levels` SET `xp`={new_xp}, `level`={level_reached} WHERE author = {message.author.id}'
                 )
