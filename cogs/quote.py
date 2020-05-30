@@ -26,6 +26,7 @@ class quote(commands.Cog):
                 await ctx.send(
                     f'Schaut "{id}" für dich aus wie eine Zahl, du Nudeldrucker?! :F'
                 )
+                return
         else:
             number = random.randint(1, 368542)
 
