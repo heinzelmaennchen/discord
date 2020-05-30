@@ -4,9 +4,7 @@ import random
 import os
 import requests
 import json
-import asyncio
-from datetime import datetime
-from pytz import timezone
+from utils.misc import getMessageTime
 
 repeat_dict = {}
 asdfMention = False
@@ -21,12 +19,6 @@ class skills(commands.Cog):
         self.client = client
         self.youtube_key = os.environ['YOUTUBE_KEY']
         self.tenor_key = os.environ['TENOR_KEY']
-
-    @commands.command()
-    @commands.guild_only()
-    async def asdf(self, ctx):
-        '''1337!!!'''
-        await ctx.send('@everyone Verachtung!!! Guade lupe uiuiui')
 
     # Calculator
     @commands.command()
@@ -70,8 +62,7 @@ class skills(commands.Cog):
                 end = 100
             elif arg[0] == 'flip' or arg[0] == 'coin':
                 coin = ['heads', 'tails']
-                await ctx.send(':arrows_counterclockwise: {0}'.format(
-                    random.choice(coin)))
+                await ctx.send('{0}'.format(random.choice(coin)))
                 return
             elif len(arg) == 1:
                 start = 1
@@ -79,27 +70,14 @@ class skills(commands.Cog):
             elif len(arg) > 1:
                 start = int(arg[0])
                 end = int(arg[1])
-            await ctx.send(
-                '**:arrows_counterclockwise:** ({0} - {1}): {2}'.format(
-                    start, end, random.randint(start, end)))
+            await ctx.send('({0} - {1}): {2}'.format(
+                start, end, random.randint(start, end)))
 
     # On Message Listener
     @commands.Cog.listener()
     async def on_message(self, message):
         if message.author == self.client.user or message.author.bot or message.channel.type == "private":
             return
-
-        # ASDF check
-        if message.channel.id == 405433814547169301 or message.channel.id == 705617951440633877 or message.channel.id == 156040097819525120:
-            # BOT DEV Channels und #wlc
-            time = self.getMessageTime(message)
-            global asdfReset
-            if time.hour == 13 and time.minute >= 35 and time.minute <= 38:
-                #CHECK AKTIV
-                if asdfReset == False:
-                    asdfReset = True
-                    asyncio.create_task(self.startReset(time.minute))
-                await self.checkHolyRules(message, time.minute)
 
         # Triple repeat
         '''repeats the message if the same message was sent three times in a row by unique authors'''
@@ -123,143 +101,14 @@ class skills(commands.Cog):
             repeat_dict.update(
                 {message.channel.id: [message.content, [message.author.id]]})
 
-    async def startReset(self, minute):
-        dt = (39 - minute) * 60
-        await asyncio.sleep(dt)
-        global asdfMention
-        global asdfCombo
-        global asdfReset
-        global asdfList
-        asdfMention = False
-        asdfCombo = False
-        asdfReset = False
-        asdfList.clear()
-
-    def getMessageTime(self, message):
-        ms = (message.id >> 22) + DISCORD_EPOCH
-        time = datetime.fromtimestamp(ms / 1000, timezone('Europe/Vienna'))
-        return time
-
-    async def checkHolyRules(self, message, minute):
-        global asdfMention
-        global asdfCombo
-        global asdfList
-        # !ASDF
-        if message.content.lower() == '!asdf':
-            if minute == 36 or minute == 37:
-                if asdfCombo == True:
-                    await self.enforceRules(message)
-                else:
-                    asdfMention = True
-            else:
-                await self.enforceRules(message)
-        # ASDF
-        elif message.content.lower() == 'asdf':
-            if minute != 37:
-                await self.enforceRules(message)
-            elif asdfMention == False:
-                asdfMention = True
-                asdfCombo = True
-                if message.author.id not in asdfList:
-                    asdfList.append(message.author.id)
-                    self.addAsdfPoint(str(message.author.id))
-                await self.enforceRules(message)
-            elif asdfMention == True:
-                asdfCombo = True
-                if message.author.id not in asdfList:
-                    asdfList.append(message.author.id)
-                    self.addAsdfPoint(str(message.author.id))
-        # ALLES ANDERE
-        else:
-            if minute == 37 and asdfCombo == True:
-                await self.enforceRules(message)
-
-    async def enforceRules(self, message):
-        await message.add_reaction('🥚')
-        await message.add_reaction('👏')
-        self.addFailPoint(str(message.author.id))
-
-    def addFailPoint(self, user):
-        with open('storage/asdf.json') as json_file:
-            jsonAsdfData = json.load(json_file)
-        if user in jsonAsdfData['fails']['user']:
-            jsonAsdfData['fails']['user'][user] = int(
-                jsonAsdfData['fails']['user'][user]) + 1
-        else:
-            jsonAsdfData['fails']['user'][user] = 1
-        with open('storage/asdf.json', 'w') as json_file:
-            json.dump(jsonAsdfData, json_file, indent=4, ensure_ascii=True)
-
-    def addAsdfPoint(self, user):
-        global asdfList
-        with open('storage/asdf.json') as json_file:
-            jsonAsdfData = json.load(json_file)
-        if user in jsonAsdfData['asdf']['user']:
-            jsonAsdfData['asdf']['user'][user] = int(
-                jsonAsdfData['asdf']['user'][user]) + 1
-        else:
-            jsonAsdfData['asdf']['user'][user] = 1
-        with open('storage/asdf.json', 'w') as json_file:
-            json.dump(jsonAsdfData, json_file, indent=4, ensure_ascii=True)
-
-    @commands.command(aliases=['lf'])
-    @commands.guild_only()
-    async def listfails(self, ctx):
-        with open('storage/asdf.json') as json_file:
-            jsonAsdfData = json.load(json_file)
-        fails = 0
-        r = ''
-        asdfEmbed = discord.Embed(title='FAIL ranking',
-                                  colour=discord.Colour.from_rgb(125, 25, 25))
-        for u, f in sorted(jsonAsdfData['fails']['user'].items(),
-                           key=lambda item: item[1],
-                           reverse=True):
-            fails += f
-            user = ctx.guild.get_member(int(u))
-            if user.nick == None:
-                user = user.name
-            else:
-                user = user.nick
-            r += f'{user}: {f}\n'
-        asdfEmbed.add_field(name=f'**Gesamt: {fails}**', value=r)
-        if fails == 0:
-            await ctx.send('```Noch keine fails ... bis jetzt.```')
-        else:
-            await ctx.send(embed=asdfEmbed)
-
-    # List asdf stats
-    @commands.command(aliases=['la'])
-    @commands.guild_only()
-    async def listasdf(self, ctx):
-        with open('storage/asdf.json') as json_file:
-            jsonAsdfData = json.load(json_file)
-        asdf = 0
-        r = ''
-        asdfEmbed = discord.Embed(title='ASDF ranking',
-                                  colour=discord.Colour.from_rgb(25, 100, 25))
-        for u, a in sorted(jsonAsdfData['asdf']['user'].items(),
-                           key=lambda item: item[1],
-                           reverse=True):
-            asdf += a
-            user = ctx.guild.get_member(int(u))
-            if user.nick == None:
-                user = user.name
-            else:
-                user = user.nick
-            r += f'{user}: {a}\n'
-
-        asdfEmbed.add_field(name=f'**Gesamt: {asdf}**', value=r)
-        if asdf == 0:
-            await ctx.send('```Noch keine asdfs ... bis jetzt.```')
-        else:
-            await ctx.send(embed=asdfEmbed)
-
     # Youtube video search
     @commands.command()
     @commands.guild_only()
     async def yt(self, ctx, *, searchterm=None):
         '''returns a youtube video related to the search string'''
         if searchterm is None:
+            await ctx.message.add_reaction('🥚')
+            await ctx.message.add_reaction('👏')
             await ctx.send("Und wonach soll ich jetzt suchen, du Heisl?")
         else:
             await ctx.send(self.searchVideo(searchterm))
@@ -286,9 +135,11 @@ class skills(commands.Cog):
     async def gif(self, ctx, *, searchterm=None):
         '''returns a gif related to the search string'''
         if searchterm is None:
+            await ctx.message.add_reaction('🥚')
+            await ctx.message.add_reaction('👏')
             await ctx.send("Und wonach soll ich jetzt suchen, du Heisl?")
         else:
-            await ctx.send(f'{self.searchGif(searchterm)} [via Tenor]')
+            await ctx.send(f'{self.searchGif(searchterm)}')
 
     def searchGif(self, searchterm):
         url = "https://api.tenor.com/v1/search"
@@ -333,7 +184,7 @@ class skills(commands.Cog):
         async with ctx.channel.typing():
             if depth > 100000:
                 message = await ctx.channel.fetch_message(depth)
-                time = self.getMessageTime(message).strftime(
+                time = getMessageTime(message).strftime(
                     "%Y-%m-%d %H:%M:%S.%f")[:-3]
                 author = message.author.name
                 content = message.content
@@ -343,6 +194,8 @@ class skills(commands.Cog):
 
             # Exit early if the result most likely be too long
             if depth > 30 and filter is None:
+                await ctx.message.add_reaction('🥚')
+                await ctx.message.add_reaction('👏')
                 await ctx.send("Na. Zu viel, zu zach. :meh:")
                 return
 
@@ -356,7 +209,7 @@ class skills(commands.Cog):
                 if filter is not None:
                     if filter.lower() not in message.content.lower():
                         continue
-                time = self.getMessageTime(message).strftime(
+                time = getMessageTime(message).strftime(
                     "%Y-%m-%d %H:%M:%S.%f")[:-3]
                 author = message.author.name
                 content = message.content
@@ -374,6 +227,8 @@ class skills(commands.Cog):
             try:
                 await ctx.send(r)
             except:
+                await ctx.message.add_reaction('🥚')
+                await ctx.message.add_reaction('👏')
                 await ctx.send(
                     "pls no - das sind mehr als 2000 Zeichen. :weary:")
         else:
