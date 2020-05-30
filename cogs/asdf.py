@@ -26,6 +26,18 @@ class asdf(commands.Cog):
         '''1337!!!'''
         await ctx.send('@everyone Verachtung!!! Guade lupe uiuiui')
 
+    # List asdf fails
+    @commands.command(aliases=['lf'])
+    @commands.guild_only()
+    async def listfails(self, ctx):
+        await self.printStats(ctx, "fail")
+
+    # List asdf stats
+    @commands.command(aliases=['la'])
+    @commands.guild_only()
+    async def listasdf(self, ctx):
+        await self.printStats(ctx, "asdf")
+
     # On Message Listener
     @commands.Cog.listener()
     async def on_message(self, message):
@@ -78,13 +90,13 @@ class asdf(commands.Cog):
                 asdfCombo = True
                 if message.author.id not in asdfList:
                     asdfList.append(message.author.id)
-                    self.addAsdfPoint(str(message.author.id))
+                    self.updatePoints(message.author.id, "asdf")
                 await self.enforceRules(message)
             elif asdfMention == True:
                 asdfCombo = True
                 if message.author.id not in asdfList:
                     asdfList.append(message.author.id)
-                    self.addAsdfPoint(str(message.author.id))
+                    self.updatePoints(message.author.id, "asdf")
         # '<anything else>'
         else:
             if minute == 37 and asdfCombo == True:
@@ -94,92 +106,29 @@ class asdf(commands.Cog):
     async def enforceRules(self, message):
         await message.add_reaction('🥚')
         await message.add_reaction('👏')
-        self.addFailPoint(str(message.author.id))
-
-    # Add an asdf fail point to the user's stats and deduct xp
-    def addFailPoint(self, user):
-        with open('storage/asdf.json') as json_file:
-            jsonAsdfData = json.load(json_file)
-        if user in jsonAsdfData['fails']['user']:
-            jsonAsdfData['fails']['user'][user] = int(
-                jsonAsdfData['fails']['user'][user]) + 1
-        else:
-            jsonAsdfData['fails']['user'][user] = 1
-        with open('storage/asdf.json', 'w') as json_file:
-            json.dump(jsonAsdfData, json_file, indent=4, ensure_ascii=True)
-
-        # self.setBonusXp(user, True) TODO: remove comment when bonus goes live
+        self.updatePoints(message.author.id, "fail")
 
     # Add an asdf point to the user's stats and add bonus xp
-    def addAsdfPoint(self, user):
-        global asdfList
-        with open('storage/asdf.json') as json_file:
-            jsonAsdfData = json.load(json_file)
-        if user in jsonAsdfData['asdf']['user']:
-            jsonAsdfData['asdf']['user'][user] = int(
-                jsonAsdfData['asdf']['user'][user]) + 1
+    def updatePoints(self, user, keyword):
+        if keyword == "asdf":
+            asdf = 1
+            fail = 0
         else:
-            jsonAsdfData['asdf']['user'][user] = 1
-        with open('storage/asdf.json', 'w') as json_file:
-            json.dump(jsonAsdfData, json_file, indent=4, ensure_ascii=True)
+            asdf = 0
+            fail = 1
+        # Check DB connection
+        self.cnx = check_connection(self.cnx)
+        self.cursor = self.cnx.cursor(buffered=True)
+        # Add a record
+        query = (f"""INSERT INTO `asdf` (`date`, `author`, `asdf`, `fail`)
+                   VALUES (CURRENT_DATE(), '{user}', '{asdf}', '{fail}')""")
+        self.cursor.execute(query)
+        self.cnx.commit()
 
-        # self.setBonusXp(user, False) TODO: remove comment when bonus goes live
-
-    # List asdf fails
-    @commands.command(aliases=['lf'])
-    @commands.guild_only()
-    async def listfails(self, ctx):
-        with open('storage/asdf.json') as json_file:
-            jsonAsdfData = json.load(json_file)
-        fails = 0
-        r = ''
-        asdfEmbed = discord.Embed(title='FAIL ranking',
-                                  colour=discord.Colour.from_rgb(125, 25, 25))
-        for u, f in sorted(jsonAsdfData['fails']['user'].items(),
-                           key=lambda item: item[1],
-                           reverse=True):
-            fails += f
-            user = ctx.guild.get_member(int(u))
-            if user.nick == None:
-                user = user.name
-            else:
-                user = user.nick
-            r += f'{user}: {f}\n'
-        asdfEmbed.add_field(name=f'**Gesamt: {fails}**', value=r)
-        if fails == 0:
-            await ctx.send('```Noch keine fails ... bis jetzt.```')
-        else:
-            await ctx.send(embed=asdfEmbed)
-
-    # List asdf stats
-    @commands.command(aliases=['la'])
-    @commands.guild_only()
-    async def listasdf(self, ctx):
-        with open('storage/asdf.json') as json_file:
-            jsonAsdfData = json.load(json_file)
-        asdf = 0
-        r = ''
-        asdfEmbed = discord.Embed(title='ASDF ranking',
-                                  colour=discord.Colour.from_rgb(25, 100, 25))
-        for u, a in sorted(jsonAsdfData['asdf']['user'].items(),
-                           key=lambda item: item[1],
-                           reverse=True):
-            asdf += a
-            user = ctx.guild.get_member(int(u))
-            if user.nick == None:
-                user = user.name
-            else:
-                user = user.nick
-            r += f'{user}: {a}\n'
-
-        asdfEmbed.add_field(name=f'**Gesamt: {asdf}**', value=r)
-        if asdf == 0:
-            await ctx.send('```Noch keine asdfs ... bis jetzt.```')
-        else:
-            await ctx.send(embed=asdfEmbed)
+        # self.setBonusXp(user, keyword) TODO: remove comment when bonus goes live
 
     # Update xp in the database - remove for fail, add for bonus
-    def setBonusXp(self, user, bonus):
+    def setBonusXp(self, user, keyword):
         # Check DB connection
         self.cnx = check_connection(self.cnx)
         self.cursor = self.cnx.cursor(buffered=True)
@@ -189,7 +138,7 @@ class asdf(commands.Cog):
         self.cnx.commit()
 
         row = self.cursor.fetchone()
-        if bonus:
+        if keyword == "asdf":
             new_xp = row[1] + 1337
         else:
             if row[1] < 1337:
@@ -200,6 +149,82 @@ class asdf(commands.Cog):
         query = (f'UPDATE `levels` SET `xp`={new_xp} WHERE author = {user.id}')
         self.cursor.execute(query)
         self.cnx.commit()
+
+    # List asdf stats
+    async def asdfStreak(self):
+        # Check DB connection
+        self.cnx = check_connection(self.cnx)
+        self.cursor = self.cnx.cursor(buffered=True)
+        query = (f"""SELECT c.dt,
+                            IFNULL(a.asdf, '0')
+                     FROM `calendar` c
+                     LEFT OUTER JOIN
+                       (SELECT DATE, COUNT(asdf) AS asdf
+                        FROM `asdf`
+                        WHERE asdf > 0
+                        GROUP BY 1) AS a ON c.dt = a.date
+                     WHERE dt BETWEEN '2020-05-05' AND '2020-05-30'
+                     ORDER BY c.dt;""")
+        self.cursor.execute(query)
+        self.cnx.commit()
+
+        if self.cursor.rowcount > 0:
+            rows = self.cursor.fetchall()
+            maxStreak = 0
+            currStreak = 0
+
+            for row in rows:
+                if int(row[1]) > 0:
+                    currStreak += 1
+                elif int(row[1]) == 0:
+                    if currStreak > maxStreak:
+                        maxStreak = currStreak
+                    currStreak = 0
+
+            return max(maxStreak, currStreak)
+
+    # Calculate and print overall stats and ranking
+    async def printStats(self, ctx, keyword):
+        # Check DB connection
+        self.cnx = check_connection(self.cnx)
+        self.cursor = self.cnx.cursor(buffered=True)
+        query = (f"""SELECT author,
+                            count({keyword})
+                     FROM `asdf`
+                     WHERE {keyword} > 0
+                     GROUP BY 1;""")
+        self.cursor.execute(query)
+        self.cnx.commit()
+
+        if self.cursor.rowcount > 0:
+            rows = self.cursor.fetchall()
+            r = ''
+            total = 0
+            asdfEmbed = discord.Embed(title=f'{keyword.upper()} ranking',
+                                      colour=discord.Colour.from_rgb(
+                                          25, 100, 25))
+
+            for row in rows:
+                total += int(row[1])
+                user = ctx.guild.get_member(int(row[0]))
+                if user.nick == None:
+                    user = user.name
+                else:
+                    user = user.nick
+                r += f'{user}: {row[1]}\n'
+
+            if keyword == "asdf":
+                # Grab asdfStreak
+                streak = await self.asdfStreak()
+                asdfEmbed.add_field(
+                    name=f'**Gesamt: {total}\nMax Streak: {streak}**', value=r)
+            else:
+                asdfEmbed.add_field(name=f'**Gesamt: {total}**', value=r)
+
+            if total == 0:
+                await ctx.send(f'```Noch keine {keyword}s ... bis jetzt.```')
+            else:
+                await ctx.send(embed=asdfEmbed)
 
 
 def setup(client):
