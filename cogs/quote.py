@@ -1,24 +1,16 @@
 import discord
 from discord.ext import commands
-import os
 from datetime import datetime, timezone
-import mysql.connector
 import random
+from utils.db import check_connection
+from utils.db import init_db
 
 
 class quote(commands.Cog):
     def __init__(self, client):
         self.client = client
 
-        self.host = os.environ['DATABASE_HOST']
-        self.user = os.environ['DATABASE_USER']
-        self.passwd = os.environ['DATABASE_PW']
-        self.database = os.environ['DATABASE_DB']
-
-        self.cnx = mysql.connector.connect(host=self.host,
-                                           user=self.user,
-                                           passwd=self.passwd,
-                                           database=self.database)
+        self.cnx = init_db()
         self.cursor = self.cnx.cursor(buffered=True)
 
     @commands.command()
@@ -34,6 +26,10 @@ class quote(commands.Cog):
             query += f' UNION SELECT {randomNumber+i} AS nr'
         query += ') AS result)'
 
+        # Check DB connection
+        self.cnx = check_connection(self.cnx)
+        self.cursor = self.cnx.cursor(buffered=True)
+        # Execute query
         self.cursor.execute(query)
         self.cnx.commit()
 

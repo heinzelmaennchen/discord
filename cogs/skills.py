@@ -316,7 +316,7 @@ class skills(commands.Cog):
                     filter = None
             except:
                 filter = ' '.join(args)
-                depth = 5
+                depth = 15
 
         # Recap for a single message by sending the id
         async with ctx.channel.typing():
