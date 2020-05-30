@@ -1,9 +1,9 @@
 import discord
 from discord.ext import commands
 import asyncio
-from utils.levels import createRankcard
 from utils.db import check_connection
 from utils.db import init_db
+from utils.levels import createRankcard, createLeaderboard
 
 
 class levels(commands.Cog):
@@ -71,36 +71,52 @@ class levels(commands.Cog):
     @commands.command()
     @commands.guild_only()
     async def levels(self, ctx):
-        # Check DB connection
-        self.cnx = check_connection(self.cnx)
-        self.cursor = self.cnx.cursor(buffered=True)
-        # Grab all records
-        query = (f'SELECT author, xp, level FROM levels ORDER BY xp DESC')
-        self.cursor.execute(query)
-        self.cnx.commit()
-        if self.cursor.rowcount == 0:
-            await ctx.message.channel.send(
-                f"Keiner da, keiner hat levels. :person_shrugging:")
-        # Build an embed with all authors, current level and xp and send it
-        else:
-            r = ''
-            rank = 0
-            for row in self.cursor.fetchall():
-                rank += 1
-                author = row[0]
-                user = ctx.guild.get_member(author)
-                if user.nick == None:
-                    name = user.name
-                else:
-                    name = user.nick
-                xp = row[1]
-                level_current = row[2]
-                r += f'#{rank} {name} - Level {level_current} mit {xp} XP!\n'
+        async with ctx.channel.typing():
+            # Check DB connection
+            self.cnx = check_connection(self.cnx)
+            self.cursor = self.cnx.cursor(buffered=True)
+            # Grab all records
+            query = (f'SELECT author, xp, level FROM levels ORDER BY xp DESC')
+            self.cursor.execute(query)
+            self.cnx.commit()
+            if self.cursor.rowcount == 0:
+                await ctx.message.channel.send(
+                    f'Keiner da, keiner hat levels. :person_shrugging:')
+            # Build Lists with authors, author_urls, levels, xp, lvlxp and nlvlxp
+            else:
+                author = []
+                authorurl = []
+                level = []
+                xp = []
+                lvlxp = []
+                nlvlxp = []
+                for row in self.cursor.fetchall():
+                    user = ctx.guild.get_member(row[0])
+                    if user == None:  # Skip User if not found in Guild
+                        continue
+                    else:  # User in guild > check if Nick or use Name instead
+                        if user.nick == None:
+                            name = user.name
+                        else:
+                            name = user.nick
+                    author.append(name)
+                    authorurl.append(user.avatar_url)
+                    xp.append(row[1])
+                    level.append(row[2])
 
-            embed = discord.Embed(colour=discord.Colour.orange(),
-                                  description=r)
-
-            await ctx.send(embed=embed)
+                    nlvlxp.append(5 * (row[2]**2) + 50 * row[2] + 100)
+                    rest_xp = row[1]
+                    for i in range(0, 500):
+                        xp_needed = 5 * (i**2) + 50 * i + 100
+                        rest_xp -= xp_needed
+                        if rest_xp < 0:
+                            rest_xp += xp_needed
+                            break
+                    lvlxp.append(rest_xp)
+                # create Image
+                createLeaderboard(author, authorurl, level, xp, lvlxp, nlvlxp)
+                await ctx.send(
+                    file=discord.File('storage/levels/leaderboard.png'))
 
     # Runs in its own thread and updates the author's XP in the database
     async def updateXp(self, message):

@@ -17,8 +17,21 @@ class hltb(commands.Cog):
         hltbResult = HLTB(game)
         for x in hltbResult:
             title = x
-        response = f"{title}\n```Main Story: {hltbResult[title]['Main Story']}\nMain + Extra: {hltbResult[title]['Main + Extra']}\nCompletionist: {hltbResult[title]['Completionist']}```<{hltbResult[title]['url']}>"
-        await ctx.send(response)
+
+        embedHltb = discord.Embed(title=title,
+                                  url=hltbResult[title]['url'],
+                                  colour=discord.Colour.from_rgb(255, 128, 0))
+        embedHltb.add_field(name='Main Story',
+                            value=f"{hltbResult[title]['Main Story']}",
+                            inline=True)
+        embedHltb.add_field(name='Main + Extra',
+                            value=f"{hltbResult[title]['Main + Extra']}",
+                            inline=True)
+        embedHltb.add_field(name='Completionist',
+                            value=f"{hltbResult[title]['Completionist']}",
+                            inline=True)
+
+        await ctx.send(embed=embedHltb)
 
 
 # Copied and modified from: https://github.com/fuzzylimes/howlongtobeat-scraper
