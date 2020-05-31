@@ -56,15 +56,16 @@ class levels(commands.Cog):
 
             query = ('SELECT author, xp FROM levels ORDER BY xp DESC')
             self.cursor.execute(query)
+            self.cnx.commit()
             rank = 0
             for row in self.cursor.fetchall():
                 rank += 1
                 if ctx.author.id == row[0]:
                     break
 
-            createRankcard(ctx.author.name, ctx.author.discriminator,
-                           ctx.author.avatar_url, rank, level_current, rest_xp,
-                           nlvlxp)
+            await createRankcard(ctx.author.name, ctx.author.discriminator,
+                                 ctx.author.avatar_url, rank, level_current,
+                                 rest_xp, nlvlxp)
             await ctx.send(
                 file=discord.File(f"storage/levels/{ctx.author.name}.png"))
 
@@ -114,7 +115,8 @@ class levels(commands.Cog):
                             break
                     lvlxp.append(rest_xp)
                 # create Image
-                createLeaderboard(author, authorurl, level, xp, lvlxp, nlvlxp)
+                await createLeaderboard(author, authorurl, level, xp, lvlxp,
+                                        nlvlxp)
                 await ctx.send(
                     file=discord.File('storage/levels/leaderboard.png'))
 
