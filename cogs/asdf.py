@@ -10,6 +10,8 @@ from utils.misc import getMessageTime
 from utils.db import check_connection
 from utils.db import init_db
 
+from cogs.levels import levels
+
 asdfMention = False
 asdfCombo = False
 asdfReset = False
@@ -20,6 +22,8 @@ DISCORD_EPOCH = 1420070400000
 class asdf(commands.Cog):
     def __init__(self, client):
         self.client = client
+        # Initiate an instance of levels to use its updateXp function
+        self.levels = levels(client)
 
         self.cnx = init_db()
         self.cursor = self.cnx.cursor(buffered=True)
@@ -99,13 +103,13 @@ class asdf(commands.Cog):
                 asdfCombo = True
                 if message.author.id not in asdfList:
                     asdfList.append(message.author.id)
-                    self.updatePoints(message.author.id, "asdf")
+                    self.updatePoints(message, 'asdf')
                 await self.enforceRules(message)
             elif asdfMention == True:
                 asdfCombo = True
                 if message.author.id not in asdfList:
                     asdfList.append(message.author.id)
-                    self.updatePoints(message.author.id, "asdf")
+                    self.updatePoints(message, 'asdf')
         # '<anything else>'
         else:
             if minute == 37 and asdfCombo == True:
@@ -115,11 +119,11 @@ class asdf(commands.Cog):
     async def enforceRules(self, message):
         await message.add_reaction('🥚')
         await message.add_reaction('👏')
-        self.updatePoints(message.author.id, "fail")
+        self.updatePoints(message, 'fail')
 
     # Add an asdf or fail point to the user's stats and add or remove bonus xp
-    def updatePoints(self, user, keyword):
-        if keyword == "asdf":
+    def updatePoints(self, message, keyword):
+        if keyword == 'asdf':
             asdf = 1
             fail = 0
         else:
@@ -130,34 +134,13 @@ class asdf(commands.Cog):
         self.cursor = self.cnx.cursor(buffered=True)
         # Add the record
         query = (f"""INSERT INTO `asdf` (`date`, `author`, `asdf`, `fail`)
-                   VALUES (CURRENT_DATE(), '{user}', '{asdf}', '{fail}')""")
+                   VALUES (CURRENT_DATE(), '{message.author.id}', '{asdf}', '{fail}')"""
+                 )
         self.cursor.execute(query)
         self.cnx.commit()
 
-        # self.setBonusXp(user, keyword) TODO: remove when resetting
-
-    # Update xp in the database - remove for fail, add for bonus
-    def setBonusXp(self, user, keyword):
-        # Check DB connection
-        self.cnx = check_connection(self.cnx)
-        self.cursor = self.cnx.cursor(buffered=True)
-        # Grab the author's record
-        query = (f'SELECT author, xp FROM levels WHERE author = {user}')
-        self.cursor.execute(query)
-        self.cnx.commit()
-
-        row = self.cursor.fetchone()
-        if keyword == "asdf":
-            new_xp = row[1] + 1337
-        else:
-            if row[1] < 1337:
-                new_xp = 0
-            else:
-                new_xp = row[1] - 1337
-
-        query = (f'UPDATE `levels` SET `xp`={new_xp} WHERE author = {user}')
-        self.cursor.execute(query)
-        self.cnx.commit()
+        # Execute updateXp from levels to give or remove bonus xp
+        # asyncio.create_task(self.levels.updateXp(message, keyword)) TODO: uncomment after reset
 
     # List asdf stats
     async def printStreak(self, ctx):
