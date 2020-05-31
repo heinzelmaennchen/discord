@@ -57,9 +57,8 @@ class asdf(commands.Cog):
         if message.author == self.client.user or message.author.bot or message.channel.type == "private":
             return
 
-    # asdf check
+        # asdf check in BOT DEV channels and #wlc
         if message.channel.id == 405433814547169301 or message.channel.id == 705617951440633877 or message.channel.id == 156040097819525120:
-            # BOT DEV Channels and #wlc
             time = getMessageTime(message)
             global asdfReset
             if time.hour == 13 and time.minute >= 35 and time.minute <= 38:
@@ -196,7 +195,7 @@ class asdf(commands.Cog):
         self.cnx.commit()
 
         wlc_streak = 0
-        streak_end = "ongoing"
+        streak_end = "läuft lohnt"
 
         if self.cursor.rowcount > 0:
             rows = self.cursor.fetchall()
@@ -215,7 +214,7 @@ class asdf(commands.Cog):
             wlc_streak = max(maxStreak, currStreak)
 
         # Set streak end to the day before
-        if streak_end != "ongoing":
+        if streak_end != "läuft lohnt":
             streak_end -= timedelta(days=1)
 
         # Grab users
