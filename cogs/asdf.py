@@ -216,10 +216,13 @@ class asdf(commands.Cog):
                     user_streak = self.getUserStreak(int(row[0]), resetDate,
                                                      today)
                     user = ctx.guild.get_member(int(row[0]))
-                    if user.nick == None:
-                        user = user.name
-                    else:
-                        user = user.nick
+                    if user == None:  # Skip User if not found in Guild
+                        continue
+                    else:  # User in guild > check if Nick or use Name instead
+                        if user.nick == None:
+                            user = user.name
+                        else:
+                            user = user.nick
                     user_streaks[user] = user_streak
 
                 user_streaks_sorted = sorted(user_streaks.items(),
@@ -303,10 +306,13 @@ class asdf(commands.Cog):
                 for row in rows:
                     total += int(row[1])
                     user = ctx.guild.get_member(int(row[0]))
-                    if user.nick == None:
-                        user = user.name
-                    else:
-                        user = user.nick
+                    if user == None:  # Skip User if not found in Guild
+                        continue
+                    else:  # User in guild > check if Nick or use Name instead
+                        if user.nick == None:
+                            user = user.name
+                        else:
+                            user = user.nick
                     r += f'{user}: {row[1]}\n'
 
                 asdfEmbed.add_field(name=f'**Gesamt: {total}**', value=r)
