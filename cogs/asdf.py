@@ -236,10 +236,10 @@ class asdf(commands.Cog):
                     name=f'**WLC max: {wlc_streak}**\nEnded: {streak_end}',
                     value=r)
 
-            if wlc_streak == 0:
-                await ctx.send(f'```Noch keine streak ... bis jetzt.```')
-            else:
-                await ctx.send(embed=asdfEmbed)
+        if wlc_streak == 0:
+            await ctx.send(f'```Noch keine streak ... bis jetzt.```')
+        else:
+            await ctx.send(embed=asdfEmbed)
 
     # Calculate user streak
     def getUserStreak(self, user, resetDate, today):
@@ -317,10 +317,10 @@ class asdf(commands.Cog):
 
                 asdfEmbed.add_field(name=f'**Gesamt: {total}**', value=r)
 
-            if total == 0:
-                await ctx.send(f'```Noch keine {keyword}s ... bis jetzt.```')
-            else:
-                await ctx.send(embed=asdfEmbed)
+        if total == 0:
+            await ctx.send(f'```Noch keine {keyword}s ... bis jetzt.```')
+        else:
+            await ctx.send(embed=asdfEmbed)
 
 
 def setup(client):
