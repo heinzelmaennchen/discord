@@ -34,22 +34,19 @@ class asdf(commands.Cog):
     @commands.command(aliases=['lf'])
     @commands.guild_only()
     async def listfails(self, ctx):
-        async with ctx.channel.typing():
-            await self.printStats(ctx, "fail")
+        await self.printStats(ctx, "fail")
 
     # List asdf stats
     @commands.command(aliases=['la'])
     @commands.guild_only()
     async def listasdf(self, ctx):
-        async with ctx.channel.typing():
-            await self.printStats(ctx, "asdf")
+        await self.printStats(ctx, "asdf")
 
     # List asdf stats
     @commands.command(aliases=['ls'])
     @commands.guild_only()
     async def liststreak(self, ctx):
-        async with ctx.channel.typing():
-            await self.printStreak(ctx)
+        await self.printStreak(ctx)
 
     # On Message Listener
     @commands.Cog.listener()
@@ -164,102 +161,102 @@ class asdf(commands.Cog):
 
     # List asdf stats
     async def printStreak(self, ctx):
-        # Check DB connection
-        self.cnx = check_connection(self.cnx)
-        self.cursor = self.cnx.cursor(buffered=True)
+        async with ctx.channel.typing():
+            # Check DB connection
+            self.cnx = check_connection(self.cnx)
+            self.cursor = self.cnx.cursor(buffered=True)
 
-        # Determine the last date for the streak, which is yesterday if today's asdf hasn't happened
-        now = datetime.now(timezone('Europe/Vienna'))
-        asdfTime = now.replace(hour=13, minute=38, second=0, microsecond=0)
-        if now > asdfTime:
-            today = datetime.now(
-                timezone('Europe/Vienna')).strftime('%Y-%m-%d')
-        else:
-            today = datetime.now(timezone('Europe/Vienna')) - timedelta(days=1)
-            today = today.strftime('%Y-%m-%d')
+            # Determine the last date for the streak, which is yesterday if today's asdf hasn't happened
+            now = datetime.now(timezone('Europe/Vienna'))
+            asdfTime = now.replace(hour=13, minute=38, second=0, microsecond=0)
+            if now > asdfTime:
+                today = datetime.now(
+                    timezone('Europe/Vienna')).strftime('%Y-%m-%d')
+            else:
+                today = datetime.now(
+                    timezone('Europe/Vienna')) - timedelta(days=1)
+                today = today.strftime('%Y-%m-%d')
 
-        resetDate = '2020-05-30'  # TODO: set to correct reset date, once reset happens
+            resetDate = '2020-05-30'  # TODO: set to correct reset date, once reset happens
 
-        # Grab wlc with the correct date
-        query = (f"""SELECT c.dt,
-                            IFNULL(a.asdf, '0')
-                     FROM `calendar` c
-                     LEFT OUTER JOIN
-                       (SELECT DATE, COUNT(asdf) AS asdf
-                        FROM `asdf`
-                        WHERE asdf > 0
-                        GROUP BY 1) AS a ON c.dt = a.date
-                     WHERE dt BETWEEN '{resetDate}' AND '{today}'
-                     ORDER BY c.dt;""")
-        self.cursor.execute(query)
-        self.cnx.commit()
+            # Grab wlc with the correct date
+            query = (f"""SELECT c.dt,
+                                IFNULL(a.asdf, '0')
+                         FROM `calendar` c
+                         LEFT OUTER JOIN
+                           (SELECT DATE, COUNT(asdf) AS asdf
+                            FROM `asdf`
+                            WHERE asdf > 0
+                            GROUP BY 1) AS a ON c.dt = a.date
+                         WHERE dt BETWEEN '{resetDate}' AND '{today}'
+                         ORDER BY c.dt;""")
+            self.cursor.execute(query)
+            self.cnx.commit()
 
-        wlc_streak = 0
-        streak_end = "läuft lohnt"
+            wlc_streak = 0
+            streak_end = "läuft lohnt"
 
-        if self.cursor.rowcount > 0:
-            rows = self.cursor.fetchall()
-            maxStreak = 0
-            currStreak = 0
+            if self.cursor.rowcount > 0:
+                rows = self.cursor.fetchall()
+                maxStreak = 0
+                currStreak = 0
 
-            for row in rows:
-                if int(row[1]) > 0:
-                    currStreak += 1
-                elif int(row[1]) == 0:
-                    if currStreak > maxStreak:
-                        maxStreak = currStreak
-                        streak_end = row[0]
-                    currStreak = 0
+                for row in rows:
+                    if int(row[1]) > 0:
+                        currStreak += 1
+                    elif int(row[1]) == 0:
+                        if currStreak > maxStreak:
+                            maxStreak = currStreak
+                            streak_end = row[0]
+                        currStreak = 0
 
-            wlc_streak = max(maxStreak, currStreak)
+                wlc_streak = max(maxStreak, currStreak)
 
-        # Set streak end to the day before
-        if streak_end != "läuft lohnt":
-            streak_end -= timedelta(days=1)
+            # Set streak end to the day before
+            if streak_end != "läuft lohnt":
+                streak_end -= timedelta(days=1)
 
-        # Grab users
-        query = (f"SELECT DISTINCT(author) FROM `asdf`")
-        self.cursor.execute(query)
-        self.cnx.commit()
+            # Grab users
+            query = (f"SELECT DISTINCT(author) FROM `asdf`")
+            self.cursor.execute(query)
+            self.cnx.commit()
 
-        if self.cursor.rowcount > 0:
-            rows = self.cursor.fetchall()
-            user_streaks = {}
-            r = ''
-            asdfEmbed = discord.Embed(title=f'Top ASDF streaks',
-                                      colour=discord.Colour.from_rgb(
-                                          102, 153, 255))
+            if self.cursor.rowcount > 0:
+                rows = self.cursor.fetchall()
+                user_streaks = {}
+                r = ''
+                asdfEmbed = discord.Embed(title=f'Top ASDF streaks',
+                                          colour=discord.Colour.from_rgb(
+                                              102, 153, 255))
 
-            for row in rows:
-                user_streak = self.getUserStreak(int(row[0]))
-                user = ctx.guild.get_member(int(row[0]))
-                if user.nick == None:
-                    user = user.name
-                else:
-                    user = user.nick
-                user_streaks[user] = user_streak
+                for row in rows:
+                    user_streak = self.getUserStreak(int(row[0]))
+                    user = ctx.guild.get_member(int(row[0]))
+                    if user.nick == None:
+                        user = user.name
+                    else:
+                        user = user.nick
+                    user_streaks[user] = user_streak
 
-            user_streaks_sorted = sorted(user_streaks.items(),
-                                         key=lambda x: x[1],
-                                         reverse=True)
+                user_streaks_sorted = sorted(user_streaks.items(),
+                                             key=lambda x: x[1],
+                                             reverse=True)
 
-            for user in user_streaks_sorted:
-                r += f'{user[0]}: {user[1]}\n'
+                for user in user_streaks_sorted:
+                    r += f'{user[0]}: {user[1]}\n'
 
-            asdfEmbed.add_field(
-                name=f'**WLC max: {wlc_streak}**\nEnded: {streak_end}',
-                value=r)
+                asdfEmbed.add_field(
+                    name=f'**WLC max: {wlc_streak}**\nEnded: {streak_end}',
+                    value=r)
 
-        if wlc_streak == 0:
-            await ctx.send(f'```Noch keine streak ... bis jetzt.```')
-        else:
-            await ctx.send(embed=asdfEmbed)
+            if wlc_streak == 0:
+                await ctx.send(f'```Noch keine streak ... bis jetzt.```')
+            else:
+                await ctx.send(embed=asdfEmbed)
 
     # Calculate user streak
     def getUserStreak(self, user):
         # Check DB connection
-        self.cnx = check_connection(self.cnx)
-        self.cursor = self.cnx.cursor(buffered=True)
         query = (f"""SELECT c.dt,
                             IFNULL(a.asdf, '0')
                      FROM `calendar` c
@@ -291,50 +288,49 @@ class asdf(commands.Cog):
 
     # Calculate and print overall stats and ranking
     async def printStats(self, ctx, keyword):
-        # Check DB connection
-        self.cnx = check_connection(self.cnx)
-        self.cursor = self.cnx.cursor(buffered=True)
-        query = (f"""SELECT author,
-                            count({keyword})
-                     FROM `asdf`
-                     WHERE {keyword} > 0
-                     GROUP BY 1
-                     ORDER BY 2 DESC;""")
-        self.cursor.execute(query)
-        self.cnx.commit()
+        async with ctx.channel.typing():
+            # Check DB connection
+            self.cnx = check_connection(self.cnx)
+            self.cursor = self.cnx.cursor(buffered=True)
+            query = (f"""SELECT author,
+                                count({keyword})
+                         FROM `asdf`
+                         WHERE {keyword} > 0
+                         GROUP BY 1
+                        ORDER BY 2 DESC;""")
+            self.cursor.execute(query)
+            self.cnx.commit()
 
-        total = 0
+            total = 0
 
-        if self.cursor.rowcount > 0:
-            rows = self.cursor.fetchall()
-            r = ''
+            if self.cursor.rowcount > 0:
+                rows = self.cursor.fetchall()
+                r = ''
 
-            # ASDF ranking should be green
-            if keyword == "asdf":
-                asdfEmbed = discord.Embed(title=f'{keyword.upper()} ranking',
-                                          colour=discord.Colour.from_rgb(
-                                              25, 100, 25))
-            # FAIL ranking should be red
-            else:
-                asdfEmbed = discord.Embed(title=f'{keyword.upper()} ranking',
-                                          colour=discord.Colour.from_rgb(
-                                              153, 0, 0))
-
-            for row in rows:
-                total += int(row[1])
-                user = ctx.guild.get_member(int(row[0]))
-                if user.nick == None:
-                    user = user.name
+                # ASDF ranking should be green
+                if keyword == "asdf":
+                    colour = discord.Colour.from_rgb(25, 100, 25)
                 else:
-                    user = user.nick
-                r += f'{user}: {row[1]}\n'
+                    colour = discord.Colour.from_rgb(153, 0, 0)
 
-            asdfEmbed.add_field(name=f'**Gesamt: {total}**', value=r)
+                asdfEmbed = discord.Embed(title=f'{keyword.upper()} ranking',
+                                          colour=colour)
 
-        if total == 0:
-            await ctx.send(f'```Noch keine {keyword}s ... bis jetzt.```')
-        else:
-            await ctx.send(embed=asdfEmbed)
+                for row in rows:
+                    total += int(row[1])
+                    user = ctx.guild.get_member(int(row[0]))
+                    if user.nick == None:
+                        user = user.name
+                    else:
+                        user = user.nick
+                    r += f'{user}: {row[1]}\n'
+
+                asdfEmbed.add_field(name=f'**Gesamt: {total}**', value=r)
+
+            if total == 0:
+                await ctx.send(f'```Noch keine {keyword}s ... bis jetzt.```')
+            else:
+                await ctx.send(embed=asdfEmbed)
 
 
 def setup(client):
