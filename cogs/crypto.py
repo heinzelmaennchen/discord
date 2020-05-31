@@ -21,9 +21,10 @@ class crypto(commands.Cog):
 
         if message.content.startswith('$'):
             coin = message.content[1:].upper().strip(' ,')
-            await message.channel.send(self.getCurrentValues(coin))
+            await self.checkChannelAndSend(message,
+                                           self.getCurrentValues(coin))
         elif message.content == '€zk':
-            await message.channel.send(self.getEzkValue())
+            await self.checkChannelAndSend(message, self.getEzkValue())
 
     # Fun crypto commands
     @commands.command()
@@ -54,32 +55,37 @@ class crypto(commands.Cog):
     @commands.command(aliases=['buffett'])
     @commands.guild_only()
     async def buffet(self, ctx):
-        await ctx.send('https://imgur.com/02Bxkye')
+        await self.checkChannelAndSend(ctx.message,
+                                       'https://imgur.com/02Bxkye')
 
     # Real crypto commands
     @commands.command()
     @commands.guild_only()
     async def top(self, ctx):
         globalStats = True
-        await ctx.send(self.getCurrentValues(self.ourCoins, globalStats))
+        await self.checkChannelAndSend(
+            ctx.message, self.getCurrentValues(self.ourCoins, globalStats))
 
     @commands.command(aliases=['topbtc', 'topBtc'])
     @commands.guild_only()
     async def topBTC(self, ctx):
-        await ctx.send(self.getCurrentValues(self.ourCoins, currency='BTC'))
+        await self.checkChannelAndSend(
+            ctx.message, self.getCurrentValues(self.ourCoins, currency='BTC'))
 
     @commands.command(aliases=['top10'])
     @commands.guild_only()
     async def topten(self, ctx):
         coins = self.getTopTenCoins()
-        await ctx.send(self.getCurrentValues(coins))
+        await self.checkChannelAndSend(ctx.message,
+                                       self.getCurrentValues(coins))
 
     @commands.command(
         aliases=['toptenbtc', 'toptenBtc', 'top10BTC', 'top10Btc', 'top10btc'])
     @commands.guild_only()
     async def toptenBTC(self, ctx):
         coins = self.getTopTenCoins()
-        await ctx.send(self.getCurrentValues(coins, currency='BTC'))
+        await self.checkChannelAndSend(
+            ctx.message, self.getCurrentValues(coins, currency='BTC'))
 
     # Crypto helper functions
     def getCurrentValues(self, coin, globalStats=False, currency='EUR'):
@@ -193,6 +199,15 @@ class crypto(commands.Cog):
             round((value / 220 - 1) * 100, 2))
         r += '```'
         return r
+
+    # Check if the channel is crypto or test, otherwise Eierklatscher
+    async def checkChannelAndSend(self, message, function):
+        if message.channel.id == 351724430306574357 or message.channel.id == 705617951440633877:
+            await message.channel.send(function)
+        else:
+            await message.add_reaction('🥚')
+            await message.add_reaction('👏')
+            await message.channel.send('fc, heast!')
 
 
 def setup(client):

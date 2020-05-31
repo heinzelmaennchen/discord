@@ -2,11 +2,12 @@ from PIL import Image, ImageDraw, ImageFont
 import requests
 import math
 
+
 # Helper functions for Level system
 
-
 # Create a rankcard image (for !rank command in Cog levels)
-def createRankcard(author, authornum, authorurl, rank, level, lvlxp, nlvlxp):
+async def createRankcard(author, authornum, authorurl, rank, level, lvlxp,
+                         nlvlxp):
     # Parameter Aufbereitung
     if lvlxp >= 1000:
         lvlxp = math.floor(lvlxp / 10) * 10
@@ -96,7 +97,7 @@ def createRankcard(author, authornum, authorurl, rank, level, lvlxp, nlvlxp):
 
 
 # Create a leaderboard image (for !levels command in Cog levels)
-def createLeaderboard(author, authorurl, level, xp, lvlxp, nlvlxp):
+async def createLeaderboard(author, authorurl, level, xp, lvlxp, nlvlxp):
 
     # Colors
     cGold = (218, 158, 59, 0)
