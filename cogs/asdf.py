@@ -230,7 +230,8 @@ class asdf(commands.Cog):
                                               102, 153, 255))
 
                 for row in rows:
-                    user_streak = self.getUserStreak(int(row[0]))
+                    user_streak = self.getUserStreak(int(row[0]), resetDate,
+                                                     today)
                     user = ctx.guild.get_member(int(row[0]))
                     if user.nick == None:
                         user = user.name
@@ -255,7 +256,7 @@ class asdf(commands.Cog):
                 await ctx.send(embed=asdfEmbed)
 
     # Calculate user streak
-    def getUserStreak(self, user):
+    def getUserStreak(self, user, resetDate, today):
         # Check DB connection
         query = (f"""SELECT c.dt,
                             IFNULL(a.asdf, '0')
@@ -266,7 +267,7 @@ class asdf(commands.Cog):
                         WHERE asdf > 0
                         AND author = {user}
                         GROUP BY 1) AS a ON c.dt = a.date
-                     WHERE dt BETWEEN '2020-05-05' AND '2020-05-30'
+                     WHERE dt BETWEEN '{resetDate}' AND '{today}'
                      ORDER BY c.dt;""")
         self.cursor.execute(query)
         self.cnx.commit()
