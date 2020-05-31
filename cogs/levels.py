@@ -121,7 +121,10 @@ class levels(commands.Cog):
                     file=discord.File('storage/levels/leaderboard.png'))
 
     # Runs in its own thread and updates the author's XP in the database
-    async def updateXp(self, message):
+    async def updateXp(self, message, keyword=None):
+        # Wait before the asdf period is over to distribute bonus xp
+        if keyword is not None:
+            await asyncio.sleep(180)
         # Check DB connection
         self.cnx = check_connection(self.cnx)
         self.cursor = self.cnx.cursor(buffered=True)
@@ -141,9 +144,20 @@ class levels(commands.Cog):
             self.cnx.commit()
         else:
             row = self.cursor.fetchone()
-            new_xp = row[1] + 20
+            # Check the keyword to determine xp modifier
+            if keyword == 'asdf':
+                new_xp = row[1] + 1337
+            elif keyword == 'fail':
+                if row[1] < 1337:
+                    new_xp = 0
+                else:
+                    new_xp = row[1] - 1337
+            else:
+                new_xp = row[1] + 20
+
             level_current = row[2]
             loop_xp = 0
+
             # Calculate the level limits and check if there was a level-up
             for i in range(0, 500):
                 xp_needed = 5 * (i**2) + 50 * i + 100
@@ -152,25 +166,34 @@ class levels(commands.Cog):
                     level_reached = i
                     break
 
+            # Check for levelup, leveldown or no change
             if level_reached > level_current:
-                # sendCongratsMessage(message.author.id)
                 query = (
                     f'UPDATE `levels` SET `xp`={new_xp}, `level`={level_reached} WHERE author = {message.author.id}'
                 )
-                self.cursor.execute(query)
-                self.cnx.commit()
                 await message.channel.send(
                     f"Grz {message.author.mention}, du Heisl! **Level {level_reached}!**"
+                )
+            elif level_reached < level_current:
+                query = (
+                    f'UPDATE `levels` SET `xp`={new_xp}, `level`={level_reached} WHERE author = {message.author.id}'
+                )
+                await message.channel.send(
+                    f"Grz zum verlorenen Level, {message.author.mention}, du Heisl! **Level {level_reached}!**"
                 )
             else:
                 query = (
                     f'UPDATE `levels` SET `xp`={new_xp} WHERE author = {message.author.id}'
                 )
-                self.cursor.execute(query)
-                self.cnx.commit()
-        # Wait for 30 seconds and then remove the author from the active list to allow for new XP
-        await asyncio.sleep(30)
-        self.active_authors.remove(message.author.id)
+
+            self.cursor.execute(query)
+            self.cnx.commit()
+        # If regular message, wait for 30 seconds and then remove the author from the active list to allow for new XP
+        if keyword == None:
+            await asyncio.sleep(30)
+            self.active_authors.remove(message.author.id)
+        else:
+            return
 
 
 def setup(client):

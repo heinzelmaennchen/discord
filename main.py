@@ -27,8 +27,8 @@ async def on_ready():
         try:
             client.load_extension(cog)
             print(f'{cog} loaded')
-        except Exception:
-            print(f'Couldn\'t load cog {cog}')
+        except Exception as e:
+            print(f'Couldn\'t load cog {cog}: {e}')
     print('Loading cogs finished')
     initTimerJSON()
     from cogs.timers import restartTimersOnBoot
