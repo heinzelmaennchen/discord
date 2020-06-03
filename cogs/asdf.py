@@ -140,7 +140,7 @@ class asdf(commands.Cog):
         self.cnx.commit()
 
         # Execute updateXp from levels to give or remove bonus xp
-        # asyncio.create_task(self.levels.updateXp(message, keyword)) TODO: uncomment after reset
+        asyncio.create_task(self.levels.updateXp(message, keyword))
 
     # List asdf stats
     async def printStreak(self, ctx):
@@ -160,7 +160,7 @@ class asdf(commands.Cog):
                     timezone('Europe/Vienna')) - timedelta(days=1)
                 today = today.strftime('%Y-%m-%d')
 
-            resetDate = '2020-05-30'  # TODO: set to correct reset date, once reset happens
+            resetDate = '2020-06-04'
 
             # Grab wlc with the correct date
             query = (f"""SELECT c.dt,
