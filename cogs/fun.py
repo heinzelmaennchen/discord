@@ -96,6 +96,15 @@ class fun(commands.Cog):
         elif 'antrag' in message.content.lower(
         ) and not 'antrag abgelehnt' in message.content.lower():
             await message.channel.send('Antrag ... abgelehnt! ❌')
+        elif 'rino' in message.content.lower().split():
+            embed = discord.Embed(colour=discord.Colour.from_rgb(47, 49, 54))
+            embed.set_author(
+                name="Rino",
+                icon_url=
+                "https://cdn.discordapp.com/avatars/704565975059791882/747f17af810cda3f43ecd01825087f79.png?size=1024"
+            )
+            embed.description = "Bin gleich da."
+            await message.channel.send(embed=embed)
 
 
 def setup(client):
