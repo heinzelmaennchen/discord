@@ -40,6 +40,34 @@ class skills(commands.Cog):
             r = False
         return r
 
+    # On Message Listener
+    @commands.Cog.listener()
+    async def on_message(self, message):
+        if message.author == self.client.user or message.author.bot or message.channel.type == "private":
+            return
+
+        # Triple repeat
+        '''repeats the message if the same message was sent three times in a row by unique authors'''
+        author_list = []
+        global repeat_dict
+
+        if message.channel.id in repeat_dict:
+            comparison_message = str(repeat_dict[message.channel.id][0])
+            author_list = repeat_dict[message.channel.id][1]
+            if message.content.lower() == comparison_message.lower():
+                if message.author.id not in author_list:
+                    author_list.append(message.author.id)
+                    if len(author_list) == 3:
+                        await message.channel.send(message.content)
+                        repeat_dict.pop(message.channel.id, None)
+            else:
+                repeat_dict.update({
+                    message.channel.id: [message.content, [message.author.id]]
+                })
+        else:
+            repeat_dict.update(
+                {message.channel.id: [message.content, [message.author.id]]})
+
     # Dice Roll
     @commands.command(aliases=['rand', 'dice', 'roll'])
     @commands.guild_only()
@@ -72,34 +100,6 @@ class skills(commands.Cog):
                 end = int(arg[1])
             await ctx.send('({0} - {1}): {2}'.format(
                 start, end, random.randint(start, end)))
-
-    # On Message Listener
-    @commands.Cog.listener()
-    async def on_message(self, message):
-        if message.author == self.client.user or message.author.bot or message.channel.type == "private":
-            return
-
-        # Triple repeat
-        '''repeats the message if the same message was sent three times in a row by unique authors'''
-        author_list = []
-        global repeat_dict
-
-        if message.channel.id in repeat_dict:
-            comparison_message = str(repeat_dict[message.channel.id][0])
-            author_list = repeat_dict[message.channel.id][1]
-            if message.content.lower() == comparison_message.lower():
-                if message.author.id not in author_list:
-                    author_list.append(message.author.id)
-                    if len(author_list) == 3:
-                        await message.channel.send(message.content)
-                        repeat_dict.pop(message.channel.id, None)
-            else:
-                repeat_dict.update({
-                    message.channel.id: [message.content, [message.author.id]]
-                })
-        else:
-            repeat_dict.update(
-                {message.channel.id: [message.content, [message.author.id]]})
 
     # Youtube video search
     @commands.command()
