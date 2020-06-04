@@ -1,5 +1,6 @@
 import discord
 from discord.ext import commands
+import asyncio
 
 
 class fun(commands.Cog):
@@ -32,6 +33,15 @@ class fun(commands.Cog):
     @commands.guild_only()
     async def gehackt(self, ctx):
         await ctx.send(':boom: GESPRENGT :boom:')
+
+    @commands.command(hidden=True)
+    @commands.guild_only()
+    async def easteregg(self, ctx):
+        await ctx.send('Das easteregg ist ...')
+        await asyncio.sleep(5)
+        await ctx.message.add_reaction('🥚')
+        await ctx.message.add_reaction('👏')
+        await ctx.send('... jebaitet!')
 
     @commands.command()
     @commands.guild_only()
@@ -84,19 +94,20 @@ class fun(commands.Cog):
         if message.author == self.client.user or message.author.bot or message.channel.type == "private":
             return
 
-        if 'good bot' in message.content.lower():
+        msg = message.content.lower()
+
+        if ('good bot' in msg or 'bot best' in msg):
             await message.channel.send(':smiling_face_with_3_hearts:')
-        elif 'bad bot' in message.content.lower():
+        elif ('bad bot' in msg or 'scheiss bot' in msg or 'scheiß bot' in msg):
             await message.channel.send(':F')
-        elif 'thx bot' in message.content.lower():
+        elif ('thx bot' in msg or 'danke bot' in msg):
             await message.channel.send('<a:meh:563687194351501340>')
-        elif 'conan' in message.content.lower():
+        elif 'conan' in msg:
             await message.channel.send(
                 'https://youtube.com/watch?v=Oo9buo9Mtos')
-        elif 'antrag' in message.content.lower(
-        ) and not 'antrag abgelehnt' in message.content.lower():
+        elif 'antrag' in msg and not 'abgelehnt' in msg:
             await message.channel.send('Antrag ... abgelehnt! ❌')
-        elif 'rino' in message.content.lower().split():
+        elif 'rino' in msg.split():
             embed = discord.Embed(colour=discord.Colour.from_rgb(47, 49, 54))
             embed.set_author(
                 name="Rino",
@@ -105,6 +116,13 @@ class fun(commands.Cog):
             )
             embed.description = "Bin gleich da."
             await message.channel.send(embed=embed)
+        elif ('obi wan' in msg or 'kenobi' in msg):
+            await message.channel.send(
+                'https://giphy.com/gifs/mrw-top-escalator-Nx0rz3jtxtEre')
+        elif 'bruce lee' in msg:
+            await message.channel.send('https://youtu.be/nOodKRhf59s')
+        elif 'alf' in msg.split():
+            await message.channel.send('https://youtu.be/sGs6gSrvrhY')
 
 
 def setup(client):

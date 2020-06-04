@@ -58,6 +58,14 @@ async def load(ctx, extension):
     client.load_extension(f'cogs.{extension}')
 
 
+# Invalid command
+@client.event
+async def on_command_error(ctx, error):
+    if isinstance(error, commands.CommandNotFound):
+        await ctx.message.add_reaction('🥚')
+        await ctx.message.add_reaction('👏')
+
+
 # Initiate the file that timers are stored in
 def initTimerJSON():
     try:
