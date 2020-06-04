@@ -98,7 +98,8 @@ class fun(commands.Cog):
 
         if ('good bot' in msg or 'bot best' in msg):
             await message.channel.send(':smiling_face_with_3_hearts:')
-        elif ('bad bot' in msg or 'scheiss bot' in msg or 'scheiß bot' in msg):
+        elif ('bad bot' in msg or 'scheiss bot' in msg or 'scheiß bot' in msg
+              or 'shit bot' in msg or 'huren bot' in msg):
             await message.channel.send(':F')
         elif ('thx bot' in msg or 'danke bot' in msg):
             await message.channel.send('<a:meh:563687194351501340>')
@@ -107,7 +108,7 @@ class fun(commands.Cog):
                 'https://youtube.com/watch?v=Oo9buo9Mtos')
         elif 'antrag' in msg and not 'abgelehnt' in msg:
             await message.channel.send('Antrag ... abgelehnt! ❌')
-        elif 'rino' in msg.split():
+        elif 'rino' in msg.split() and message.channel == 156040097819525120:
             embed = discord.Embed(colour=discord.Colour.from_rgb(47, 49, 54))
             embed.set_author(
                 name="Rino",
