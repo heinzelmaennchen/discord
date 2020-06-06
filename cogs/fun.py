@@ -108,7 +108,7 @@ class fun(commands.Cog):
                 'https://youtube.com/watch?v=Oo9buo9Mtos')
         elif 'antrag' in msg and not 'abgelehnt' in msg:
             await message.channel.send('Antrag ... abgelehnt! ❌')
-        elif 'rino' in msg.split() and message.channel == 156040097819525120:
+        elif 'rino' in msg.split() and message.channel.id == 156040097819525120:
             embed = discord.Embed(colour=discord.Colour.from_rgb(47, 49, 54))
             embed.set_author(
                 name="Rino",
