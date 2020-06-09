@@ -58,8 +58,8 @@ class skills(commands.Cog):
                 if message.author.id not in author_list:
                     author_list.append(message.author.id)
                     if len(author_list) == 3:
-                        await message.channel.send(message.content)
                         repeat_dict.pop(message.channel.id, None)
+                        await message.channel.send(message.content)
             else:
                 repeat_dict.update({
                     message.channel.id: [message.content, [message.author.id]]
