@@ -28,10 +28,10 @@ class quote(commands.Cog):
                 )
                 return
         else:
-            number = random.randint(1, 368542)
+            number = random.randint(1, 453299)
 
         query = (f"""SELECT number, `time`, author, message
-                FROM wlc_quotes WHERE number IN
+                FROM wlc_quotes_v2 WHERE number IN
                 (SELECT nr FROM
                  (SELECT {number} AS nr""")
         for i in range(1, offset):
