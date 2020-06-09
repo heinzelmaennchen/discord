@@ -35,7 +35,7 @@ class skills(commands.Cog):
             if result % 1 == 0:
                 r = int(result)
             else:
-                r = float(result)
+                r = round(float(result), 4)
         except:
             r = False
         return r
