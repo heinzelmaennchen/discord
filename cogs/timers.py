@@ -20,7 +20,7 @@ class timers(commands.Cog):
     async def timer(self, ctx, *, arg):
         '''creates a timer
     ---------------
-    !timr <duration> or !timr <duration> <reason>
+    !timer <duration> or !timer <duration> <reason>
     <duration> Each of the following terms is optional but at least one has to be used. Timer durations < 10s and > 10y aren't allowed.
     
     2years 3weeks 2days 7hours 30minutes 17seconds
@@ -29,7 +29,7 @@ class timers(commands.Cog):
                                  m         s
     
     <reason> (optional) text which will be added to the mention
-    Example: !timr 4h 30min Zockerdonnerstag!!!
+    Example: !timer 4h 30min Zockerdonnerstag!!!
     '''
         compiled = re.compile(
             r'((?P<years>[0-9]+) ?y(ears?)?)?( ?(?P<weeks>[0-9]+) ?w(eeks?)?)?( ?(?P<days>[0-9]+) ?d(ays?)?)?( ?(?P<hours>[0-9]+) ?h(ours?)?)?( ?(?P<minutes>[0-9]+) ?m(in(utes?)?)?)?( ?(?P<seconds>[0-9]+) ?s(ec(onds?)?)?)?( (?P<prep>(to)|(for)+))?( (?P<reason>.+))?',
