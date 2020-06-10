@@ -54,6 +54,11 @@ class levels(commands.Cog):
                     rest_xp += xp_needed
                     break
 
+            if ctx.author.nick == None:
+                name = ctx.author.name
+            else:
+                name = ctx.author.nick
+
             query = ('SELECT author, xp FROM levels ORDER BY xp DESC')
             self.cursor.execute(query)
             self.cnx.commit()
@@ -63,11 +68,9 @@ class levels(commands.Cog):
                 if ctx.author.id == row[0]:
                     break
 
-            await createRankcard(ctx.author.name, ctx.author.discriminator,
-                                 ctx.author.avatar_url, rank, level_current,
-                                 rest_xp, nlvlxp)
-            await ctx.send(
-                file=discord.File(f"storage/levels/{ctx.author.name}.png"))
+            await createRankcard(name, ctx.author.avatar_url, rank, xp,
+                                 level_current, rest_xp, nlvlxp)
+            await ctx.send(file=discord.File(f"storage/levels/{name}.png"))
 
     @commands.command()
     @commands.guild_only()
