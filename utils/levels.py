@@ -35,11 +35,11 @@ async def createRankcard(author, authorurl, rank, xp, level, lvlxp, nlvlxp):
         (nlvlxp - lvlxp) / 20)).replace(',', ' ')
     strXp = '{:,}'.format(xp).replace(',', ' ')
 
-    if rank == 0:
+    if rank == 1:
         rankColor = cGold
-    elif rank == 1:
-        rankColor = cSilver
     elif rank == 2:
+        rankColor = cSilver
+    elif rank == 3:
         rankColor = cBronze
     else:
         rankColor = cDarkGrey
