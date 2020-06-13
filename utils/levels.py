@@ -180,11 +180,26 @@ async def createLeaderboard(author, authorurl, level, xp, lvlxp, nlvlxp):
                                   (usercount - 1) + 2 * border),
                           color='#23272A')
 
+    # Längte XP und MSG2LVL Zahl
+    maxXp_width = 0
+    maxM2L_width = 0
     for i in range(0, len(author)):
-        # Parameter Aufbereitung
+        strXp = '{:,}'.format(xp[i]).replace(',', ' ')
         msgtolvlup = '{:,}'.format(math.ceil(
             (nlvlxp[i] - lvlxp[i]) / 20)).replace(',', ' ')
+        if fntL.getsize(msgtolvlup)[0] > maxM2L_width:
+            maxM2L_width = fntL.getsize(msgtolvlup)[0]
+
+    for i in range(0, len(author)):
+        # Parameter Aufbereitung
         strXp = '{:,}'.format(xp[i]).replace(',', ' ')
+        msgtolvlup = '{:,}'.format(math.ceil(
+            (nlvlxp[i] - lvlxp[i]) / 20)).replace(',', ' ')
+        if i > 0:
+            msgtorank = '{:,}'.format(math.ceil(
+                (xp[i - 1] - xp[i]) / 20)).replace(',', ' ')
+        else:
+            msgtorank = '--'
 
         if i == 0:
             rankColor = cGold
@@ -218,7 +233,7 @@ async def createLeaderboard(author, authorurl, level, xp, lvlxp, nlvlxp):
         # NAME Location
         disName = 10
         locName = (disRankCircle + sizRankCircle + disLogo + sizLogo + disName,
-                   y / 2 - fntXL_height / 2)
+                   y / 2 - fntXL_height / 2 - 2)
         # LEVEL location
         widthLvl = fntXL.getsize(str(level[i]))[0]
         locLvl = (locProgress[0] + sizProgress / 2 - widthLvl / 2,
@@ -226,20 +241,34 @@ async def createLeaderboard(author, authorurl, level, xp, lvlxp, nlvlxp):
         # EXPERIENCE TEXT & NUM location
         xptext_width = fntS.getsize('EXPERIENCE')[0]
         xpnum_width = fntL.getsize(strXp)[0]
-        xp_width = max(xptext_width, xpnum_width)
+        xp_width = max(xptext_width, maxXp_width)
 
         disXp = 35
         locXptext = (x - disProgress - sizProgress - disXp - xptext_width, 20)
         locXpnum = (x - disProgress - sizProgress - disXp - xpnum_width, 50)
-        # MSG 2 LVLUP TEXT  & NUM location
-        msgtext_width = fntS.getsize('^ MSGS')[0]
-        msgnum_width = fntL.getsize(msgtolvlup)[0]
+        # MSG 2 LVLUP & RANKUP TEXT  & NUM location
+        msgLtext_width = fntS.getsize('LVL^')[0]
+        msglvl_width = fntL.getsize(msgtolvlup)[0]
+        msgL_width = max(maxM2L_width, msgLtext_width)
 
-        disMsg = 35
-        locMsgText = (x - disProgress - sizProgress - disXp - xp_width -
-                      disMsg - msgtext_width, 20)
-        locMsgNum = (x - disProgress - sizProgress - disXp - xp_width -
-                     disMsg - msgnum_width, 50)
+        msgRtext_width = fntS.getsize('RANK^')[0]
+        msgrank_width = fntL.getsize(msgtorank)[0]
+        if i > 0:
+            msgR_width = max(msgrank_width, msgRtext_width)
+        else:
+            msgR_width = 0
+
+        disMsg = 25
+        locMsgLText = (x - disProgress - sizProgress - disXp - xp_width -
+                       disMsg - msgLtext_width, 20)
+        locMsgLvl = (x - disProgress - sizProgress - disXp - xp_width -
+                     disMsg - msglvl_width, 50)
+
+        locMsgRText = (x - disProgress - sizProgress - disXp - xp_width -
+                       disMsg - msgL_width - disMsg - msgRtext_width, 20)
+        locMsgRank = (x - disProgress - sizProgress - disXp - xp_width -
+                      disMsg - msgL_width - disMsg - msgrank_width, 50)
+
         # New Image with size x10 for antialiasing of Circles
         img = Image.new('RGB', (x * 10, y * 10), color=(0, 0, 0, 0))
         # Alpha Mask for User Logo (circle)
@@ -281,8 +310,10 @@ async def createLeaderboard(author, authorurl, level, xp, lvlxp, nlvlxp):
         # Draw Call
         draw = ImageDraw.Draw(img)
         # Username - Text
-        if fntXL.getsize(author[i])[0] > 271:
-            while fntXL.getsize(author[i])[0] > 250:
+        maxname = 271
+        maxname = x - disRankCircle - sizRankCircle - disLogo - sizLogo - disName - disProgress - sizProgress - disXp - xp_width - disMsg - msgL_width - disMsg - msgR_width - 20
+        if fntXL.getsize(author[i])[0] > maxname:
+            while fntXL.getsize(author[i])[0] > maxname - 21:
                 author[i] = author[i][:-1]
             author[i] += '...'
         draw.text((locName[0], locName[1]),
@@ -295,8 +326,11 @@ async def createLeaderboard(author, authorurl, level, xp, lvlxp, nlvlxp):
         draw.text(locXptext, 'EXPERIENCE', font=fntS, fill=cLightGrey)
         draw.text(locXpnum, strXp, font=fntL, fill='white')
         # MSG - TEXT
-        draw.text(locMsgText, '^ MSGS', font=fntS, fill=cLightGrey)
-        draw.text(locMsgNum, msgtolvlup, font=fntL, fill='white')
+        draw.text(locMsgLText, 'LVL^', font=fntS, fill=cLightGrey)
+        draw.text(locMsgLvl, msgtolvlup, font=fntL, fill='white')
+        if i > 0:
+            draw.text(locMsgRText, 'RANK^', font=fntS, fill=cLightGrey)
+            draw.text(locMsgRank, msgtorank, font=fntL, fill='white')
         # RANK - TEXT
         draw.text(locRank, str(i + 1), font=fntL, fill='white')
         # PASTE IMAGE into LEADERBOARD
