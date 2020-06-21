@@ -64,6 +64,8 @@ async def on_command_error(ctx, error):
     if isinstance(error, commands.CommandNotFound):
         await ctx.message.add_reaction('🥚')
         await ctx.message.add_reaction('👏')
+    else:
+        print(error)
 
 
 # Initiate the file that timers are stored in
