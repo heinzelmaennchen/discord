@@ -1,6 +1,7 @@
 import discord
 from discord.ext import commands
 import asyncio
+import random
 
 
 class fun(commands.Cog):
@@ -95,6 +96,7 @@ class fun(commands.Cog):
             return
 
         msg = message.content.lower()
+        cleanMsg = cleanupString(msg)
 
         if ('good bot' in msg or 'bot best' in msg):
             await message.channel.send(':smiling_face_with_3_hearts:')
@@ -108,7 +110,8 @@ class fun(commands.Cog):
                 'https://youtube.com/watch?v=Oo9buo9Mtos')
         elif 'antrag' in msg and not 'abgelehnt' in msg:
             await message.channel.send('Antrag ... abgelehnt! ❌')
-        elif 'rino' in msg.split() and message.channel.id == 156040097819525120:
+        elif 'rino' in cleanMsg.split(
+        ) and message.channel.id == 156040097819525120:
             embed = discord.Embed(colour=discord.Colour.from_rgb(47, 49, 54))
             embed.set_author(
                 name="Rino",
@@ -117,13 +120,34 @@ class fun(commands.Cog):
             )
             embed.description = "Bin gleich da."
             await message.channel.send(embed=embed)
+        elif 'peda' in cleanMsg.split(
+        ) and message.channel.id == 156040097819525120:
+            strList = [
+                'cool bist!',
+                'leute besorgts zeug ich will mich zu pufffffffen',
+                'willst du meine du mich heirante?'
+            ]
+            embed = discord.Embed(colour=discord.Colour.from_rgb(47, 49, 54))
+            embed.set_author(
+                name="Peda",
+                icon_url="https://cdn.discordapp.com/embed/avatars/2.png")
+            embed.description = random.choice(strList)
+            await message.channel.send(embed=embed)
         elif ('obi wan' in msg or 'kenobi' in msg):
             await message.channel.send(
                 'https://giphy.com/gifs/mrw-top-escalator-Nx0rz3jtxtEre')
         elif 'bruce lee' in msg:
             await message.channel.send('https://youtu.be/nOodKRhf59s')
-        elif 'alf' in msg.split():
+        elif 'alf' in cleanMsg.split():
             await message.channel.send('https://youtu.be/sGs6gSrvrhY')
+
+
+def cleanupString(text):
+    chars = ".,?!"  # chars which get replaced by a space
+    for c in chars:
+        if c in text:
+            text = text.replace(c, ' ')
+    return text
 
 
 def setup(client):
