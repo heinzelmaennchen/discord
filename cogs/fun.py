@@ -108,7 +108,8 @@ class fun(commands.Cog):
         elif 'conan' in msg:
             await message.channel.send(
                 'https://youtube.com/watch?v=Oo9buo9Mtos')
-        elif 'antrag' in msg and not 'abgelehnt' in msg:
+        elif 'antrag' in cleanMsg.split(
+        ) and not 'abgelehnt' in cleanMsg.split():
             await message.channel.send('Antrag ... abgelehnt! ❌')
         elif 'rino' in cleanMsg.split(
         ) and message.channel.id == 156040097819525120:
