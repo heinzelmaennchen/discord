@@ -26,7 +26,7 @@ class skills(commands.Cog):
     async def calc(self, ctx, *, calcString):
         '''calculates the result of your expression'''
         result = self.doCalculate(calcString)
-        if result:
+        if result != None:
             await ctx.send(result)
 
     def doCalculate(self, calcStr):
@@ -35,9 +35,9 @@ class skills(commands.Cog):
             if result % 1 == 0:
                 r = int(result)
             else:
-                r = round(float(result), 4)
+                r = f'{round(float(result), 8):.8f}'.rstrip('0').rstrip('.')
         except:
-            r = False
+            r = None
         return r
 
     # On Message Listener
