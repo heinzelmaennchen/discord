@@ -217,7 +217,7 @@ def saveTimerToJSON(timer, endtime):
     timerCounter = jsonTimerData['counter'] + 1
     starttime = datetime.datetime.now().timestamp()
     if endtime == None:
-        endtime = starttime + timer[2]
+        endtime = int(starttime + timer[2])
     newCounter = {"counter": timerCounter}
     jsonTimerData.update(newCounter)
     newTimer = {
