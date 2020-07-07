@@ -116,9 +116,7 @@ class fun(commands.Cog):
         elif 'rino' in cleanMsg.split() and (message.channel.id
                                              == 156040097819525120
                                              or isDevServer(message)):
-            await message.channel.send(int(os.environ['RINO_ID']))
             user = await self.client.fetch_user(int(os.environ['RINO_ID']))
-            await message.channel.send(user)
             embed = discord.Embed(colour=discord.Colour.from_rgb(47, 49, 54))
             embed.set_author(name="Rino", icon_url=user.avatar_url)
             embed.description = "Bin gleich da."
