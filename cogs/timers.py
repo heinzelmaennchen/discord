@@ -4,6 +4,7 @@ from discord.ext import commands
 import re
 import asyncio
 import datetime
+from pytz import timezone
 import json
 
 from main import taskDict
@@ -20,62 +21,102 @@ class timers(commands.Cog):
     async def timer(self, ctx, *, arg):
         '''creates a timer
     ---------------
-    !timer <duration> or !timer <duration> <reason>
+    !timer <duration> or !timer <duration> <reason> OR
+    !timer <date> <time> or !timer <date> <time> <reason>
+
     <duration> Each of the following terms is optional but at least one has to be used. Timer durations < 10s and > 10y aren't allowed.
     
     2years 3weeks 2days 7hours 30minutes 17seconds
      year   week   day   hour    minute    second
      y      w      d     h       min       sec
                                  m         s
+
+    <date>: D.M.YYYY
+    <time>: hh:mm
+    The duration from now until <date> <time> isn't allowed to be < 10s or > 10y.
     
     <reason> (optional) text which will be added to the mention
-    Example: !timer 4h 30min Zockerdonnerstag!!!
+    
+    Examples: 
+    !timer 4h 30min Zockerdonnerstag!!!
+    !timer 13.7.1337 13:37 Oaschradieren!!!
     '''
         compiled = re.compile(
             r'((?P<years>[0-9]+) ?y(ears?)?)?( ?(?P<weeks>[0-9]+) ?w(eeks?)?)?( ?(?P<days>[0-9]+) ?d(ays?)?)?( ?(?P<hours>[0-9]+) ?h(ours?)?)?( ?(?P<minutes>[0-9]+) ?m(in(utes?)?)?)?( ?(?P<seconds>[0-9]+) ?s(ec(onds?)?)?)?( (?P<prep>(to)|(for)+))?( (?P<reason>.+))?',
             flags=re.I)
         match = compiled.match(arg)
         if match is None or not match.group(0):
-            await ctx.send(
-                'Heast Gschissana, die Zeit musst schon richtig eingeben, damit das was wird!'
-            )
-            return
+            compiled = re.compile(
+                r'(?P<reDateTime>(?P<day>[0-9]{1,2}).(?P<month>[0-9]{1,2}).(?P<year>[0-9]{4}) (?P<hour>[0-9]{1,2}):(?P<minute>[0-9]{1,2}))( (?P<reason>.+))?',
+                flags=re.I)
+            match = compiled.match(arg)
+            if match is None or not match.group(0):
+                await ctx.send(
+                    'Heast Gschissana, die Dauer bzw. Datum/Zeit musst schon richtig eingeben, damit das was wird!'
+                )
+                return
+            else:
+                timerStatus = 1
+        else:
+            timerStatus = 0
         duration = 0
+        endtime = None
 
-        years = match.group('years')
-        if years is not None:
-            duration += int(years.rstrip(' yY')) * 60 * 60 * 24 * 365
+        if timerStatus == 0:
+            years = match.group('years')
+            if years is not None:
+                duration += int(years.rstrip(' yY')) * 60 * 60 * 24 * 365
 
-        weeks = match.group('weeks')
-        if weeks is not None:
-            duration += int(weeks.rstrip(' wW')) * 60 * 60 * 24 * 7
+            weeks = match.group('weeks')
+            if weeks is not None:
+                duration += int(weeks.rstrip(' wW')) * 60 * 60 * 24 * 7
 
-        days = match.group('days')
-        if days is not None:
-            duration += int(days.rstrip(' dD')) * 60 * 60 * 24
+            days = match.group('days')
+            if days is not None:
+                duration += int(days.rstrip(' dD')) * 60 * 60 * 24
 
-        hours = match.group('hours')
-        if hours is not None:
-            duration += int(hours.rstrip(' hH')) * 60 * 60
+            hours = match.group('hours')
+            if hours is not None:
+                duration += int(hours.rstrip(' hH')) * 60 * 60
 
-        minutes = match.group('minutes')
-        if minutes is not None:
-            duration += int(minutes.rstrip(' mM')) * 60
+            minutes = match.group('minutes')
+            if minutes is not None:
+                duration += int(minutes.rstrip(' mM')) * 60
 
-        seconds = match.group('seconds')
-        if seconds is not None:
-            duration += int(seconds.rstrip(' sS'))
+            seconds = match.group('seconds')
+            if seconds is not None:
+                duration += int(seconds.rstrip(' sS'))
+        elif timerStatus == 1:
+            # TO DO : Werte auf gültige Werte begrenzen
+            day = int(match.group('day'))
+            month = int(match.group('month'))
+            year = int(match.group('year'))
+            hour = int(match.group('hour'))
+            minute = int(match.group('minute'))
+
+            tz = timezone('Europe/Vienna')
+            try:
+                endtime = tz.localize(
+                    datetime.datetime(year, month, day, hour,
+                                      minute)).timestamp()
+            except ValueError:
+                await ctx.send(
+                    'So wird des nix. Diese Jahr/Monat/Tag/Stunden/Minuten - Kombi gibts nicht.'
+                )
+                return
+            starttime = datetime.datetime.now().timestamp()
+            duration = int(endtime - starttime)
 
         reason = match.group('reason')
         if duration < 10 or duration > 315360000:
             await ctx.send(
-                f'Oida du Heisl, gib g\'fälligst eine Zeit von 10s bis 10y ein.'
+                f'Oida du Heisl, gib g\'fälligst eine Dauer oder Datum/Zeit innerhalb von 10s bis 10y ein.'
             )
             return
 
         response = getTimerResponse(reason)
         timer = [ctx.author.id, ctx.channel.id, duration, reason, response]
-        tId = saveTimerToJSON(timer)
+        tId = saveTimerToJSON(timer, endtime)
         timer.append(tId)
 
         await ctx.send(response[0].format(ctx.author,
@@ -104,9 +145,18 @@ class timers(commands.Cog):
                     reason = '<keine Beschreibung>'
                 remaining = int(jsonTimerData['timers'][timer]['endtime'] -
                                 datetime.datetime.now().timestamp())
-                response += f"\n[#{timer}] {reason} ({secondsToReadable(remaining)} remaining)"
+                enddatetime = str(
+                    datetime.datetime.fromtimestamp(
+                        jsonTimerData['timers'][timer]['endtime'],
+                        timezone('Europe/Vienna')))[:-9]
+
+                response += f"\n[#{timer}] [{enddatetime}] {reason} ({secondsToReadable(remaining)} remaining)"
                 count += 1
-        response = f'```{count} timers open' + response + '```'
+        if count == 1:
+            strTimer = 'timer'
+        else:
+            strTimer = 'timers'
+        response = f'```{count} {strTimer} open [{ctx.author.name}]' + response + '```'
         await ctx.send(response)
 
     @timer.command(name='cancel')
@@ -160,13 +210,14 @@ async def createTimer(bot, timer):
     removeTimerFromJSON(timer[5])
 
 
-def saveTimerToJSON(timer):
+def saveTimerToJSON(timer, endtime):
     with open('storage/timer.json') as json_file:
         jsonTimerData = json.load(json_file)
 
     timerCounter = jsonTimerData['counter'] + 1
     starttime = datetime.datetime.now().timestamp()
-    endtime = starttime + timer[2]
+    if endtime == None:
+        endtime = int(starttime + timer[2])
     newCounter = {"counter": timerCounter}
     jsonTimerData.update(newCounter)
     newTimer = {
