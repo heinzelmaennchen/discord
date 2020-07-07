@@ -3,6 +3,7 @@ from discord.ext import commands
 import asyncio
 import random
 import os
+from utils.misc import isDevServer
 
 
 class fun(commands.Cog):
@@ -112,15 +113,16 @@ class fun(commands.Cog):
         elif 'antrag' in cleanMsg.split(
         ) and not 'abgelehnt' in cleanMsg.split():
             await message.channel.send('Antrag ... abgelehnt! ❌')
-        elif 'rino' in cleanMsg.split(
-        ) and message.channel.id == 156040097819525120:
-            user = await self.client.fetch_user(os.environ['RINO_ID'])
+        elif 'rino' in cleanMsg.split() and (message.channel.id
+                                             == 156040097819525120
+                                             or isDevServer(message)):
             embed = discord.Embed(colour=discord.Colour.from_rgb(47, 49, 54))
             embed.set_author(name="Rino", icon_url=user.avatar_url)
             embed.description = "Bin gleich da."
             await message.channel.send(embed=embed)
-        elif 'peda' in cleanMsg.split(
-        ) and message.channel.id == 156040097819525120:
+        elif 'peda' in cleanMsg.split() and (message.channel.id
+                                             == 156040097819525120
+                                             or isDevServer(message)):
             strList = [
                 'cool bist!',
                 'leute besorgts zeug ich will mich zu pufffffffen',
