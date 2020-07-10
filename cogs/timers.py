@@ -130,27 +130,33 @@ class timers(commands.Cog):
 
     @timer.command(name='list')
     @commands.guild_only()
-    async def timer_list(self, ctx):
+    async def timer_list(self, ctx, arg=None):
         response = ''
         count = 0
         with open('storage/timer.json') as json_file:
             jsonTimerData = json.load(json_file)
         for timer in jsonTimerData['timers']:
-            if jsonTimerData['timers'][timer][
-                    'author'] == ctx.author.id and jsonTimerData['timers'][
-                        timer]['channel'] == ctx.channel.id:
-                if jsonTimerData['timers'][timer]['reason'] != None:
-                    reason = jsonTimerData['timers'][timer]['reason']
+            if jsonTimerData['timers'][timer]['author'] == ctx.author.id:
+                if arg != 'all' and jsonTimerData['timers'][timer][
+                        'channel'] != ctx.channel.id:
+                    continue
                 else:
-                    reason = '<keine Beschreibung>'
-                remaining = int(jsonTimerData['timers'][timer]['endtime'] -
-                                datetime.datetime.now().timestamp())
-                enddatetime = str(
-                    datetime.datetime.fromtimestamp(
-                        jsonTimerData['timers'][timer]['endtime'],
-                        timezone('Europe/Vienna')))[:-9]
+                    if jsonTimerData['timers'][timer]['reason'] != None:
+                        reason = jsonTimerData['timers'][timer]['reason']
+                    else:
+                        reason = '<keine Beschreibung>'
+                    remaining = int(jsonTimerData['timers'][timer]['endtime'] -
+                                    datetime.datetime.now().timestamp())
+                    enddatetime = str(
+                        datetime.datetime.fromtimestamp(
+                            jsonTimerData['timers'][timer]['endtime'],
+                            timezone('Europe/Vienna')))[:-9]
+                    channelname = self.client.get_channel(
+                        jsonTimerData['timers'][timer]['channel']).name
 
-                response += f"\n[#{timer}] [{enddatetime}] {reason} ({secondsToReadable(remaining)} remaining)"
+                    response += f"\n[#{timer}] [{enddatetime}] {reason} ({secondsToReadable(remaining)} remaining)"
+                    if arg == 'all':
+                        response += f' [#{channelname}]'
                 count += 1
         if count == 1:
             strTimer = 'timer'
@@ -167,11 +173,9 @@ class timers(commands.Cog):
         #check if it's your own timer
         tId = tId.lstrip('#')
         if tId not in jsonTimerData['timers'] or jsonTimerData['timers'][tId][
-                'author'] != ctx.author.id or jsonTimerData['timers'][tId][
-                    'channel'] != ctx.channel.id:
+                'author'] != ctx.author.id:
             await ctx.send(
-                f'Timer #{tId} ist nicht von dir oder existiert nicht in diesem Channel!'
-            )
+                f'Timer #{tId} ist nicht von dir oder existiert nicht!')
             return
         tId = int(tId)
         task = taskDict[tId]
