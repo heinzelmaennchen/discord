@@ -142,6 +142,8 @@ class fun(commands.Cog):
             await message.channel.send('https://youtu.be/nOodKRhf59s')
         elif 'alf' in cleanMsg.split():
             await message.channel.send('https://youtu.be/sGs6gSrvrhY')
+        elif 'succulent' in cleanMsg.split():
+            await message.channel.send('https://youtu.be/XebF2cgmFmU')
 
 
 def cleanupString(text):
