@@ -184,6 +184,7 @@ class asdf(commands.Cog):
                 maxStreak = 0
                 currStreak = 0
 
+                # Grab max streak for wlc
                 for row in rows:
                     if int(row[1]) > 0:
                         currStreak += 1
@@ -194,6 +195,18 @@ class asdf(commands.Cog):
                         currStreak = 0
 
                 wlc_streak = max(maxStreak, currStreak)
+
+                # Grab active streak for wlc
+                rows_sorted = sorted(rows, key=lambda x: x[0], reverse=True)
+                activeStreak = 0
+
+                for row in rows_sorted:
+                    if int(row[1]) > 0:
+                        activeStreak += 1
+                    elif int(row[1]) == 0:
+                        break
+
+                wlc_active_streak = activeStreak
 
             # Set streak end to the day before
             if streak_end != "läuft lohnt":
@@ -206,15 +219,18 @@ class asdf(commands.Cog):
 
             if self.cursor.rowcount > 0:
                 rows = self.cursor.fetchall()
-                user_streaks = {}
+                user_max_streaks = {}
+                user_active_streaks = {}
                 r = ''
-                asdfEmbed = discord.Embed(title=f'Top ASDF streaks',
-                                          colour=discord.Colour.from_rgb(
-                                              102, 153, 255))
+                asdfEmbed = discord.Embed(
+                    title=f'Top and (active) ASDF streaks',
+                    colour=discord.Colour.from_rgb(102, 153, 255))
 
                 for row in rows:
-                    user_streak = self.getUserStreak(int(row[0]), resetDate,
-                                                     today)
+                    user_max_streak = self.getUserStreak(
+                        True, int(row[0]), resetDate, today)
+                    user_active_streak = self.getUserStreak(
+                        False, int(row[0]), resetDate, today)
                     user = ctx.guild.get_member(int(row[0]))
                     if user == None:  # Skip User if not found in Guild
                         continue
@@ -223,17 +239,19 @@ class asdf(commands.Cog):
                             user = user.name
                         else:
                             user = user.nick
-                    user_streaks[user] = user_streak
+                    user_max_streaks[user] = user_max_streak
+                    user_active_streaks[user] = user_active_streak
 
-                user_streaks_sorted = sorted(user_streaks.items(),
-                                             key=lambda x: x[1],
-                                             reverse=True)
+                user_max_streaks_sorted = sorted(user_max_streaks.items(),
+                                                 key=lambda x: x[1],
+                                                 reverse=True)
 
-                for user in user_streaks_sorted:
-                    r += f'{user[0]}: {user[1]}\n'
+                for user in user_max_streaks_sorted:
+                    r += f'{user[0]}: {user[1]} ({user_active_streaks[user[0]]})\n'
 
                 asdfEmbed.add_field(
-                    name=f'**WLC max: {wlc_streak}**\nEnded: {streak_end}',
+                    name=
+                    f'**WLC max: {wlc_streak}**\nWLC active: {wlc_active_streak}\nMax ended: {streak_end}',
                     value=r)
 
         if wlc_streak == 0:
@@ -242,8 +260,10 @@ class asdf(commands.Cog):
             await ctx.send(embed=asdfEmbed)
 
     # Calculate user streak
-    def getUserStreak(self, user, resetDate, today):
+    def getUserStreak(self, isMax, user, resetDate, today):
         # Check DB connection
+        self.cnx = check_connection(self.cnx)
+        self.cursor = self.cnx.cursor(buffered=True)
         query = (f"""SELECT c.dt,
                             IFNULL(a.asdf, '0')
                      FROM `calendar` c
@@ -258,20 +278,37 @@ class asdf(commands.Cog):
         self.cursor.execute(query)
         self.cnx.commit()
 
-        if self.cursor.rowcount > 0:
-            rows = self.cursor.fetchall()
-            maxStreak = 0
-            currStreak = 0
+        # If max streak is requested, grab max
+        if isMax:
+            if self.cursor.rowcount > 0:
+                rows = self.cursor.fetchall()
+                maxStreak = 0
+                currStreak = 0
 
-            for row in rows:
-                if int(row[1]) > 0:
-                    currStreak += 1
-                elif int(row[1]) == 0:
-                    if currStreak > maxStreak:
-                        maxStreak = currStreak
-                    currStreak = 0
+                for row in rows:
+                    if int(row[1]) > 0:
+                        currStreak += 1
+                    elif int(row[1]) == 0:
+                        if currStreak > maxStreak:
+                            maxStreak = currStreak
+                        currStreak = 0
 
-            return max(maxStreak, currStreak)
+                return max(maxStreak, currStreak)
+
+        # Otherwise grab the active streak and return it
+        else:
+            if self.cursor.rowcount > 0:
+                rows = self.cursor.fetchall()
+                rows_sorted = sorted(rows, key=lambda x: x[0], reverse=True)
+                activeStreak = 0
+
+                for row in rows_sorted:
+                    if int(row[1]) > 0:
+                        activeStreak += 1
+                    elif int(row[1]) == 0:
+                        break
+
+                return activeStreak
 
     # Calculate and print overall stats and ranking
     async def printStats(self, ctx, keyword):
