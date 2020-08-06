@@ -127,13 +127,14 @@ class fun(commands.Cog):
             strList = [
                 'cool bist!',
                 'leute besorgts zeug ich will mich zu pufffffffen',
-                'willst du meine du mich heirante?'
+                'willst du meine du mich heirante?',
+                'Gratulation {0.mention}! du bist die KUA des Jahres!!!!!'
             ]
             embed = discord.Embed(colour=discord.Colour.from_rgb(47, 49, 54))
             embed.set_author(
                 name="Peda",
                 icon_url="https://cdn.discordapp.com/embed/avatars/2.png")
-            embed.description = random.choice(strList)
+            embed.description = random.choice(strList).format(message.author)
             await message.channel.send(embed=embed)
         elif ('obi wan' in msg or 'kenobi' in msg):
             await message.channel.send(
