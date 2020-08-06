@@ -14,7 +14,7 @@ asdfReset = False
 asdfList = []
 DISCORD_EPOCH = 1420070400000
 
-redditpattern = re.compile(r'r\/\w+')
+redditpattern = re.compile(r'[^\/](r\/\w+)')
 
 
 class skills(commands.Cog):
