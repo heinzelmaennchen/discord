@@ -130,12 +130,12 @@ class crypto(commands.Cog):
                     coinStats = apiRequestCoins
                 """Build arrays."""
                 values.append('%.2f' % round(float(coinStats['price']), 2))
-                change_24h.append('%.2f' %
-                                  round(float(coinStats['delta_24h']), 2))
-                change_7d.append('%.2f' %
-                                 round(float(coinStats['delta_7d']), 2))
-                change_30d.append('%.2f' %
-                                  round(float(coinStats['delta_30d']), 2))
+                change_24h.append('%.1f' %
+                                  round(float(coinStats['delta_24h']), 1))
+                change_7d.append('%.1f' %
+                                 round(float(coinStats['delta_7d']), 1))
+                change_30d.append('%.1f' %
+                                  round(float(coinStats['delta_30d']), 1))
             except KeyError:
                 r = (
                     'Heast du elelelendige Scheißkreatur, schau amoi wos du für an'
