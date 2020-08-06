@@ -77,8 +77,10 @@ class skills(commands.Cog):
         if matches:
             reddit = 'https://www.reddit.com/'
             for match in matches:
-                url = reddit + match
-                await message.channel.send(url)
+                for entry in match:
+                    if entry:
+                        url = reddit + entry + '/'
+                        await message.channel.send(url)
 
     # Dice Roll
     @commands.command(aliases=['rand', 'dice', 'roll'])
