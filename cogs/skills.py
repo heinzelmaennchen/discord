@@ -3,6 +3,7 @@ from discord.ext import commands
 import random
 import os
 import requests
+import re
 import json
 from utils.misc import getMessageTime
 
@@ -12,6 +13,8 @@ asdfCombo = False
 asdfReset = False
 asdfList = []
 DISCORD_EPOCH = 1420070400000
+
+redditpattern = re.compile(r'r\/\w+')
 
 
 class skills(commands.Cog):
@@ -67,6 +70,15 @@ class skills(commands.Cog):
         else:
             repeat_dict.update(
                 {message.channel.id: [message.content, [message.author.id]]})
+
+        # Reddit Link
+        global redditpattern
+        matches = redditpattern.findall(message.content)
+        if matches:
+            reddit = 'https://www.reddit.com/'
+            for match in matches:
+                url = reddit + match
+                await message.channel.send(url)
 
     # Dice Roll
     @commands.command(aliases=['rand', 'dice', 'roll'])
