@@ -128,8 +128,13 @@ class crypto(commands.Cog):
                     coinStats = apiRequestCoins['coins'][num]
                 else:
                     coinStats = apiRequestCoins
+                """Get the Kraken price if there is one, else use the EUR value."""
+                coinPrice = coinStats['price']
+                for exchange in coinStats['markets'][0]['exchanges']:
+                    if exchange['name'].lower() == 'kraken':
+                        coinPrice = exchange['price']
                 """Build arrays."""
-                values.append('%.2f' % round(float(coinStats['price']), 2))
+                values.append('%.2f' % round(float(coinPrice), 2))
                 change_24h.append('%.1f' %
                                   round(float(coinStats['delta_24h']), 1))
                 change_7d.append('%.1f' %
