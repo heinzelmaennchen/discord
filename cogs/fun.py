@@ -4,6 +4,7 @@ import asyncio
 import random
 import os
 from utils.misc import isDevServer
+from utils.bobbybquotes import bbquotes
 
 
 class fun(commands.Cog):
@@ -135,6 +136,12 @@ class fun(commands.Cog):
                 name="Peda",
                 icon_url="https://cdn.discordapp.com/embed/avatars/2.png")
             embed.description = random.choice(strList).format(message.author)
+            await message.channel.send(embed=embed)
+        elif 'bobby b' in msg or 'bobby-b' in msg or 'bobbyb' in msg:
+            embed = discord.Embed(colour=discord.Colour.from_rgb(47, 49, 54))
+            embed.set_author(name="Bobby B.",
+                             icon_url="https://i.imgur.com/GHvm2Xs.png")
+            embed.description = random.choice(bbquotes)
             await message.channel.send(embed=embed)
         elif ('obi wan' in msg or 'kenobi' in msg):
             await message.channel.send(
