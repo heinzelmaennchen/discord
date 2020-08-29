@@ -2,6 +2,7 @@ import discord
 import os
 import requests
 import random
+import re
 import json
 
 from discord.ext import commands, tasks
@@ -62,8 +63,12 @@ async def load(ctx, extension):
 @client.event
 async def on_command_error(ctx, error):
     if isinstance(error, commands.CommandNotFound):
-        await ctx.message.add_reaction('🥚')
-        await ctx.message.add_reaction('👏')
+        ignorePattern = r"^!{2,7}$"  # 2-7 Rufzeichen erlaubt
+        if re.match(ignorePattern, ctx.message.content):
+            return
+        else:
+            await ctx.message.add_reaction('🥚')
+            await ctx.message.add_reaction('👏')
     else:
         print(error)
 
