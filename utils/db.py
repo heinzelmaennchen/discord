@@ -16,6 +16,6 @@ def check_connection(connection):
     try:
         connection.ping(reconnect=True, attempts=3, delay=5)
     except mysql.connector.Error:
-        # reconnect your cursor as you did in __init__ or wherever
+        # reconnect the cursor
         connection = init_db()
     return connection
