@@ -107,7 +107,7 @@ class botpm(commands.Cog):
             if any(x in message.content.lower() for x in egg.triggers):
                 await message.channel.send(''.join(egg.responses))
 
-    @commands.command()
+    @commands.command(aliases=['ae', 'createegg'])
     @commands.dm_only()
     async def addegg(self, ctx):
         # Set flow to 'ADD' to mark we're in the adding flow
@@ -142,7 +142,7 @@ class botpm(commands.Cog):
         egglist_temp.append(new_egg)
         await ctx.send("Kk, los geht's! Erstes Triggerwort?")
 
-    @commands.command()
+    @commands.command(aliases=['le', 'showeggs'])
     @commands.dm_only()
     async def listeggs(self, ctx):
         # Check DB connection
@@ -168,7 +168,7 @@ class botpm(commands.Cog):
             r += '```'
             await ctx.send(r)
 
-    @commands.command()
+    @commands.command(aliases=['deleteegg', 'removeegg', 'se'])
     @commands.dm_only()
     async def scrapegg(self, ctx, delete_id=None):
 
@@ -213,6 +213,25 @@ class botpm(commands.Cog):
 
             except Exception:
                 await ctx.send("Kaputte ID, bitte nur Zahlen eingeben.")
+
+    @commands.command(aliases=['hme', 'howmany', 'wieviele'])
+    async def howmanyeggs(self, ctx):
+        # Check DB connection
+        self.cnx = check_connection(self.cnx)
+        self.cursor = self.cnx.cursor(buffered=True)
+
+        query = (f'SELECT count(*) FROM eastereggs')
+        self.cursor.execute(query)
+        self.cnx.commit()
+
+        if self.cursor.rowcount == 0:
+            await ctx.send(
+                "Das Nichts nichtet. !addegg verwenden, um ein neues zu erstellen."
+            )
+        else:
+            row = self.cursor.fetchone()
+            count = row[0]
+            await ctx.send(f'Es gibt {count} custom eastereggs!1elf')
 
     # Check for forbidden words or if the word is too short
     async def checkContent(self, message):
