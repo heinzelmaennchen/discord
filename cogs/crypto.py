@@ -150,10 +150,10 @@ class crypto(commands.Cog):
                 else:
                     change_7d.append(
                         '%.1f' %
-                        round(100 * float(current_price / price_7d - 1)))
+                        round(100 * float(current_price / price_7d - 1), 2))
                     change_30d.append(
                         '%.1f' %
-                        round(100 * float(current_price / price_30d - 1)))
+                        round(100 * float(current_price / price_30d - 1), 2))
 
             except KeyError:
                 r = (
