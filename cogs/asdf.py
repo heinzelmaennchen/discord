@@ -239,8 +239,8 @@ class asdf(commands.Cog):
                             user = user.name
                         else:
                             user = user.nick
-                    user_max_streaks[user] = user_max_streak
-                    user_active_streaks[user] = user_active_streak
+                    user_max_streaks[user] = user_max_streak % 100
+                    user_active_streaks[user] = user_active_streak % 100
 
                 user_max_streaks_sorted = sorted(user_max_streaks.items(),
                                                  key=lambda x: x[1],
