@@ -14,7 +14,10 @@ from config.botactivity import __activities__, __activityTimer__
 
 load_dotenv()
 
-client = commands.Bot(command_prefix='!')
+intents = discord.Intents.default()
+intents.members = True
+
+client = commands.Bot(command_prefix='!', intents=intents)
 taskDict = {
 }  # used in cog 'skills' for saving the Timer Tasks, but saved in main, if cog gets reloaded
 
