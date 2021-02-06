@@ -20,9 +20,14 @@ class crypto(commands.Cog):
             return
 
         if message.content.startswith('$'):
-            coin = message.content[1:].upper().strip(' ,')
-            await self.checkChannelAndSend(message,
-                                           self.getCurrentValues(coin))
+            if message.content.startswith('$ratio'):
+                coin = message.content[7:].upper().strip(' ,')
+                await self.checkChannelAndSend(message,
+                                               self.getCurrentValues(coin, currency='BTC'))
+            else:
+                coin = message.content[1:].upper().strip(' ,')
+                await self.checkChannelAndSend(message,
+                                               self.getCurrentValues(coin))  
         elif message.content == '€zk':
             await self.checkChannelAndSend(message, self.getEzkValue())
 
