@@ -19,14 +19,15 @@ class crypto(commands.Cog):
         if message.author == self.client.user or message.author.bot or message.channel.type == "private":
             return
 
-        if message.content.startswith('$ratio'):
-            coin = message.content[1:].upper().strip(' ,')
-            await self.checkChannelAndSend(message,
-                                           self.getCurrentValues(coin, currency='BTC'))
         if message.content.startswith('$'):
-            coin = message.content[1:].upper().strip(' ,')
-            await self.checkChannelAndSend(message,
-                                           self.getCurrentValues(coin))
+            if message.content.startswith('$ratio'):
+                coin = message.content[6:].upper().strip(' ,')
+                await self.checkChannelAndSend(message,
+                                               self.getCurrentValues(coin, currency='BTC'))
+            else:
+                coin = message.content[1:].upper().strip(' ,')
+                await self.checkChannelAndSend(message,
+                                               self.getCurrentValues(coin))  
         elif message.content == '€zk':
             await self.checkChannelAndSend(message, self.getEzkValue())
 
