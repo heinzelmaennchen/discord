@@ -21,7 +21,7 @@ class crypto(commands.Cog):
 
         if message.content.startswith('$'):
             if message.content.startswith('$ratio'):
-                coin = message.content[6:].upper().strip(' ,')
+                coin = message.content[7:].upper().strip(' ,')
                 await self.checkChannelAndSend(message,
                                                self.getCurrentValues(coin, currency='BTC'))
             else:
