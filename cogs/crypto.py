@@ -125,12 +125,18 @@ class crypto(commands.Cog):
         change_7d = []
         change_30d = []
 
+        # Define floating point precision for price.
+        if currency == 'BTC':
+            precision = 5
+        else:
+            precision = 2
+            
         # Build response.
         for coin in coins:
             try:
                 # Add price and 24h to the dictionary.
-                values.append('%.2f' % round(
-                    float(apiRequestCoins['RAW'][coin][currency]['PRICE']), 2))
+                values.append('%.{}f'.format(precision) % round(
+                    float(apiRequestCoins['RAW'][coin][currency]['PRICE']), precision))
                 change_24h.append('%.1f' % round(
                     float(apiRequestCoins['RAW'][coin][currency]
                           ['CHANGEPCT24HOUR']), 2))
