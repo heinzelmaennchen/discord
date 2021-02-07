@@ -184,10 +184,18 @@ class crypto(commands.Cog):
         rating_7d = self.calculateRating(change_7d[0])
         rating_30d = self.calculateRating(change_30d[0])
 
+        # Use currency symbols to save space.
+        if currency == 'EUR':
+            currency_symbol = '€'
+        elif currency == 'BTC':
+            currency_symbol = '₿'
+        else:
+            currency_symbol = 'N/A'
+
         r = '```\n'
         for x in coins:
             r += ((coins[coins.index(x)]).rjust(coinwidth) + ': ' +
-                  (values[coins.index(x)]).rjust(valuewidth) + ' ' + currency +
+                  (values[coins.index(x)]).rjust(valuewidth) + ' ' + currency_symbol +
                   ' | ' + (change_24h[coins.index(x)]).rjust(changewidth_24h) +
                   '% | ' + (change_7d[coins.index(x)]).rjust(changewidth_7d) +
                   '% | ' +
