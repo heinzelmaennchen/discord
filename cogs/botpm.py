@@ -80,7 +80,7 @@ class botpm(commands.Cog):
                                                    ' is ned erlaubt. NEXT!')
                 elif not egg.responses:
                     if await self.checkContent(message.content):
-                        egg.add_response(message.content)
+                        egg.add_response(message.content.replace("+>", ">"))
                         await message.channel.send(
                             "Das war's, thx! Wart', ich hau das in die Datenbank."
                         )
