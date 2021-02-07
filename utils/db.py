@@ -8,7 +8,9 @@ def init_db():
     connection = mysql.connector.connect(host=os.environ['DATABASE_HOST'],
                                          user=os.environ['DATABASE_USER'],
                                          passwd=os.environ['DATABASE_PW'],
-                                         database=os.environ['DATABASE_DB'])
+                                         database=os.environ['DATABASE_DB'],
+                                         charset='utf8mb4',
+                                         collation='utf8mb4_unicode_ci')
     return connection
 
 
