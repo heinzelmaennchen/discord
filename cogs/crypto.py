@@ -22,12 +22,12 @@ class crypto(commands.Cog):
         if message.content.startswith('$'):
             if message.content.startswith('$ratio'):
                 coin = message.content[7:].upper().strip(' ,')
-                await self.checkChannelAndSend(message,
-                                               self.getCurrentValues(coin, currency='BTC'))
+                await self.checkChannelAndSend(
+                    message, self.getCurrentValues(coin, currency='BTC'))
             else:
                 coin = message.content[1:].upper().strip(' ,')
                 await self.checkChannelAndSend(message,
-                                               self.getCurrentValues(coin))  
+                                               self.getCurrentValues(coin))
         elif message.content == '€zk':
             await self.checkChannelAndSend(message, self.getEzkValue())
 
@@ -130,13 +130,14 @@ class crypto(commands.Cog):
             precision = 5
         else:
             precision = 2
-            
+
         # Build response.
         for coin in coins:
             try:
                 # Add price and 24h to the dictionary.
                 values.append('%.{}f'.format(precision) % round(
-                    float(apiRequestCoins['RAW'][coin][currency]['PRICE']), precision))
+                    float(apiRequestCoins['RAW'][coin][currency]['PRICE']),
+                    precision))
                 change_24h.append('%.1f' % round(
                     float(apiRequestCoins['RAW'][coin][currency]
                           ['CHANGEPCT24HOUR']), 2))
@@ -155,13 +156,15 @@ class crypto(commands.Cog):
                     apiRequestHistory['Data']['Data'][0]['close'])
 
                 # Check for 0 prices before dividing to calculate the change.
-                if price_7d == 0 or price_30d == 0:
+                if price_7d == 0:
                     change_7d.append('n/a')
-                    change_30d.append('n/a')
                 else:
                     change_7d.append(
                         '%.1f' %
                         round(100 * float(current_price / price_7d - 1), 2))
+                if price_30d == 0:
+                    change_30d.append('n/a')
+                else:
                     change_30d.append(
                         '%.1f' %
                         round(100 * float(current_price / price_30d - 1), 2))
