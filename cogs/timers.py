@@ -47,7 +47,7 @@ class timers(commands.Cog):
         match = compiled.match(arg)
         if match is None or not match.group(0):
             compiled = re.compile(
-                r'(?P<reDateTime>(?P<day>[0-9]{1,2}).(?P<month>[0-9]{1,2}).(?P<year>[0-9]{4}) (?P<hour>[0-9]{1,2}):(?P<minute>[0-9]{1,2}))( (?P<reason>.+))?',
+                r'(?P<reDateTime>(?P<day>[0-9]{1,2}).(?P<month>[0-9]{1,2}).(?P<year>[0-9]{4}) *(?P<hour>[0-9]{1,2}):(?P<minute>[0-9]{1,2}))( (?P<reason>.+))?',
                 flags=re.I)
             match = compiled.match(arg)
             if match is None or not match.group(0):
