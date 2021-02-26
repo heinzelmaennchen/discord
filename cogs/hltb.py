@@ -108,13 +108,19 @@ def FindGame(title):
 
 
 def GetPage(title):
+    headers = {
+        'Content-type':
+        'application/x-www-form-urlencoded',
+        'User-Agent':
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36'
+    }
     data = {
         'queryString': title,
         't': 'games',
         'sorthead': 'popular',
         'length_type': 'main'
     }
-    return requests.post(HLTB_URL, data=data).text
+    return requests.post(HLTB_URL, data=data, headers=headers).text
 
 
 def setup(client):
