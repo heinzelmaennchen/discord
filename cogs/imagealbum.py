@@ -4,6 +4,7 @@ import discord
 from discord.ext import commands
 from utils.misc import getMessageTime
 import utils.googlephotos
+from main import logger
 
 
 class imagealbum(commands.Cog):
@@ -55,8 +56,9 @@ class imagealbum(commands.Cog):
                             #print(f'Media Item: {mediaItem}')
 
                             await message.add_reaction('⬆️')
-            except:
+            except Exception as e:
                 await message.add_reaction('❌')
+                logger.error(e)
 
 
 def setup(client):

@@ -6,6 +6,9 @@ from utils.db import check_connection
 from utils.db import init_db
 from datetime import date
 
+from main import logger
+
+
 class crypto(commands.Cog):
     def __init__(self, client):
         self.client = client
@@ -15,7 +18,7 @@ class crypto(commands.Cog):
         self.ourCoins = os.environ['OUR_COINS']
         self.api_key = os.environ['API_KEY']
         self.cnx = init_db()
-        
+
     # Use on_message if command isn't possible
     @commands.Cog.listener()
     async def on_message(self, message):
@@ -70,9 +73,12 @@ class crypto(commands.Cog):
     @commands.command()
     @commands.guild_only()
     async def top(self, ctx):
+        logger.debug('.TOP command')
+        logger.debug(f'..{self.ourCoins}')
         globalStats = True
         await self.checkChannelAndSend(
             ctx.message, self.getCurrentValues(self.ourCoins, globalStats))
+        logger.debug('..Message gesendet')
 
     @commands.command(aliases=['topbtc', 'topBtc'])
     @commands.guild_only()
@@ -100,22 +106,23 @@ class crypto(commands.Cog):
     @commands.command()
     @commands.guild_only()
     async def history(self, ctx):
-        await self.checkChannelAndSend(
-            ctx.message, self.getHistoricalPrices())
-                             
+        await self.checkChannelAndSend(ctx.message, self.getHistoricalPrices())
+
     # Crypto helper functions
     def getCurrentValues(self, coinList, globalStats=False, currency='EUR'):
         # Grab current values for a coin from Cryptocompare.
+        logger.debug('..before CC API request')
         apiRequestCoins = requests.get(
             'https://min-api.cryptocompare.com/data/pricemultifull?fsyms=' +
             coinList + '&tsyms=' + currency + '&api_key=' +
             self.api_key).json()
-
+        logger.debug('..after CC API request')
         # Grab global stats if requested.
         if globalStats:
+            logger.debug('..before coingecko API request')
             apiRequestGlobal = requests.get(
                 'https://api.coingecko.com/api/v3/global').json()['data']
-
+            logger.debug('..after coingecko API request')
             totalMarketCap = str(
                 round(
                     float(apiRequestGlobal['total_market_cap']['eur']) / 10**9,
@@ -126,14 +133,15 @@ class crypto(commands.Cog):
             btcDominance = str(
                 round(float(apiRequestGlobal['market_cap_percentage']['btc']),
                       1))
-
+            logger.debug('..finished extracting coingecko values')
         # Create and initiate lists for coins, values, %change and rating.
+        logger.debug('..initiating lists')
         coins = coinList.split(',')
         values = []
         change_24h = []
         change_7d = []
         change_30d = []
-
+        logger.debug('..initiating lists finished')
         # Define floating point precision for price.
         if currency == 'BTC':
             precision = 5
@@ -141,9 +149,11 @@ class crypto(commands.Cog):
             precision = 2
 
         # Build response.
+        logger.debug('..starting to build the response')
         for coin in coins:
             try:
                 # Add price and 24h to the dictionary.
+                logger.debug(f'...build response {coin} #1')
                 values.append('%.{}f'.format(precision) % round(
                     float(apiRequestCoins['RAW'][coin][currency]['PRICE']),
                     precision))
@@ -152,6 +162,7 @@ class crypto(commands.Cog):
                           ['CHANGEPCT24HOUR']), 2))
 
                 # Get historical values for this coin and calculate change.
+                logger.debug(f'...build response {coin} #2')
                 apiRequestHistory = requests.get(
                     'https://min-api.cryptocompare.com/data/v2/histoday?fsym='
                     + coin + '&tsym=' + currency + '&limit=30&api_key=' +
@@ -165,6 +176,7 @@ class crypto(commands.Cog):
                     apiRequestHistory['Data']['Data'][0]['close'])
 
                 # Check for 0 prices before dividing to calculate the change.
+                logger.debug(f'...build response {coin} #3')
                 if price_7d == 0:
                     change_7d.append('n/a')
                 else:
@@ -177,13 +189,16 @@ class crypto(commands.Cog):
                     change_30d.append(
                         '%.1f' %
                         round(100 * float(current_price / price_30d - 1), 2))
+                logger.debug(f'...build response {coin} #4')
 
             except KeyError:
+                logger.debug(f'...build response {coin} KeyError')
                 r = (
                     'Heast du elelelendige Scheißkreatur, schau amoi wos du für an'
                     + ' Bledsinn gschrieben host. Oida!')
                 return r
 
+        logger.debug('...build response #5')
         # Dynamic indent width.
         coinwidth = len(max(coins, key=len))
         valuewidth = len(max(values, key=len))
@@ -191,11 +206,13 @@ class crypto(commands.Cog):
         changewidth_7d = len(max(change_7d, key=len))
         changewidth_30d = len(max(change_30d, key=len))
 
+        logger.debug('...build response #6')
         # Calculate rating for the first coin in the list.
         rating_24h = self.calculateRating(change_24h[0])
         rating_7d = self.calculateRating(change_7d[0])
         rating_30d = self.calculateRating(change_30d[0])
 
+        logger.debug('...build response #7')
         # Use currency symbols to save space.
         if currency == 'EUR':
             currency_symbol = '€'
@@ -204,23 +221,29 @@ class crypto(commands.Cog):
         else:
             currency_symbol = 'N/A'
 
+        logger.debug('...build response #8')
         r = '```\n'
         for x in coins:
             r += ((coins[coins.index(x)]).rjust(coinwidth) + ': ' +
-                  (values[coins.index(x)]).rjust(valuewidth) + ' ' + currency_symbol +
-                  ' | ' + (change_24h[coins.index(x)]).rjust(changewidth_24h) +
+                  (values[coins.index(x)]).rjust(valuewidth) + ' ' +
+                  currency_symbol + ' | ' +
+                  (change_24h[coins.index(x)]).rjust(changewidth_24h) +
                   '% | ' + (change_7d[coins.index(x)]).rjust(changewidth_7d) +
                   '% | ' +
                   (change_30d[coins.index(x)]).rjust(changewidth_30d) + '%\n')
+        logger.debug('...build response #9')
         if globalStats:
+            logger.debug('...build response #10 - mit globalStats')
             r += ('\nMarket Cap: ' + totalMarketCap + ' Mrd. EUR')
             r += ('\nVolume 24h: ' + totalVolume + ' Mrd. EUR')
             r += ('\nBTC dominance: ' + btcDominance + '%')
             r += '```'
             r += rating_24h + ' ' + rating_7d + ' ' + rating_30d
         else:
+            logger.debug('...build response #10 - ohne globalStats')
             r += '```'
             r += rating_24h + ' ' + rating_7d + ' ' + rating_30d
+        logger.debug('...build response #11 - Response fertig')
         return r
 
     def getTopTenCoins(self, btc=False):
@@ -265,19 +288,18 @@ class crypto(commands.Cog):
     def getHistoricalPrices(self):
         # Initiate arrays
         rows = []
-        returns= []
-        
+        returns = []
+
         # Grab current values for a coin from Cryptocompare and get the current price
         apiRequestCoins = requests.get(
             'https://min-api.cryptocompare.com/data/pricemultifull?fsyms=' +
-            'BTC' + '&tsyms=' + 'EUR' + '&api_key=' +
-            self.api_key).json()
-      
-        current_price = float(
-                    apiRequestCoins['RAW']['BTC']['EUR']['PRICE'])
-        
-        rows.append(tuple([str(date.today().strftime("%Y-%m-%d")), current_price]))  
-        
+            'BTC' + '&tsyms=' + 'EUR' + '&api_key=' + self.api_key).json()
+
+        current_price = float(apiRequestCoins['RAW']['BTC']['EUR']['PRICE'])
+
+        rows.append(
+            tuple([str(date.today().strftime("%Y-%m-%d")), current_price]))
+
         # Query to retrieve historical BTC prices
         query = ("""SELECT DATE, CLOSE
                 FROM
@@ -285,37 +307,41 @@ class crypto(commands.Cog):
                 WHERE
                     DAYOFYEAR(CURRENT_DATE) = DAYOFYEAR(DATE)
                 ORDER BY DATE DESC""")
-                
+
         # Check DB connection
         self.cnx = check_connection(self.cnx)
         self.cursor = self.cnx.cursor(buffered=True)
-        
+
         # Execute query
         self.cursor.execute(query)
         self.cnx.commit()
-        
-        # If resultset is non empty, add rows to array        
+
+        # If resultset is non empty, add rows to array
         if self.cursor.rowcount > 0:
             rows += self.cursor.fetchall()
-            
+
             # Calculate year on year returns
             for index, row in enumerate(rows):
-                if index == len(rows)-1:
+                if index == len(rows) - 1:
                     returns.append('\n')
                 else:
-                    returns.append(str('%.1f' % ((float(row[1]) / float(rows[index+1][1])-1)*100)) + '%\n')
-            
+                    returns.append(
+                        str('%.1f' %
+                            ((float(row[1]) / float(rows[index + 1][1]) - 1) *
+                             100)) + '%\n')
+
             # Define widths for prices and returns
             valuewidth = len(max((str(row[1]) for row in rows), key=len))
-            returnswidth = len(max(returns, key=len))        
+            returnswidth = len(max(returns, key=len))
 
             # Prepare and send output
-            r = '```\n' 
+            r = '```\n'
             for index, row in enumerate(rows):
-                r += row[0] + ': ' + str(row[1]).rjust(valuewidth) + ' € | ' + returns[index].rjust(returnswidth)       
+                r += row[0] + ': ' + str(row[1]).rjust(
+                    valuewidth) + ' € | ' + returns[index].rjust(returnswidth)
             r += '```'
         else:
-            r = 'Keine Daten in der Datenbank 😟'    
+            r = 'Keine Daten in der Datenbank 😟'
         return r
 
     # Check if the channel is crypto or test, otherwise Eierklatscher
@@ -326,7 +352,6 @@ class crypto(commands.Cog):
             await message.add_reaction('🥚')
             await message.add_reaction('👏')
             await message.channel.send('fc, heast!')
-
 
 
 def setup(client):

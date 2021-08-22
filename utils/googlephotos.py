@@ -6,6 +6,8 @@ from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 from google.auth.transport.requests import Request
 
+from main import logger
+
 
 def init_service():
     API_NAME = 'photoslibrary'
@@ -51,6 +53,7 @@ def Create_Service(client_secret_file, api_name, api_version, *scopes):
         return service
     except Exception as e:
         print(e)
+        logger.error(e)
     return None
 
 
