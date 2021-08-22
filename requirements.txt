@@ -3,7 +3,7 @@ requests
 python-dotenv
 beautifulsoup4
 pytz
-mysql-connector-python
+mysql-connector
 Pillow
 google-api-python-client
 google-auth-httplib2
