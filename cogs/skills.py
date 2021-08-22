@@ -6,6 +6,7 @@ import requests
 import re
 import json
 from utils.misc import getMessageTime
+from main import logger
 
 repeat_dict = {}
 asdfMention = False
@@ -119,13 +120,18 @@ class skills(commands.Cog):
     @commands.command()
     @commands.guild_only()
     async def yt(self, ctx, *, searchterm=None):
+        logger.debug('.YT command')
         '''returns a youtube video related to the search string'''
         if searchterm is None:
+            logger.debug('..no search term > Eierklatscher')
             await ctx.message.add_reaction('🥚')
             await ctx.message.add_reaction('👏')
             await ctx.send("Und wonach soll ich jetzt suchen, du Heisl?")
+            logger.debug('..YT command Ende')
         else:
+            logger.debug('..enter searchVideo')
             await ctx.send(self.searchVideo(searchterm))
+            logger.debug('..YT command Ende')
 
     def searchVideo(self, searchterm):
         url = "https://www.googleapis.com/youtube/v3/search"
@@ -137,10 +143,13 @@ class skills(commands.Cog):
             'safeSearch': 'none',
             'type': 'video'
         }
-
+        logger.debug('..before request')
         r = requests.get(url, params=payload).json()
+        logger.debug('..after request > getting videoId')
         video_id = r['items'][0]['id']['videoId']
+        logger.debug('..building YT URL')
         video_url = ('https://youtube.com/watch?v=' + video_id)
+        logger.debug('..returning YT video')
         return video_url
 
     # Tenor GIF search
