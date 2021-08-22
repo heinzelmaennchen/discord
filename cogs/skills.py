@@ -6,6 +6,9 @@ import requests
 import re
 import json
 from utils.misc import getMessageTime
+
+import aiohttp
+
 from main import logger
 
 repeat_dict = {}
@@ -129,11 +132,12 @@ class skills(commands.Cog):
             await ctx.send("Und wonach soll ich jetzt suchen, du Heisl?")
             logger.debug('..YT command Ende')
         else:
+            await ctx.send(await self.searchVideo(searchterm))
             logger.debug('..enter searchVideo')
-            await ctx.send(self.searchVideo(searchterm))
             logger.debug('..YT command Ende')
 
-    def searchVideo(self, searchterm):
+
+    async def searchVideo(self, searchterm):
         url = "https://www.googleapis.com/youtube/v3/search"
         payload = {
             'key': self.youtube_key,
@@ -143,14 +147,18 @@ class skills(commands.Cog):
             'safeSearch': 'none',
             'type': 'video'
         }
+
         logger.debug('..before request')
-        r = requests.get(url, params=payload).json()
-        logger.debug('..after request > getting videoId')
-        video_id = r['items'][0]['id']['videoId']
-        logger.debug('..building YT URL')
-        video_url = ('https://youtube.com/watch?v=' + video_id)
-        logger.debug('..returning YT video')
-        return video_url
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url, params=payload) as r:
+                if r.status == 200:
+                    json = await r.json()
+                    logger.debug('..after request > getting videoId')
+                    video_id = json['items'][0]['id']['videoId']
+                    video_url = ('https://youtube.com/watch?v=' + video_id)
+                    logger.debug('..returning YT video')
+                    return video_url
+
 
     # Tenor GIF search
     @commands.command()
