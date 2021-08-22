@@ -4,6 +4,7 @@ import requests
 import random
 import re
 import json
+import logging
 
 from discord.ext import commands, tasks
 from discord.ext.commands import Bot
@@ -11,6 +12,15 @@ from dotenv import load_dotenv
 
 from config.cogs import __cogs__
 from config.botactivity import __activities__, __activityTimer__
+
+logger = logging.getLogger('discord')
+logger.setLevel(logging.DEBUG)
+handler = logging.FileHandler(filename='storage/discord.log',
+                              encoding='utf-8',
+                              mode='w')
+handler.setFormatter(
+    logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
+logger.addHandler(handler)
 
 load_dotenv()
 
