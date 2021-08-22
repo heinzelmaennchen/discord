@@ -6,6 +6,7 @@ import requests
 import re
 import json
 from utils.misc import getMessageTime
+import aiohttp
 
 repeat_dict = {}
 asdfMention = False
@@ -125,9 +126,9 @@ class skills(commands.Cog):
             await ctx.message.add_reaction('👏')
             await ctx.send("Und wonach soll ich jetzt suchen, du Heisl?")
         else:
-            await ctx.send(self.searchVideo(searchterm))
+            await ctx.send(await self.searchVideo(searchterm))
 
-    def searchVideo(self, searchterm):
+    async def searchVideo(self, searchterm):
         url = "https://www.googleapis.com/youtube/v3/search"
         payload = {
             'key': self.youtube_key,
@@ -138,10 +139,13 @@ class skills(commands.Cog):
             'type': 'video'
         }
 
-        r = requests.get(url, params=payload).json()
-        video_id = r['items'][0]['id']['videoId']
-        video_url = ('https://youtube.com/watch?v=' + video_id)
-        return video_url
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url, params=payload) as r:
+                if r.status == 200:
+                    json = await r.json()
+                    video_id = json['items'][0]['id']['videoId']
+                    video_url = ('https://youtube.com/watch?v=' + video_id)
+                    return video_url
 
     # Tenor GIF search
     @commands.command()
