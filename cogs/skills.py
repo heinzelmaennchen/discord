@@ -5,6 +5,7 @@ import os
 import requests
 import re
 import json
+import aiohttp
 from utils.misc import getMessageTime
 
 repeat_dict = {}
@@ -153,9 +154,9 @@ class skills(commands.Cog):
             await ctx.message.add_reaction('👏')
             await ctx.send("Und wonach soll ich jetzt suchen, du Heisl?")
         else:
-            await ctx.send(f'{self.searchGif(searchterm)}')
+            await ctx.send(f'{await self.searchGif(searchterm)}')
 
-    def searchGif(self, searchterm):
+    async def searchGif(self, searchterm):
         url = "https://api.tenor.com/v1/search"
         payload = {
             'key': self.tenor_key,
@@ -163,9 +164,13 @@ class skills(commands.Cog):
             'limit': 1,
         }
 
-        r = requests.get(url, params=payload).json()
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url, params=payload) as r:
+                if r.status == 200:
+                    json = await r.json()
+
         try:
-            gif_url = r['results'][0]['media'][0]['gif']['url']
+            gif_url = json['results'][0]['media'][0]['gif']['url']
         except:
             gif_url = 'I find\' nix!'
         return gif_url
