@@ -72,7 +72,6 @@ class crypto(commands.Cog):
     @commands.guild_only()
     async def top(self, ctx):
         globalStats = True
-        print('in top')
         await self.checkChannelAndSend(
             ctx.message, await self.getCurrentValues(self.ourCoins, globalStats))
 
@@ -120,9 +119,7 @@ class crypto(commands.Cog):
         if globalStats:
 
             async with aiohttp.ClientSession() as session:
-                print('in session globalstats')
                 async with session.get('https://api.coingecko.com/api/v3/global') as r:
-                    print(r)
                     if r.status == 200:
                         apiRequestGlobal = await r.json()['data']
                     else: print(r.status)
