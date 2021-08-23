@@ -6,6 +6,8 @@ import requests
 from utils.db import check_connection
 from utils.db import init_db
 from datetime import date
+import re
+
 
 class crypto(commands.Cog):
     def __init__(self, client):
@@ -16,7 +18,7 @@ class crypto(commands.Cog):
         self.ourCoins = os.environ['OUR_COINS']
         self.api_key = os.environ['API_KEY']
         self.cnx = init_db()
-        
+
     # Use on_message if command isn't possible
     @commands.Cog.listener()
     async def on_message(self, message):
@@ -25,15 +27,15 @@ class crypto(commands.Cog):
 
         if message.content.startswith('$'):
             if message.content.startswith('$ratio'):
-                coin = message.content[7:].upper().strip(' ,')
+                coin = message.content[7:].upper().strip(' ,').replace(' ', '')
                 await self.checkChannelAndSend(
                     message, await self.getCurrentValues(coin, currency='BTC'))
             else:
-                coin = message.content[1:].upper().strip(' ,')
-                await self.checkChannelAndSend(message,
-                                               self.getCurrentValues(coin))
+                coin = message.content[1:].upper().strip(' ,').replace(' ', '')
+                await self.checkChannelAndSend(
+                    message, await self.getCurrentValues(coin))
         elif message.content == '€zk':
-            await self.checkChannelAndSend(message, self.getEzkValue())
+            await self.checkChannelAndSend(message, await self.getEzkValue())
 
     # Fun crypto commands
     @commands.command()
@@ -73,7 +75,8 @@ class crypto(commands.Cog):
     async def top(self, ctx):
         globalStats = True
         await self.checkChannelAndSend(
-            ctx.message, await self.getCurrentValues(self.ourCoins, globalStats))
+            ctx.message, await self.getCurrentValues(self.ourCoins,
+                                                     globalStats))
 
     @commands.command(aliases=['topbtc', 'topBtc'])
     @commands.guild_only()
@@ -87,8 +90,8 @@ class crypto(commands.Cog):
     @commands.guild_only()
     async def topten(self, ctx):
         coins = await self.getTopTenCoins()
-        await self.checkChannelAndSend(ctx.message,
-                                       await self.getCurrentValues(coins))
+        await self.checkChannelAndSend(ctx.message, await
+                                       self.getCurrentValues(coins))
 
     @commands.command(
         aliases=['toptenbtc', 'toptenBtc', 'top10BTC', 'top10Btc', 'top10btc'])
@@ -101,29 +104,63 @@ class crypto(commands.Cog):
     @commands.command()
     @commands.guild_only()
     async def history(self, ctx):
+        await self.checkChannelAndSend(ctx.message, await
+                                       self.getHistoricalPrices())
+
+    @commands.command()
+    @commands.guild_only()
+    async def kraken(self, ctx, *args):
+        status = 0
+        if not args:
+            first = 'BTC'
+            second = 'EUR'
+        elif len(args) == 1:
+            first = args[0].upper()
+            second = 'EUR'
+        elif len(args) == 2:
+            first = args[0].upper()
+            second = args[1].upper()
+        else:
+            first = ''
+            second = ''
+            status = 2
+
+        first = re.sub('[^A-Za-z0-9]+', '', first)
+        second = re.sub('[^A-Za-z0-9]+', '', second)
+
+        if len(first) > 6 or len(second) > 6:
+            status = 1
+
         await self.checkChannelAndSend(
-            ctx.message, await self.getHistoricalPrices())
-                             
+            ctx.message, self.getKrakenChartUrl(first, second, status))
+
     # Crypto helper functions
-    async def getCurrentValues(self, coinList, globalStats=False, currency='EUR'):
+    async def getCurrentValues(self,
+                               coinList,
+                               globalStats=False,
+                               currency='EUR'):
         # Grab current values for a coin from Cryptocompare.
         async with aiohttp.ClientSession() as session:
-            async with session.get('https://min-api.cryptocompare.com/data/pricemultifull?fsyms=' +
-                                   coinList + '&tsyms=' + currency + '&api_key=' +
-                                   self.api_key) as r:
+            async with session.get(
+                    'https://min-api.cryptocompare.com/data/pricemultifull?fsyms='
+                    + coinList + '&tsyms=' + currency + '&api_key=' +
+                    self.api_key) as r:
                 if r.status == 200:
                     apiRequestCoins = await r.json()
-                else: print(r.status)
+                else:
+                    print(r.status)
 
         # Grab global stats if requested.
         if globalStats:
 
             async with aiohttp.ClientSession() as session:
-                async with session.get('https://api.coingecko.com/api/v3/global') as r:
+                async with session.get(
+                        'https://api.coingecko.com/api/v3/global') as r:
                     if r.status == 200:
                         json = await r.json()
                         apiRequestGlobal = json['data']
-                    else: print(r.status)
+                    else:
+                        print(r.status)
 
             totalMarketCap = str(
                 round(
@@ -162,12 +199,24 @@ class crypto(commands.Cog):
 
                 # Get historical values for this coin and calculate change.
                 async with aiohttp.ClientSession() as session:
-                    async with session.get('https://min-api.cryptocompare.com/data/v2/histoday?fsym='
-                                   + coin + '&tsym=' + currency + '&limit=30&api_key=' +
-                                   self.api_key) as r:
+                    async with session.get(
+                            'https://min-api.cryptocompare.com/data/v2/histoday?fsym='
+                            + coin + '&tsym=' + currency +
+                            '&limit=30&api_key=' + self.api_key) as r:
                         if r.status == 200:
                             apiRequestHistory = await r.json()
+            except KeyError:
+                r = (
+                    'Heast du elelelendige Scheißkreatur, schau amoi wos du für an'
+                    + ' Bledsinn gschrieben host. Oida!')
+                return r
 
+            # Get historical values for this coin and calculate change.
+            apiRequestHistory = requests.get(
+                'https://min-api.cryptocompare.com/data/v2/histoday?fsym=' +
+                coin + '&tsym=' + currency + '&limit=30&api_key=' +
+                self.api_key).json()
+            try:
                 current_price = float(
                     apiRequestCoins['RAW'][coin][currency]['PRICE'])
                 price_7d = float(
@@ -175,25 +224,24 @@ class crypto(commands.Cog):
                 price_30d = float(
                     apiRequestHistory['Data']['Data'][0]['close'])
 
-                # Check for 0 prices before dividing to calculate the change.
-                if price_7d == 0:
-                    change_7d.append('n/a')
-                else:
-                    change_7d.append(
-                        '%.1f' %
-                        round(100 * float(current_price / price_7d - 1), 2))
-                if price_30d == 0:
-                    change_30d.append('n/a')
-                else:
-                    change_30d.append(
-                        '%.1f' %
-                        round(100 * float(current_price / price_30d - 1), 2))
-
             except KeyError:
-                r = (
-                    'Heast du elelelendige Scheißkreatur, schau amoi wos du für an'
-                    + ' Bledsinn gschrieben host. Oida!')
-                return r
+                price_7d = 0
+                price_30d = 0
+                pass
+
+            # Check for 0 prices before dividing to calculate the change.
+            if price_7d == 0:
+                change_7d.append('n/a')
+            else:
+                change_7d.append(
+                    '%.1f' %
+                    round(100 * float(current_price / price_7d - 1), 2))
+            if price_30d == 0:
+                change_30d.append('n/a')
+            else:
+                change_30d.append(
+                    '%.1f' %
+                    round(100 * float(current_price / price_30d - 1), 2))
 
         # Dynamic indent width.
         coinwidth = len(max(coins, key=len))
@@ -218,8 +266,9 @@ class crypto(commands.Cog):
         r = '```\n'
         for x in coins:
             r += ((coins[coins.index(x)]).rjust(coinwidth) + ': ' +
-                  (values[coins.index(x)]).rjust(valuewidth) + ' ' + currency_symbol +
-                  ' | ' + (change_24h[coins.index(x)]).rjust(changewidth_24h) +
+                  (values[coins.index(x)]).rjust(valuewidth) + ' ' +
+                  currency_symbol + ' | ' +
+                  (change_24h[coins.index(x)]).rjust(changewidth_24h) +
                   '% | ' + (change_7d[coins.index(x)]).rjust(changewidth_7d) +
                   '% | ' +
                   (change_30d[coins.index(x)]).rjust(changewidth_30d) + '%\n')
@@ -238,12 +287,12 @@ class crypto(commands.Cog):
 
         async with aiohttp.ClientSession() as session:
             async with session.get(
-                'https://api.coingecko.com/api/v3/coins/markets?vs_currency=EUR&order=market_cap_desc&per_page=10&page=1&sparkline=false'
-                ) as r:
-                    if r.status == 200:
-                        topTenList = await r.json()
-                    else:
-                        print(r.status)
+                    'https://api.coingecko.com/api/v3/coins/markets?vs_currency=EUR&order=market_cap_desc&per_page=10&page=1&sparkline=false'
+            ) as r:
+                if r.status == 200:
+                    topTenList = await r.json()
+                else:
+                    print(r.status)
 
         topTenCoins = []
         for i in range(10):
@@ -271,13 +320,13 @@ class crypto(commands.Cog):
 
         async with aiohttp.ClientSession() as session:
             async with session.get(
-                'https://min-api.cryptocompare.com/data/pricemultifull?fsyms=BTC,ETH&tsyms=EUR&api_key='
-                + self.api_key) as r:
-                    if r.status == 200:
-                        apiRequest = await r.json()
-                    else:
-                        print(r.status)        
-            
+                    'https://min-api.cryptocompare.com/data/pricemultifull?fsyms=BTC,ETH&tsyms=EUR&api_key='
+                    + self.api_key) as r:
+                if r.status == 200:
+                    apiRequest = await r.json()
+                else:
+                    print(r.status)
+
         valueBTC = float(apiRequest['RAW']['BTC']['EUR']['PRICE'])
         valueETH = float(apiRequest['RAW']['ETH']['EUR']['PRICE'])
         value = round(amountBTC * valueBTC + amountETH * valueETH, 2)
@@ -290,25 +339,24 @@ class crypto(commands.Cog):
     async def getHistoricalPrices(self):
         # Initiate arrays
         rows = []
-        returns= []
-        
-        # Grab current values for a coin from Cryptocompare and get the current price
+        returns = []
 
+        # Grab current values for a coin from Cryptocompare and get the current price
         async with aiohttp.ClientSession() as session:
             async with session.get(
-                'https://min-api.cryptocompare.com/data/pricemultifull?fsyms=' +
-            'BTC' + '&tsyms=' + 'EUR' + '&api_key=' +
-            self.api_key) as r:
-                    if r.status == 200:
-                        apiRequestCoins = await r.json()
-                    else:
-                        print(r.status)      
- 
-        current_price = float(
-                    apiRequestCoins['RAW']['BTC']['EUR']['PRICE'])
-        
-        rows.append(tuple([str(date.today().strftime("%Y-%m-%d")), current_price]))  
-        
+                    'https://min-api.cryptocompare.com/data/pricemultifull?fsyms='
+                    + 'BTC' + '&tsyms=' + 'EUR' + '&api_key=' +
+                    self.api_key) as r:
+                if r.status == 200:
+                    apiRequestCoins = await r.json()
+                else:
+                    print(r.status)
+
+        current_price = float(apiRequestCoins['RAW']['BTC']['EUR']['PRICE'])
+
+        rows.append(
+            tuple([str(date.today().strftime("%Y-%m-%d")), current_price]))
+
         # Query to retrieve historical BTC prices
         query = ("""SELECT DATE, CLOSE
                 FROM
@@ -316,37 +364,54 @@ class crypto(commands.Cog):
                 WHERE
                     DAYOFYEAR(CURRENT_DATE) = DAYOFYEAR(DATE)
                 ORDER BY DATE DESC""")
-                
+
         # Check DB connection
         self.cnx = check_connection(self.cnx)
         self.cursor = self.cnx.cursor(buffered=True)
-        
+
         # Execute query
         self.cursor.execute(query)
         self.cnx.commit()
-        
-        # If resultset is non empty, add rows to array        
+
+        # If resultset is non empty, add rows to array
         if self.cursor.rowcount > 0:
             rows += self.cursor.fetchall()
-            
+
             # Calculate year on year returns
             for index, row in enumerate(rows):
-                if index == len(rows)-1:
+                if index == len(rows) - 1:
                     returns.append('\n')
                 else:
-                    returns.append(str('%.1f' % ((float(row[1]) / float(rows[index+1][1])-1)*100)) + '%\n')
-            
+                    returns.append(
+                        str('%.1f' %
+                            ((float(row[1]) / float(rows[index + 1][1]) - 1) *
+                             100)) + '%\n')
+
             # Define widths for prices and returns
             valuewidth = len(max((str(row[1]) for row in rows), key=len))
-            returnswidth = len(max(returns, key=len))        
+            returnswidth = len(max(returns, key=len))
 
             # Prepare and send output
-            r = '```\n' 
+            r = '```\n'
             for index, row in enumerate(rows):
-                r += row[0] + ': ' + str(row[1]).rjust(valuewidth) + ' € | ' + returns[index].rjust(returnswidth)       
+                r += row[0] + ': ' + str(row[1]).rjust(
+                    valuewidth) + ' € | ' + returns[index].rjust(returnswidth)
             r += '```'
         else:
-            r = 'Keine Daten in der Datenbank 😟'    
+            r = 'Keine Daten in der Datenbank 😟'
+        return r
+
+    def getKrakenChartUrl(self, first, second, status):
+        baseUrl = 'https://trade.kraken.com/charts/KRAKEN:'
+        sUrl = baseUrl + first + '-' + second + '/'
+        r = sUrl
+
+        if status == 1:
+            r = 'Parameter zu lang, das sind doch fix keine echten Tickersymbole'
+        elif status == 2:
+            r = 'Zu viele Parameter. Maximal 2!'
+        else:
+            pass
         return r
 
     # Check if the channel is crypto or test, otherwise Eierklatscher
@@ -357,7 +422,6 @@ class crypto(commands.Cog):
             await message.add_reaction('🥚')
             await message.add_reaction('👏')
             await message.channel.send('fc, heast!')
-
 
 
 def setup(client):
