@@ -4,8 +4,8 @@ from pytz import timezone
 DISCORD_EPOCH = 1420070400000
 
 
-def getMessageTime(message):
-    ms = (message.id >> 22) + DISCORD_EPOCH
+def getMessageTime(snowflake):
+    ms = (snowflake >> 22) + DISCORD_EPOCH
     time = datetime.fromtimestamp(ms / 1000, timezone('Europe/Vienna'))
     return time
 
