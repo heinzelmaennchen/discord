@@ -71,7 +71,7 @@ class crypto(commands.Cog):
     @commands.command()
     @commands.guild_only()
     async def top(self, ctx):
-        globalStats = False
+        globalStats = True
         print('in top')
         await self.checkChannelAndSend(
             ctx.message, await self.getCurrentValues(self.ourCoins, globalStats))
