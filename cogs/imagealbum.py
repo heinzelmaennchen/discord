@@ -40,7 +40,7 @@ class imagealbum(commands.Cog):
                                     album_title, service)
                             #print(f'AlbumId: {albumId}\n')
                             #FILENAME
-                            time = getMessageTime(message)
+                            time = getMessageTime(message.id)
                             filenametime = f'{time.year}{time.month}{time.day}{time.hour}{time.minute}{time.second}'
                             filename = os.path.splitext(att.filename)[0]
                             filename = filenametime + '_' + filename + os.path.splitext(

@@ -207,8 +207,8 @@ class skills(commands.Cog):
         async with ctx.channel.typing():
             if depth > 100000:
                 message = await ctx.channel.fetch_message(depth)
-                time = getMessageTime(message).strftime(
-                    "%Y-%m-%d %H:%M:%S.%f")[:-3]
+                time = getMessageTime(
+                    message.id).strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
                 author = message.author.name
                 content = message.content
                 r = (f'```\n[{time}] {author}: {content}```')
@@ -232,8 +232,8 @@ class skills(commands.Cog):
                 if filter is not None:
                     if filter.lower() not in message.content.lower():
                         continue
-                time = getMessageTime(message).strftime(
-                    "%Y-%m-%d %H:%M:%S.%f")[:-3]
+                time = getMessageTime(
+                    message.id).strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
                 author = message.author.name
                 content = message.content
                 if '```' in content:
@@ -271,6 +271,25 @@ class skills(commands.Cog):
         embed.set_author(name=name, icon_url=ctx.author.avatar_url)
         await ctx.send(embed=embed)
         await ctx.message.delete()
+
+    # Return timestamp of a Discord Snowflake
+    @commands.command()
+    @commands.guild_only()
+    async def timestamp(self, ctx, *, snowflake):
+        isInt = True
+        try:
+            snowflake = int(snowflake)
+        except:
+            isInt = False
+        if isInt == False:
+            r = "Muss eine ganze Zahl sein."
+        elif snowflake < 4194304 or snowflake > 100000000000000000000:
+            r = "Schaut nicht nach ner gültigen ID aus."
+        else:
+            time = getMessageTime(snowflake).strftime(
+                "%Y-%m-%d %H:%M:%S.%f")[:-3]
+            r = (f'```ID: {snowflake}\n{time}```')
+        await ctx.send(r)
 
 
 def setup(client):

@@ -60,7 +60,7 @@ class asdf(commands.Cog):
 
         # asdf check in BOT DEV channels and #wlc
         if message.channel.id == 405433814547169301 or message.channel.id == 705617951440633877 or message.channel.id == 156040097819525120:
-            time = getMessageTime(message)
+            time = getMessageTime(message.id)
             global asdfReset
             if time.hour == 13 and time.minute >= 35 and time.minute <= 38:
                 # Check if active
