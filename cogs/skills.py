@@ -2,9 +2,7 @@ import discord
 from discord.ext import commands
 import random
 import os
-import requests
 import re
-import json
 import aiohttp
 from utils.misc import getMessageTime
 import aiohttp
