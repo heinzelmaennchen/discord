@@ -15,6 +15,7 @@ asdfList = []
 DISCORD_EPOCH = 1420070400000
 
 redditpattern = re.compile(r'[^\/\w](r\/\w+)|^(r\/\w+)')
+calcpattern = re.compile(r'[0-9\+\-\*\/\(\).% ,]*')
 
 
 class skills(commands.Cog):
@@ -33,14 +34,24 @@ class skills(commands.Cog):
             await ctx.send(result)
 
     def doCalculate(self, calcStr):
-        try:
-            result = eval(calcStr.replace(",", "."), {'__builtins__': None})
-            if result % 1 == 0:
-                r = int(result)
-            else:
-                r = f'{round(float(result), 8):.8f}'.rstrip('0').rstrip('.')
-        except:
-            r = None
+        # erlaube Zeichen: 0-9 + - * / ( ) . %   ,
+        matches = calcpattern.fullmatch(calcStr)
+        if matches:
+            try:
+                result = eval(calcStr.replace(",", "."),
+                              {'__builtins__': None})
+                if result % 1 == 0:
+                    r = int(result)
+                else:
+                    r = f'{round(float(result), 8):.8f}'.rstrip('0').rstrip(
+                        '.')
+            except:
+                r = None
+
+        #    return r
+        else:
+            r = 'Keine gültige Berechnung!'
+
         return r
 
     # On Message Listener
