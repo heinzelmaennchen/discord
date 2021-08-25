@@ -1,7 +1,7 @@
 import discord
 from discord.ext import commands
 from bs4 import BeautifulSoup
-import requests
+import aiohttp
 
 HLTB_URL = 'https://howlongtobeat.com/search_results.php?page=1'
 HLTB_PRE = 'https://howlongtobeat.com/'
@@ -14,7 +14,7 @@ class hltb(commands.Cog):
     @commands.command()
     @commands.guild_only()
     async def hltb(self, ctx, *, game):
-        hltbResult = HLTB(game)
+        hltbResult = await HLTB(game)
         for x in hltbResult:
             title = x
 
@@ -57,9 +57,9 @@ class hltb(commands.Cog):
 
 # Copied and modified from: https://github.com/fuzzylimes/howlongtobeat-scraper
 ### Main Function ###
-def HLTB(title):
+async def HLTB(title):
     try:
-        times, title, url = FindGame(title)
+        times, title, url = await FindGame(title)
         hltbResult = {
             title: {
                 'url': url,
@@ -75,8 +75,8 @@ def HLTB(title):
 #######################################
 # Helpers
 #######################################
-def FindGame(title):
-    soup = BeautifulSoup(GetPage(title), 'html.parser')
+async def FindGame(title):
+    soup = BeautifulSoup(await GetPage(title), 'html.parser')
     try:
         page = soup.findAll("div", class_="search_list_details")[0]
     except IndexError:
@@ -107,7 +107,7 @@ def FindGame(title):
     return result, title, url
 
 
-def GetPage(title):
+async def GetPage(title):
     headers = {
         'Content-type':
         'application/x-www-form-urlencoded',
@@ -120,7 +120,12 @@ def GetPage(title):
         'sorthead': 'popular',
         'length_type': 'main'
     }
-    return requests.post(HLTB_URL, data=data, headers=headers).text
+
+    async with aiohttp.ClientSession() as session:
+        async with session.post(HLTB_URL, data=data, headers=headers) as r:
+            if r.status == 200:
+                data = await r.text()
+                return data
 
 
 def setup(client):

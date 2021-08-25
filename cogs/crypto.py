@@ -2,7 +2,6 @@ import discord
 from discord.ext import commands
 import aiohttp
 import os
-import requests
 from utils.db import check_connection
 from utils.db import init_db
 from datetime import date
@@ -197,14 +196,6 @@ class crypto(commands.Cog):
                     float(apiRequestCoins['RAW'][coin][currency]
                           ['CHANGEPCT24HOUR']), 2))
 
-                # Get historical values for this coin and calculate change.
-                async with aiohttp.ClientSession() as session:
-                    async with session.get(
-                            'https://min-api.cryptocompare.com/data/v2/histoday?fsym='
-                            + coin + '&tsym=' + currency +
-                            '&limit=30&api_key=' + self.api_key) as r:
-                        if r.status == 200:
-                            apiRequestHistory = await r.json()
             except KeyError:
                 r = (
                     'Heast du elelelendige Scheißkreatur, schau amoi wos du für an'
@@ -212,10 +203,13 @@ class crypto(commands.Cog):
                 return r
 
             # Get historical values for this coin and calculate change.
-            apiRequestHistory = requests.get(
-                'https://min-api.cryptocompare.com/data/v2/histoday?fsym=' +
-                coin + '&tsym=' + currency + '&limit=30&api_key=' +
-                self.api_key).json()
+            async with aiohttp.ClientSession() as session:
+                async with session.get(
+                        'https://min-api.cryptocompare.com/data/v2/histoday?fsym='
+                        + coin + '&tsym=' + currency + '&limit=30&api_key=' +
+                        self.api_key) as r:
+                    if r.status == 200:
+                        apiRequestHistory = await r.json()
             try:
                 current_price = float(
                     apiRequestCoins['RAW'][coin][currency]['PRICE'])

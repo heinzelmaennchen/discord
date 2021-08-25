@@ -1,6 +1,6 @@
 import pickle
 import os
-import requests
+import aiohttp
 from google_auth_oauthlib.flow import Flow, InstalledAppFlow
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
@@ -71,18 +71,20 @@ def create_album(album_title, service):
     return album['id']
 
 
-def upload_image_to_album(album_id, img, upload_file_name, token, service):
+async def upload_image_to_album(album_id, img, upload_file_name, token,
+                                service):
     upload_url = 'https://photoslibrary.googleapis.com/v1/uploads'
     headers = {
         'Authorization': 'Bearer ' + token.token,
         'Content-type': 'application/octet-stream',
         'X-Goog-Upload-Protocol': 'raw',
     }
-    #print(headers)
-    ultoken = requests.post(upload_url, data=img, headers=headers)
-    #print(f'Undecoded Upload Token: {ultoken}\n')
-    uploadtoken = ultoken.content.decode('utf-8')
-    #print(f'Decoded Upload Token: {uploadtoken}\n')
+
+    async with aiohttp.ClientSession() as session:
+        async with session.post(upload_url, data=img, headers=headers) as r:
+            if r.status == 200:
+                uploadtoken = await r.text('utf-8')
+
     new_media_item = [{
         'simpleMediaItem': {
             'fileName': upload_file_name,

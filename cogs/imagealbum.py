@@ -50,7 +50,7 @@ class imagealbum(commands.Cog):
                             #IMAGE BYTE STREAM
                             image_bytes = await att.read()
 
-                            mediaItem = utils.googlephotos.upload_image_to_album(
+                            mediaItem = await utils.googlephotos.upload_image_to_album(
                                 albumId, image_bytes, filename, token, service)
                             #print(f'Media Item: {mediaItem}')
 
