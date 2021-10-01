@@ -21,7 +21,7 @@ class imagealbum(commands.Cog):
             try:
                 for att in atts:
                     for ext in pic_ext:
-                        if att.filename.endswith(ext):
+                        if att.filename.lower().endswith(ext):
                             #AUTH TOKEN
                             service = utils.googlephotos.init_service()
                             token = pickle.load(

@@ -162,7 +162,12 @@ class timers(commands.Cog):
             strTimer = 'timer'
         else:
             strTimer = 'timers'
-        response = f'```{count} {strTimer} open [{ctx.author.name}]' + response + '```'
+
+        if ctx.author.nick == None:
+            name = ctx.author.name
+        else:
+            name = ctx.author.nick
+        response = f'```{count} {strTimer} open [{name}]' + response + '```'
         await ctx.send(response)
 
     @timer.command(name='cancel')
