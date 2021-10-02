@@ -102,7 +102,10 @@ class fun(commands.Cog):
 
         output = '```\n'
         for emoji in emojis:
-            output += f'<:{emoji.name}:{emoji.id}+>\n'
+            if emoji.animated:
+                output += f'<a:{emoji.name}:{emoji.id}+>\n'
+            else:
+                output += f'<:{emoji.name}:{emoji.id}+>\n'
         output += '```'
         await ctx.send(output)
 
