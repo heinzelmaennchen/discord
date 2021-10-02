@@ -297,9 +297,9 @@ class crypto(commands.Cog):
 
     def calculateRating(self, change):
         try:
-            if float(change) < -5:
+            if float(change) <= -5:
                 rating = self.ripperl_string
-            elif float(change) > 5:
+            elif float(change) >= 5:
                 rating = self.moon_string
             else:
                 rating = self.gurkerl_string
