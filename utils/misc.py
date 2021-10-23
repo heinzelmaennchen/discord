@@ -6,6 +6,8 @@ from pytz import timezone
 DISCORD_EPOCH = 1420070400000
 MAX_MESSAGE_LENGTH = 1980
 
+devs = list(map(int, os.environ['DEVS'].split(",")))
+
 
 def getMessageTime(snowflake):
     ms = (snowflake >> 22) + DISCORD_EPOCH
@@ -13,8 +15,23 @@ def getMessageTime(snowflake):
     return time
 
 
+def getNick(user):
+    if user.nick == False:
+        name = user.name
+    else:
+        name = user.nick
+    return name
+
+
 def isDevServer(ctx):
     if ctx.guild.id == 405433814114893835:
+        return True
+    else:
+        return False
+
+
+def isDev(ctx):
+    if ctx.author.id in devs:
         return True
     else:
         return False

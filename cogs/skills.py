@@ -218,7 +218,7 @@ class skills(commands.Cog):
                 message = await ctx.channel.fetch_message(depth)
                 time = getMessageTime(
                     message.id).strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
-                author = message.author.name
+                author = getNick(message.author)
                 content = message.content
                 r = (f'```\n[{time}] {author}: {content}```')
                 await sendLongMsg(ctx, r)
@@ -243,7 +243,7 @@ class skills(commands.Cog):
                         continue
                 time = getMessageTime(
                     message.id).strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
-                author = message.author.name
+                author = getNick(message.author)
                 content = message.content
                 if '```' in content:
                     content = content.replace('```', '')
