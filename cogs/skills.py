@@ -4,7 +4,7 @@ import random
 import os
 import re
 import aiohttp
-from utils.misc import getMessageTime
+from utils.misc import getMessageTime, sendLongMsg, getNick
 import aiohttp
 
 repeat_dict = {}
@@ -221,7 +221,7 @@ class skills(commands.Cog):
                 author = message.author.name
                 content = message.content
                 r = (f'```\n[{time}] {author}: {content}```')
-                await ctx.send(r)
+                await sendLongMsg(ctx, r)
                 return
 
             # Exit early if the result most likely be too long

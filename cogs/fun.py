@@ -3,7 +3,7 @@ from discord.ext import commands
 import asyncio
 import random
 import os
-from utils.misc import isDevServer
+from utils.misc import isDevServer, sendLongMsg
 from utils.bobbybquotes import bbquotes
 
 
@@ -107,7 +107,7 @@ class fun(commands.Cog):
             else:
                 output += f'<:{emoji.name}:{emoji.id}+>\n'
         output += '```'
-        await ctx.send(output)
+        await sendLongMsg(ctx, output)
 
     # Good bot, bad bot, thx bot
     @commands.Cog.listener()

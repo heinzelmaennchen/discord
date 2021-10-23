@@ -1,4 +1,3 @@
-import discord
 from discord.ext import commands
 
 import re
@@ -8,6 +7,7 @@ from pytz import timezone
 import json
 
 from main import taskDict
+from utils.misc import sendLongMsg
 
 
 class timers(commands.Cog):
@@ -168,7 +168,7 @@ class timers(commands.Cog):
         else:
             name = ctx.author.nick
         response = f'```{count} {strTimer} open [{name}]' + response + '```'
-        await ctx.send(response)
+        await sendLongMsg(ctx, response)
 
     @timer.command(name='cancel')
     @commands.guild_only()
