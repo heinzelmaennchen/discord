@@ -13,6 +13,14 @@ def getMessageTime(snowflake):
     return time
 
 
+def getNick(user):
+    if user.nick == False:
+        name = user.name
+    else:
+        name = user.nick
+    return name
+
+
 def isDevServer(ctx):
     if ctx.guild.id == 405433814114893835:
         return True
