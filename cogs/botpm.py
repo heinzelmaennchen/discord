@@ -1,7 +1,6 @@
-import discord
 from discord.ext import commands
-from utils.db import check_connection
-from utils.db import init_db
+from utils.db import check_connection, init_db
+from utils.misc import sendLongMsg
 from enum import Enum
 
 egglist_temp = []
@@ -166,7 +165,7 @@ class botpm(commands.Cog):
                       ' - Trigger(s): ' + row[2] + ' - Antwort: ' + row[3] +
                       '\n')
             r += '```'
-            await ctx.send(r)
+            await sendLongMsg(ctx, r)
 
     @commands.command(aliases=['deleteegg', 'removeegg', 'se'])
     @commands.dm_only()
