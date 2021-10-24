@@ -17,9 +17,9 @@ def getMessageTime(snowflake):
 
 def getNick(user):
     if user.nick is not None:
-        name = user.name
-    else:
         name = user.nick
+    else:
+        name = user.name
     return name
 
 
