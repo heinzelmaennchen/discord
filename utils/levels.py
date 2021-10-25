@@ -175,9 +175,9 @@ async def createLeaderboard(author, authorurl, level, xp, lvlxp, nlvlxp):
     fntL_height = fntL.getsize('gh')[1]
 
     # IMG Size
-    (x, y) = (900, 116)
+    (x, y) = (1080, 116)
     usercount = len(author)
-    border = 15
+    border = 10
     space = 3
 
     # Hintergrundbild für Levels
