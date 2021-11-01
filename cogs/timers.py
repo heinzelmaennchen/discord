@@ -167,7 +167,7 @@ class timers(commands.Cog):
             name = ctx.author.name
         else:
             name = ctx.author.nick
-        response = f'```{count} {strTimer} open [{name}]' + response + '```'
+        response = f'```\n{count} {strTimer} open [{name}]' + response + '```'
         await sendLongMsg(ctx, response)
 
     @timer.command(name='cancel')
