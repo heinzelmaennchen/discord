@@ -16,6 +16,7 @@ class crypto(commands.Cog):
         self.ripperl_string = ':meat_on_bone: :meat_on_bone: :meat_on_bone:'
         self.ourCoins = os.environ['OUR_COINS']
         self.api_key = os.environ['API_KEY']
+        self.bannedCoins = os.environ['COINFILTER']
         self.cnx = init_db()
 
     # Use on_message if command isn't possible
@@ -87,16 +88,22 @@ class crypto(commands.Cog):
     @commands.guild_only()
     async def topten(self, ctx):
         coins = await self.getTopTenCoins()
-        await self.checkChannelAndSend(ctx.message, await
-                                       self.getCurrentValues(coins))
+        if coins == 'spam':
+            await self.checkChannelAndSend(ctx.message, 'Spammen einstellen, sonst fahrst morgen mit dem Zahnbürscht\'l in\'s Leere!')
+        else:
+            await self.checkChannelAndSend(ctx.message, await
+                                           self.getCurrentValues(coins))
 
     @commands.command(
         aliases=['toptenbtc', 'toptenBtc', 'top10BTC', 'top10Btc', 'top10btc'])
     @commands.guild_only()
     async def toptenBTC(self, ctx):
         coins = await self.getTopTenCoins(True)
-        await self.checkChannelAndSend(
-            ctx.message, await self.getCurrentValues(coins, currency='BTC'))
+        if coins == 'spam':
+            await self.checkChannelAndSend(ctx.message, 'Spammen einstellen, sonst fahrst morgen mit dem Zahnbürscht\'l in\'s Leere!')
+        else:
+            await self.checkChannelAndSend(ctx.message, await
+                                           self.getCurrentValues(coins, currency='BTC'))
 
     @commands.command()
     @commands.guild_only()
@@ -161,8 +168,15 @@ class crypto(commands.Cog):
             async with session.get('https://api.coingecko.com/api/v3/coins/list') as r:
                 if r.status == 200:
                     apiResponseCoinList = await r.json()
+                    await session.close()
+                elif r.status == 429:
+                    r = 'Spammen einstellen, sonst fahrst morgen mit dem Zahnbürscht\'l in\'s Leere!'
+                    await session.close()
+                    return r
                 else:
-                    print(r.status)
+                    r = r.status
+                    await session.close()
+                    return r
 
         coins = coinList.split(',')
         coinDict = {}
@@ -177,11 +191,20 @@ class crypto(commands.Cog):
             try:
                 results = list(
                     filter(lambda x: x["symbol"] == coin.lower(), apiResponseCoinList))
-                # If more than one result is found, ask the user to specify the id
-                if len(results) > 1:
-                    matches = []
-                    for result in results:
+                # If more than one result is found, first kick out banned coins:
+                bannedCoins = self.bannedCoins.split(',')
+                matches = []
+                for result in results:
+                    skip = False
+                    for bannedCoin in bannedCoins:
+                        if bannedCoin in result["id"]:
+                            skip = True
+                            break
+                    if skip:
+                        results.remove(result)
+                    else:
                         matches.append(result["id"])
+                if len(results) > 1:
                     r = (
                         'Leider gibt es das Symbol ' + coin + ' wohl öfter. Bitte eine dieser IDs verwenden, du Oasch: ' + ', '.join(matches))
                     return r
@@ -209,8 +232,15 @@ class crypto(commands.Cog):
                         + '&developer_data=false') as r:
                     if r.status == 200:
                         marketDict[coin] = await r.json()
+                        await session.close()
+                    elif r.status == 429:
+                        r = 'Spammen einstellen, sonst fahrst morgen mit dem Zahnbürscht\'l in\'s Leere!'
+                        await session.close()
+                        return r
                     else:
-                        print(r.status)
+                        r = r.status
+                        await session.close()
+                        return r
 
         # If ATH data is requested, call the function and return the constructed message.
         if ath:
@@ -226,8 +256,15 @@ class crypto(commands.Cog):
                     if r.status == 200:
                         json = await r.json()
                         apiResponseGlobal = json['data']
+                        await session.close()
+                    elif r.status == 429:
+                        r = 'Spammen einstellen, sonst fahrst morgen mit dem Zahnbürscht\'l in\'s Leere!'
+                        await session.close()
+                        return r
                     else:
-                        print(r.status)
+                        r = r.status
+                        await session.close()
+                        return r
 
             totalMarketCap = str(
                 round(
@@ -325,8 +362,11 @@ class crypto(commands.Cog):
             ) as r:
                 if r.status == 200:
                     topTenList = await r.json()
+                    await session.close()
                 else:
-                    print(r.status)
+                    r = 'spam'
+                    await session.close()
+                    return r
 
         topTenCoins = []
         for i in range(10):
@@ -425,8 +465,15 @@ class crypto(commands.Cog):
                     'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin%2Cethereum&vs_currencies=eur') as r:
                 if r.status == 200:
                     apiRequest = await r.json()
+                    await session.close()
+                elif r.status == 429:
+                    r = 'Spammen einstellen, sonst fahrst morgen mit dem Zahnbürscht\'l in\'s Leere!'
+                    await session.close()
+                    return r
                 else:
-                    print(r.status)
+                    r = r.status
+                    await session.close()
+                    return r
 
         valueBTC = float(apiRequest['bitcoin']['eur'])
         valueETH = float(apiRequest['ethereum']['eur'])
@@ -454,8 +501,15 @@ class crypto(commands.Cog):
                     + '&developer_data=false') as r:
                 if r.status == 200:
                     apiRequestCoins = await r.json()
+                    await session.close()
+                elif r.status == 429:
+                    r = 'Spammen einstellen, sonst fahrst morgen mit dem Zahnbürscht\'l in\'s Leere!'
+                    await session.close()
+                    return r
                 else:
-                    print(r.status)
+                    r = r.status
+                    await session.close()
+                    return r
 
         current_price = '%.{}f'.format(2) % round(
             apiRequestCoins["market_data"]["current_price"]['eur'], 2)
