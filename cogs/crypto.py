@@ -292,11 +292,14 @@ class crypto(commands.Cog):
                         ["current_price"][currency.lower()])
 
             def scientific_to_float(string):
-                e_index = string.index('e')
-                base = float(string[:e_index])
-                exponent = float(string[e_index + 1:])
-                float_number = base * (10 ** exponent)
-                return float_number
+                if 'e' in string:
+                    e_index = string.index('e')
+                    base = float(string[:e_index])
+                    exponent = float(string[e_index + 1:])
+                    float_number = base * (10 ** exponent)
+                    return float_number
+                else:
+                    return float(string)
 
             price = scientific_to_float(price)
 
