@@ -286,7 +286,26 @@ class crypto(commands.Cog):
         change_30d = []
 
         # Define floating point precision for price.
-        if currency == 'BTC':
+        if len(coinDict) == 1:
+            coin = list(coinDict.keys())[0]
+            price = str(marketDict[coin]["market_data"]
+                        ["current_price"][currency.lower()])
+
+            def scientific_to_float(string):
+                e_index = string.index('e')
+                base = float(string[:e_index])
+                exponent = float(string[e_index + 1:])
+                float_number = base * (10 ** exponent)
+                return float_number
+
+            price = scientific_to_float(price)
+
+            if price < 1:
+                index = re.search("[1-9]", "{:.20f}".format(price)).start()
+                precision = index
+            else:
+                precision = 2
+        elif currency == 'BTC':
             precision = 5
         else:
             precision = 2
