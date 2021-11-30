@@ -358,14 +358,12 @@ class crypto(commands.Cog):
             currency_symbol = 'N/A'
 
         r = '```\n'
-        for x in symbols:
-            r += ((symbols[symbols.index(x)]).rjust(coinwidth) + ': ' +
-                  (values[symbols.index(x)]).rjust(valuewidth) + ' ' +
-                  currency_symbol + ' | ' +
-                  (change_24h[symbols.index(x)]).rjust(changewidth_24h) +
-                  '% | ' + (change_7d[symbols.index(x)]).rjust(changewidth_7d) +
-                  '% | ' +
-                  (change_30d[symbols.index(x)]).rjust(changewidth_30d) + '%\n')
+        for x in range(len(symbols)):
+            r += ((symbols[x]).rjust(coinwidth) + ': ' +
+                  (values[x]).rjust(valuewidth) + ' ' + currency_symbol +
+                  ' | ' + (change_24h[x]).rjust(changewidth_24h) + '% | ' +
+                  (change_7d[x]).rjust(changewidth_7d) + '% | ' +
+                  (change_30d[x]).rjust(changewidth_30d) + '%\n')
         if globalStats:
             r += ('\nMarket Cap: ' + totalMarketCap + ' Mrd. EUR')
             r += ('\nVolume 24h: ' + totalVolume + ' Mrd. EUR')
