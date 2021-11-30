@@ -162,8 +162,8 @@ class botpm(commands.Cog):
             r = '```\n'
             for row in rows:
                 r += ('#' + str(row[0]) + ' - ' + str(row[1]) +
-                      ' - Trigger(s): ' + row[2] + ' - Antwort: ' + row[3] +
-                      '\n')
+                      ' - Trigger(s): ' + row[2] + ' - Antwort: ' +
+                      row[3].replace("`", "") + '\n')
             r += '```'
             await sendLongMsg(ctx, r)
 

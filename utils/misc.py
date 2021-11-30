@@ -59,7 +59,7 @@ def msgSplitter(response):
 
         responses.append(response[:splitindex])
         if addCb == True:
-            responses[-1] = f'```{responses[-1]}'
+            responses[-1] = f'```\n{responses[-1]}'
             addCb = False
         if responses[-1].count('```') % 2 != 0:
             responses[-1] += '```'
@@ -67,6 +67,6 @@ def msgSplitter(response):
         response = response[splitindex + 1:]
     responses.append(response)
     if addCb == True:
-        responses[-1] = f'```{responses[-1]}'
+        responses[-1] = f'```\n{responses[-1]}'
         addCb = False
     return responses
