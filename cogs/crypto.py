@@ -449,8 +449,8 @@ class crypto(commands.Cog):
 
                 # Dynamic indent width.
         coinwidth = len(max(symbols, key=len))
+        athwidth = len(max(ath, key=len))
         valuewidth = len(max(values, key=len))
-        changewidth_24h = len(max(ath, key=len))
         changewidth_7d = len(max(ath_percentage, key=len))
         changewidth_30d = len(max(ath_date, key=len))
 
@@ -465,9 +465,9 @@ class crypto(commands.Cog):
         r = '```\n'
         for x in symbols:
             r += ((symbols[symbols.index(x)]).rjust(coinwidth) + ': ' +
-                  (ath[symbols.index(x)]).rjust(changewidth_24h) +
+                  (values[symbols.index(x)]).rjust(valuewidth) +
                   currency_symbol + ' | ' +
-                  (values[symbols.index(x)]).rjust(valuewidth) + ' ' +
+                  (ath[symbols.index(x)]).rjust(athwidth) + ' ' +
                   currency_symbol + ' | ' +
                   (ath_percentage[symbols.index(x)]).rjust(changewidth_7d) +
                   '% | ' +
