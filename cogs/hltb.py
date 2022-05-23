@@ -3,8 +3,9 @@ from discord.ext import commands
 from bs4 import BeautifulSoup
 import aiohttp
 
-HLTB_URL = 'https://howlongtobeat.com/search_results.php?page=1'
-HLTB_PRE = 'https://howlongtobeat.com/'
+HLTB_URL = 'https://howlongtobeat.com/'
+HLTB_SEARCH = HLTB_URL + 'search_results?page=1'
+HLTB_REFERER = HLTB_URL
 
 
 class hltb(commands.Cog):
@@ -83,7 +84,7 @@ async def FindGame(title):
         raise Exception('{} Not Found'.format(title))
     tmp = page.find("a", title=True, href=True)
     #title,url = tmp['title'], HLTB_PRE + tmp['href'] ORIGINAL
-    title, url = tmp.text, HLTB_PRE + tmp['href']
+    title, url = tmp.text, HLTB_URL + tmp['href']
     scrape = page.findAll("div", class_="search_list_tidbit")
     result = []
     try:
@@ -112,7 +113,8 @@ async def GetPage(title):
         'Content-type':
         'application/x-www-form-urlencoded',
         'User-Agent':
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36'
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36',
+        'referer': HLTB_REFERER
     }
     data = {
         'queryString': title,
@@ -122,11 +124,14 @@ async def GetPage(title):
     }
 
     async with aiohttp.ClientSession() as session:
-        async with session.post(HLTB_URL, data=data, headers=headers) as r:
-            if r.status == 200:
+        async with session.post(HLTB_SEARCH, data=data, headers=headers) as r:
+            if r is not None and r.status == 200:
                 data = await r.text()
-                return data
-
+                r = data
+            else:
+                r = None
+        await session.close()
+        return r
 
 def setup(client):
     client.add_cog(hltb(client))
