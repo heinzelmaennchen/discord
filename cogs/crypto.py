@@ -200,9 +200,11 @@ class crypto(commands.Cog):
                         if bannedCoin in result["id"]:
                             skip = True
                             break
-                    if not skip:
+                    if skip:
+                        results.remove(result)
+                    else:
                         matches.append(result["id"])
-                if len(matches) > 1:
+                if len(results) > 1:
                     r = (
                         'Leider gibt es das Symbol ' + coin + ' wohl öfter. Bitte eine dieser IDs verwenden, du Oasch: ' + ', '.join(matches))
                     return r
