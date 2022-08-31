@@ -1,14 +1,12 @@
 import discord
 from discord.ext import commands
 import asyncio
-import json
 
 from datetime import datetime, timedelta
 from pytz import timezone
 
-from utils.misc import getMessageTime
-from utils.db import check_connection
-from utils.db import init_db
+from utils.misc import getMessageTime, getNick
+from utils.db import check_connection, init_db
 
 from cogs.levels import levels
 
@@ -60,7 +58,7 @@ class asdf(commands.Cog):
 
         # asdf check in BOT DEV channels and #wlc
         if message.channel.id == 405433814547169301 or message.channel.id == 705617951440633877 or message.channel.id == 156040097819525120:
-            time = getMessageTime(message)
+            time = getMessageTime(message.id)
             global asdfReset
             if time.hour == 13 and time.minute >= 35 and time.minute <= 38:
                 # Check if active
@@ -235,10 +233,7 @@ class asdf(commands.Cog):
                     if user == None:  # Skip User if not found in Guild
                         continue
                     else:  # User in guild > check if Nick or use Name instead
-                        if user.nick == None:
-                            user = user.name
-                        else:
-                            user = user.nick
+                        user = getNick(user)
                     user_max_streaks[user] = user_max_streak
                     user_active_streaks[user] = user_active_streak
 
@@ -346,10 +341,7 @@ class asdf(commands.Cog):
                     if user == None:  # Skip User if not found in Guild
                         continue
                     else:  # User in guild > check if Nick or use Name instead
-                        if user.nick == None:
-                            user = user.name
-                        else:
-                            user = user.nick
+                        user = getNick(user)
                     r += f'{user}: {row[1]}\n'
 
                 asdfEmbed.add_field(name=f'**Gesamt: {total}**', value=r)

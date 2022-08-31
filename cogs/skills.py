@@ -2,10 +2,10 @@ import discord
 from discord.ext import commands
 import random
 import os
-import requests
 import re
-import json
-from utils.misc import getMessageTime
+import aiohttp
+from utils.misc import getMessageTime, sendLongMsg, getNick
+import aiohttp
 
 repeat_dict = {}
 asdfMention = False
@@ -15,6 +15,7 @@ asdfList = []
 DISCORD_EPOCH = 1420070400000
 
 redditpattern = re.compile(r'[^\/\w](r\/\w+)|^(r\/\w+)')
+calcpattern = re.compile(r'[0-9\+\-\*\/\(\).% ,]*')
 
 
 class skills(commands.Cog):
@@ -33,14 +34,24 @@ class skills(commands.Cog):
             await ctx.send(result)
 
     def doCalculate(self, calcStr):
-        try:
-            result = eval(calcStr.replace(",", "."), {'__builtins__': None})
-            if result % 1 == 0:
-                r = int(result)
-            else:
-                r = f'{round(float(result), 8):.8f}'.rstrip('0').rstrip('.')
-        except:
-            r = None
+        # erlaube Zeichen: 0-9 + - * / ( ) . %   ,
+        matches = calcpattern.fullmatch(calcStr)
+        if matches:
+            try:
+                result = eval(calcStr.replace(",", "."),
+                              {'__builtins__': None})
+                if result % 1 == 0:
+                    r = int(result)
+                else:
+                    r = f'{round(float(result), 8):.8f}'.rstrip('0').rstrip(
+                        '.')
+            except:
+                r = None
+
+        #    return r
+        else:
+            r = 'Keine gültige Berechnung!'
+
         return r
 
     # On Message Listener
@@ -125,9 +136,9 @@ class skills(commands.Cog):
             await ctx.message.add_reaction('👏')
             await ctx.send("Und wonach soll ich jetzt suchen, du Heisl?")
         else:
-            await ctx.send(self.searchVideo(searchterm))
+            await ctx.send(await self.searchVideo(searchterm))
 
-    def searchVideo(self, searchterm):
+    async def searchVideo(self, searchterm):
         url = "https://www.googleapis.com/youtube/v3/search"
         payload = {
             'key': self.youtube_key,
@@ -138,10 +149,13 @@ class skills(commands.Cog):
             'type': 'video'
         }
 
-        r = requests.get(url, params=payload).json()
-        video_id = r['items'][0]['id']['videoId']
-        video_url = ('https://youtube.com/watch?v=' + video_id)
-        return video_url
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url, params=payload) as r:
+                if r.status == 200:
+                    json = await r.json()
+                    video_id = json['items'][0]['id']['videoId']
+                    video_url = ('https://youtube.com/watch?v=' + video_id)
+                    return video_url
 
     # Tenor GIF search
     @commands.command()
@@ -153,9 +167,9 @@ class skills(commands.Cog):
             await ctx.message.add_reaction('👏')
             await ctx.send("Und wonach soll ich jetzt suchen, du Heisl?")
         else:
-            await ctx.send(f'{self.searchGif(searchterm)}')
+            await ctx.send(f'{await self.searchGif(searchterm)}')
 
-    def searchGif(self, searchterm):
+    async def searchGif(self, searchterm):
         url = "https://api.tenor.com/v1/search"
         payload = {
             'key': self.tenor_key,
@@ -163,9 +177,13 @@ class skills(commands.Cog):
             'limit': 1,
         }
 
-        r = requests.get(url, params=payload).json()
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url, params=payload) as r:
+                if r.status == 200:
+                    json = await r.json()
+
         try:
-            gif_url = r['results'][0]['media'][0]['gif']['url']
+            gif_url = json['results'][0]['media'][0]['gif']['url']
         except:
             gif_url = 'I find\' nix!'
         return gif_url
@@ -198,12 +216,12 @@ class skills(commands.Cog):
         async with ctx.channel.typing():
             if depth > 100000:
                 message = await ctx.channel.fetch_message(depth)
-                time = getMessageTime(message).strftime(
-                    "%Y-%m-%d %H:%M:%S.%f")[:-3]
-                author = message.author.name
+                time = getMessageTime(
+                    message.id).strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
+                author = getNick(message.author)
                 content = message.content
                 r = (f'```\n[{time}] {author}: {content}```')
-                await ctx.send(r)
+                await sendLongMsg(ctx, r)
                 return
 
             # Exit early if the result most likely be too long
@@ -223,9 +241,9 @@ class skills(commands.Cog):
                 if filter is not None:
                     if filter.lower() not in message.content.lower():
                         continue
-                time = getMessageTime(message).strftime(
-                    "%Y-%m-%d %H:%M:%S.%f")[:-3]
-                author = message.author.name
+                time = getMessageTime(
+                    message.id).strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
+                author = getNick(message.author)
                 content = message.content
                 if '```' in content:
                     content = content.replace('```', '')
@@ -262,6 +280,25 @@ class skills(commands.Cog):
         embed.set_author(name=name, icon_url=ctx.author.avatar_url)
         await ctx.send(embed=embed)
         await ctx.message.delete()
+
+    # Return timestamp of a Discord Snowflake
+    @commands.command()
+    @commands.guild_only()
+    async def timestamp(self, ctx, *, snowflake):
+        isInt = True
+        try:
+            snowflake = int(snowflake)
+        except:
+            isInt = False
+        if isInt == False:
+            r = "Muss eine ganze Zahl sein."
+        elif snowflake < 4194304 or snowflake > 100000000000000000000:
+            r = "Schaut nicht nach ner gültigen ID aus."
+        else:
+            time = getMessageTime(snowflake).strftime(
+                "%Y-%m-%d %H:%M:%S.%f")[:-3]
+            r = (f'```ID: {snowflake}\n{time}```')
+        await ctx.send(r)
 
 
 def setup(client):

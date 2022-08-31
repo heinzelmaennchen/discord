@@ -1,9 +1,9 @@
 import discord
 from discord.ext import commands
 import asyncio
-from utils.db import check_connection
-from utils.db import init_db
+from utils.db import check_connection, init_db
 from utils.levels import createRankcard, createLeaderboard
+from utils.misc import getNick
 
 
 class levels(commands.Cog):
@@ -99,10 +99,7 @@ class levels(commands.Cog):
                     if user == None:  # Skip User if not found in Guild
                         continue
                     else:  # User in guild > check if Nick or use Name instead
-                        if user.nick == None:
-                            name = user.name
-                        else:
-                            name = user.nick
+                        name = getNick(user)
                     author.append(name)
                     authorurl.append(user.avatar_url)
                     xp.append(row[1])

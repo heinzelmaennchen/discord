@@ -21,7 +21,7 @@ class imagealbum(commands.Cog):
             try:
                 for att in atts:
                     for ext in pic_ext:
-                        if att.filename.endswith(ext):
+                        if att.filename.lower().endswith(ext):
                             #AUTH TOKEN
                             service = utils.googlephotos.init_service()
                             token = pickle.load(
@@ -40,7 +40,7 @@ class imagealbum(commands.Cog):
                                     album_title, service)
                             #print(f'AlbumId: {albumId}\n')
                             #FILENAME
-                            time = getMessageTime(message)
+                            time = getMessageTime(message.id)
                             filenametime = f'{time.year}{time.month}{time.day}{time.hour}{time.minute}{time.second}'
                             filename = os.path.splitext(att.filename)[0]
                             filename = filenametime + '_' + filename + os.path.splitext(
@@ -50,7 +50,7 @@ class imagealbum(commands.Cog):
                             #IMAGE BYTE STREAM
                             image_bytes = await att.read()
 
-                            mediaItem = utils.googlephotos.upload_image_to_album(
+                            mediaItem = await utils.googlephotos.upload_image_to_album(
                                 albumId, image_bytes, filename, token, service)
                             #print(f'Media Item: {mediaItem}')
 

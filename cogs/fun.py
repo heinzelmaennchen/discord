@@ -3,7 +3,7 @@ from discord.ext import commands
 import asyncio
 import random
 import os
-from utils.misc import isDevServer
+from utils.misc import isDevServer, sendLongMsg
 from utils.bobbybquotes import bbquotes
 
 
@@ -92,6 +92,23 @@ class fun(commands.Cog):
             '<:galacticballs:572766585593266206><:galactic2:572764693203124224>#ReachForTheStars<:galactic2:572764693203124224><:galacticballs:572766585593266206>'
         )
 
+    @commands.command()
+    @commands.guild_only()
+    async def emojilist(self, ctx):
+        serverId = 156040097819525120
+        server = self.client.get_guild(serverId)
+        server = ctx.guild
+        emojis = await server.fetch_emojis()
+
+        output = '```\n'
+        for emoji in emojis:
+            if emoji.animated:
+                output += f'<a:{emoji.name}:{emoji.id}+>\n'
+            else:
+                output += f'<:{emoji.name}:{emoji.id}+>\n'
+        output += '```'
+        await sendLongMsg(ctx, output)
+
     # Good bot, bad bot, thx bot
     @commands.Cog.listener()
     async def on_message(self, message):
@@ -152,6 +169,22 @@ class fun(commands.Cog):
             await message.channel.send('https://youtu.be/sGs6gSrvrhY')
         elif 'succulent' in cleanMsg.split():
             await message.channel.send('https://youtu.be/XebF2cgmFmU')
+
+
+    # Re-Add bot reaction if it gets deleted
+    @commands.Cog.listener()
+    async def on_reaction_remove(self, reaction, user):
+        if user != self.client.user:
+            return
+        else:
+            await reaction.message.add_reaction(reaction.emoji)
+    
+    # Re-Add bot-reactions if they get cleared
+    @commands.Cog.listener()
+    async def on_reaction_clear(self, message, reactions):
+        for reaction in reactions:
+            if reaction.me:
+                await reaction.message.add_reaction(reaction.emoji)
 
 
 def cleanupString(text):

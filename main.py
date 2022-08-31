@@ -1,6 +1,5 @@
 import discord
 import os
-import requests
 import random
 import re
 import json
@@ -37,7 +36,8 @@ async def on_ready():
     initTimerJSON()
     from cogs.timers import restartTimersOnBoot
     await restartTimersOnBoot(client)
-    change_status.start()
+    if not change_status.is_running():
+        change_status.start()
     print('Let\'s go!')
 
 

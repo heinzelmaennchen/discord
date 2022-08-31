@@ -1,7 +1,6 @@
-import discord
 from discord.ext import commands
-from utils.db import check_connection
-from utils.db import init_db
+from utils.db import check_connection, init_db
+from utils.misc import sendLongMsg
 from enum import Enum
 
 egglist_temp = []
@@ -80,7 +79,7 @@ class botpm(commands.Cog):
                                                    ' is ned erlaubt. NEXT!')
                 elif not egg.responses:
                     if await self.checkContent(message.content):
-                        egg.add_response(message.content)
+                        egg.add_response(message.content.replace("+>", ">"))
                         await message.channel.send(
                             "Das war's, thx! Wart', ich hau das in die Datenbank."
                         )
@@ -163,10 +162,10 @@ class botpm(commands.Cog):
             r = '```\n'
             for row in rows:
                 r += ('#' + str(row[0]) + ' - ' + str(row[1]) +
-                      ' - Trigger(s): ' + row[2] + ' - Antwort: ' + row[3] +
-                      '\n')
+                      ' - Trigger(s): ' + row[2] + ' - Antwort: ' +
+                      row[3].replace("`", "") + '\n')
             r += '```'
-            await ctx.send(r)
+            await sendLongMsg(ctx, r)
 
     @commands.command(aliases=['deleteegg', 'removeegg', 'se'])
     @commands.dm_only()

@@ -1,6 +1,7 @@
 from PIL import Image, ImageDraw, ImageFont
-import requests
+import aiohttp
 import math
+import io
 
 
 # Helper functions for Level system
@@ -98,7 +99,11 @@ async def createRankcard(author, authorurl, rank, xp, level, lvlxp, nlvlxp):
     mask.ellipse([(0, 0), (sizLogo * 10, sizLogo * 10)], fill=(0, 0, 0, 255))
     # Load Userlogo and resize to x10 of final size (antialiasing)
     avatar_url = authorurl
-    avatar = Image.open(requests.get(avatar_url, stream=True).raw)
+    async with aiohttp.ClientSession() as session:
+        async with session.get(str(avatar_url)) as r:
+            if r.status == 200:
+                buffer = io.BytesIO(await r.read())
+    avatar = Image.open(buffer)
     avatar = avatar.resize((sizLogo * 10, sizLogo * 10), Image.LANCZOS)
     # Paste User Logo with alpha mask on Image
     img.paste(avatar, (locLogo[0] * 10, locLogo[1] * 10), mask=mask_im)
@@ -170,9 +175,9 @@ async def createLeaderboard(author, authorurl, level, xp, lvlxp, nlvlxp):
     fntL_height = fntL.getsize('gh')[1]
 
     # IMG Size
-    (x, y) = (900, 116)
+    (x, y) = (960, 116)
     usercount = len(author)
-    border = 15
+    border = 10
     space = 3
 
     # Hintergrundbild für Levels
@@ -279,7 +284,11 @@ async def createLeaderboard(author, authorurl, level, xp, lvlxp, nlvlxp):
                      fill=(0, 0, 0, 255))
         # Load Userlogo and resize to x10 of final size (antialiasing)
         avatar_url = authorurl[i]
-        avatar = Image.open(requests.get(avatar_url, stream=True).raw)
+        async with aiohttp.ClientSession() as session:
+            async with session.get(str(avatar_url)) as r:
+                if r.status == 200:
+                    buffer = io.BytesIO(await r.read())
+        avatar = Image.open(buffer)
         avatar = avatar.resize((sizLogo * 10, sizLogo * 10), Image.LANCZOS)
         # Paste User Logo with alpha mask on Image
         img.paste(avatar, (locLogo[0] * 10, locLogo[1] * 10), mask=mask_im)

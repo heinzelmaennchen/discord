@@ -1,4 +1,3 @@
-import discord
 from discord.ext import commands
 
 import re
@@ -8,6 +7,7 @@ from pytz import timezone
 import json
 
 from main import taskDict
+from utils.misc import sendLongMsg
 
 
 class timers(commands.Cog):
@@ -47,7 +47,7 @@ class timers(commands.Cog):
         match = compiled.match(arg)
         if match is None or not match.group(0):
             compiled = re.compile(
-                r'(?P<reDateTime>(?P<day>[0-9]{1,2}).(?P<month>[0-9]{1,2}).(?P<year>[0-9]{4}) (?P<hour>[0-9]{1,2}):(?P<minute>[0-9]{1,2}))( (?P<reason>.+))?',
+                r'(?P<reDateTime>(?P<day>[0-9]{1,2}).(?P<month>[0-9]{1,2}).(?P<year>[0-9]{4}) *(?P<hour>[0-9]{1,2}):(?P<minute>[0-9]{1,2}))( (?P<reason>.+))?',
                 flags=re.I)
             match = compiled.match(arg)
             if match is None or not match.group(0):
@@ -162,8 +162,13 @@ class timers(commands.Cog):
             strTimer = 'timer'
         else:
             strTimer = 'timers'
-        response = f'```{count} {strTimer} open [{ctx.author.name}]' + response + '```'
-        await ctx.send(response)
+
+        if ctx.author.nick == None:
+            name = ctx.author.name
+        else:
+            name = ctx.author.nick
+        response = f'```\n{count} {strTimer} open [{name}]' + response + '```'
+        await sendLongMsg(ctx, response)
 
     @timer.command(name='cancel')
     @commands.guild_only()
