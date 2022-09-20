@@ -1,6 +1,5 @@
 discord.py>=1.4,<1.5
 python-dotenv
-beautifulsoup4
 pytz
 mysql-connector-python
 Pillow
