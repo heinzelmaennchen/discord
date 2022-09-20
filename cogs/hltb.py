@@ -38,20 +38,21 @@ class hltb(commands.Cog):
                                 value=f"{hltbResult['comp_100']}",
                                 inline=True)
 
-        if hltbResult['flag_combine'] & hltbResult['flag_sp']:
-            embedHltb.add_field(name='Solo',
-                                value=f"{hltbResult['comp_all']}",
-                                inline=True)
+        else:
+            if hltbResult['flag_combine'] & hltbResult['flag_sp']:
+                embedHltb.add_field(name='Solo',
+                                    value=f"{hltbResult['comp_all']}",
+                                    inline=True)
 
-        if hltbResult['flag_co']:
-            embedHltb.add_field(name='Co-Op',
-                                value=f"{hltbResult['invested_co']}",
-                                inline=True)
+            if hltbResult['flag_co']:
+                embedHltb.add_field(name='Co-Op',
+                                    value=f"{hltbResult['invested_co']}",
+                                    inline=True)
 
-        if hltbResult['flag_mp']:
-            embedHltb.add_field(name='Vs.',
-                                value=f"{hltbResult['invested_mp']}",
-                                inline=True)
+            if hltbResult['flag_mp']:
+                embedHltb.add_field(name='Vs.',
+                                    value=f"{hltbResult['invested_mp']}",
+                                    inline=True)
 
         await ctx.send(embed=embedHltb)
 
