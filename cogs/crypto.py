@@ -376,7 +376,7 @@ class crypto(commands.Cog):
     async def getTopTenCoins(self, btc=False):
         async with aiohttp.ClientSession() as session:
             async with session.get(
-                    'https://api.coingecko.com/api/v3/coins/markets?vs_currency=EUR&order=market_cap_desc&per_page=10&page=1&sparkline=false'
+                    'https://api.coingecko.com/api/v3/coins/markets?vs_currency=EUR&order=market_cap_desc&per_page=20&page=1&sparkline=false'
             ) as r:
                 if r.status == 200:
                     topTenList = await r.json()
@@ -387,8 +387,15 @@ class crypto(commands.Cog):
                     return r
 
         topTenCoins = []
-        for i in range(10):
-            topTenCoins.append(topTenList[i]['id'])
+        for i in range(20):
+            if len(topTenCoins) == 10:
+                break
+            coin = topTenList[i]['id']
+            symbol = topTenList[i]['symbol']
+            if symbol in ('usdt, usdc, busd'):
+                continue
+            else:
+                topTenCoins.append(coin)
         if btc:
             topTenCoins.remove('bitcoin')
         return ','.join(topTenCoins)
