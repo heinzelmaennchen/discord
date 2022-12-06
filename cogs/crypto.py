@@ -392,7 +392,7 @@ class crypto(commands.Cog):
                 break
             coin = topTenList[i]['id']
             symbol = topTenList[i]['symbol']
-            if symbol in ('usdt, usdc, busd'):
+            if symbol in ('usdt, usdc, busd, dai'):
                 continue
             else:
                 topTenCoins.append(coin)
