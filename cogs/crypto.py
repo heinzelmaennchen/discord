@@ -355,7 +355,7 @@ class crypto(commands.Cog):
         else:
             currency_symbol = 'N/A'
 
-        r = '```\n​'
+        r = '```\n\u200b'
         for x in range(len(symbols)):
             r += ((symbols[x]).rjust(coinwidth) + ': ' +
                   (values[x]).rjust(valuewidth) + ' ' + currency_symbol +
