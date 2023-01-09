@@ -4,7 +4,7 @@ import aiohttp
 import os
 from utils.db import check_connection
 from utils.db import init_db
-from datetime import date
+from datetime import date, datetime
 import re
 
 
@@ -110,6 +110,13 @@ class crypto(commands.Cog):
     async def history(self, ctx):
         await self.checkChannelAndSend(ctx.message, await
                                        self.getHistoricalPrices())
+
+    @commands.command(
+        aliases=['priceon', 'wasletztepreisam', 'warderpreisheißam', 'wasletztepreis', 'ytd'])
+    @commands.guild_only()
+    async def price(self, ctx, inputDate=None):
+        await self.checkChannelAndSend(ctx.message, await
+                                       self.getHistoricalPriceByDate(inputDate))
 
     @commands.command()
     @commands.guild_only()
@@ -576,6 +583,90 @@ class crypto(commands.Cog):
             for index, row in enumerate(rows):
                 r += row[0] + ': ' + str(row[1]).rjust(
                     valuewidth) + ' € | ' + returns[index].rjust(returnswidth)
+            r += '```'
+        else:
+            r = 'Keine Daten in der Datenbank 😟'
+        return r
+
+    async def getHistoricalPriceByDate(self, inputDate):
+        rows = []
+        changes = []
+        format = "%Y-%m-%d"
+
+        if inputDate:
+            try:
+                inputDate = datetime.strptime(str(inputDate), format)
+                inputDate = inputDate.strftime(format)
+            except ValueError:
+                r = "Falsches Format oder kaputtes Datum, need YYYY-MM-DD, pls."
+                return r
+        else:
+            inputDate = date.today().replace(day=1, month=1).strftime(format)
+
+        # Query to retrieve historical BTC prices on a date
+        query = (
+            f'SELECT DATE, CLOSE FROM `bitcoin_historical` WHERE date = "{inputDate}"'
+        )
+
+        # Check DB connection
+        self.cnx = check_connection(self.cnx)
+        self.cursor = self.cnx.cursor(buffered=True)
+
+        # Execute query
+        self.cursor.execute(query)
+        self.cnx.commit()
+
+        # If resultset is non empty, add rows to array
+        if self.cursor.rowcount > 0:
+            rows += self.cursor.fetchall()
+
+            # Grab current values for a coin from Cryptocompare and get the current price
+            async with aiohttp.ClientSession() as session:
+                async with session.get(
+                        'https://api.coingecko.com/api/v3/coins/'
+                        + 'bitcoin'
+                        + '?localization=false'
+                        + '&tickers=false'
+                        + '&market_data=true'
+                        + '&community_data=false'
+                        + '&developer_data=false') as r:
+                    if r.status == 200:
+                        apiRequestCoins = await r.json()
+                        await session.close()
+                    elif r.status == 429:
+                        r = 'Spammen einstellen, sonst fahrst morgen mit dem Zahnbürscht\'l in\'s Leere!'
+                        await session.close()
+                        return r
+                    else:
+                        r = r.status
+                        await session.close()
+                        return r
+
+            current_price = '%.{}f'.format(2) % round(
+                apiRequestCoins["market_data"]["current_price"]['eur'], 2)
+
+            rows.append(
+                tuple([str(date.today().strftime("%Y-%m-%d")), current_price]))
+
+            # Calculate change
+            for index, row in enumerate(rows):
+                if index == len(rows) - 1:
+                    changes.append(
+                        str('%.1f' %
+                            ((float(current_price) / float(rows[index-1][1]) - 1) *
+                             100)) + '%\n')
+                else:
+                    changes.append('\n')
+
+            # Define widths for prices and changes
+            valuewidth = len(max((str(row[1]) for row in rows), key=len))
+            changeswidth = len(max(changes, key=len))
+
+            # Prepare and send output
+            r = '```\n'
+            for index, row in enumerate(rows):
+                r += row[0] + ': ' + str(row[1]).rjust(
+                    valuewidth) + ' € | ' + changes[index].rjust(changeswidth)
             r += '```'
         else:
             r = 'Keine Daten in der Datenbank 😟'
