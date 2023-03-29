@@ -25,7 +25,12 @@ class chatgpt(commands.Cog):
             )
             message = response.choices[0].text
             # Send the generated text as a message in the Discord channel
-            await ctx.send(message)
+            embed = discord.Embed(colour=discord.Colour.from_rgb(47, 49, 54))
+            embed.set_author(
+                name="WLC GPT",
+                icon_url="https://townsquare.media/site/295/files/2019/10/Terminator-Orion.jpg")
+            embed.description = message
+            await ctx.send(embed=embed)
         except Exception as e:
             # Send an error message to the Discord channel if there was an issue with the API request
             await ctx.send(f"Sorry, there was an error generating the text. Error message: {str(e)}")
