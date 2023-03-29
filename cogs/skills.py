@@ -6,6 +6,7 @@ import re
 import aiohttp
 from utils.misc import getMessageTime, sendLongMsg, getNick
 import aiohttp
+from math import factorial
 
 repeat_dict = {}
 asdfMention = False
@@ -15,7 +16,8 @@ asdfList = []
 DISCORD_EPOCH = 1420070400000
 
 redditpattern = re.compile(r'[^\/\w](r\/\w+)|^(r\/\w+)')
-calcpattern = re.compile(r'[0-9\+\-\*\/\(\).% ,]*')
+calcpattern = re.compile(r'[0-9\+\-\*\/\(\).% ,^!]*')
+factorialpattern = r'\d+!'
 
 
 class skills(commands.Cog):
@@ -34,17 +36,29 @@ class skills(commands.Cog):
             await ctx.send(result)
 
     def doCalculate(self, calcStr):
-        # erlaube Zeichen: 0-9 + - * / ( ) . %   ,
+        # erlaube Zeichen: 0-9 + - * / ( ) . %   , ^ !
         matches = calcpattern.fullmatch(calcStr)
         if matches:
             try:
-                result = eval(calcStr.replace(",", "."),
-                              {'__builtins__': None})
+                # Komma zu Dezimalpunkt und ^ zu ** ändern
+                calcStr = calcStr.replace(",", ".")
+                calcStr = calcStr.replace("^", "**")
+                # RegEx Suche für faktoriell
+                f_matches = re.findall(factorialpattern, calcStr)
+                for f_match in f_matches:
+                    calcStr = calcStr.replace(f_match, 'factorial('+ f_match[:-1]+')')
+                
+                result = eval(calcStr,
+                              {'__builtins__': None},{'factorial':factorial})
                 if result % 1 == 0:
                     r = int(result)
                 else:
                     r = f'{round(float(result), 8):.8f}'.rstrip('0').rstrip(
                         '.')
+                if len(str(r)) > 2000:
+                    r = "https://i.imgur.com/C38uPeQ.jpg"
+            except SyntaxError:
+                r = 'I glaub des is a Bledsinn'
             except:
                 r = None
 

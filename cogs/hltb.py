@@ -1,10 +1,12 @@
+from math import floor
 import discord
 from discord.ext import commands
-from bs4 import BeautifulSoup
 import aiohttp
+import json
 
-HLTB_URL = 'https://howlongtobeat.com/search_results.php?page=1'
-HLTB_PRE = 'https://howlongtobeat.com/'
+HLTB_URL = 'https://howlongtobeat.com/'
+HLTB_SEARCH = HLTB_URL + 'api/search'
+HLTB_REFERER = HLTB_URL
 
 
 class hltb(commands.Cog):
@@ -15,117 +17,141 @@ class hltb(commands.Cog):
     @commands.guild_only()
     async def hltb(self, ctx, *, game):
         hltbResult = await HLTB(game)
-        for x in hltbResult:
-            title = x
+        if hltbResult == -1:
+            await ctx.send(f"Spiel {game} nicht gefunden.")
+            return
 
-        embedHltb = discord.Embed(title=title,
-                                  url=hltbResult[title]['url'],
+        url = HLTB_URL + 'game/' + str(hltbResult['game_id'])
+
+        embedHltb = discord.Embed(title=hltbResult['game_name'],
+                                  url=url,
                                   colour=discord.Colour.from_rgb(255, 128, 0))
-        try:
+        embedHltb.set_thumbnail(url = HLTB_URL + 'games/' + hltbResult['image_url'])
+        if hltbResult['flag_combine'] == 0 and hltbResult['flag_sp'] == 1 and hltbResult['flag_spd'] == 1:
             embedHltb.add_field(name='Main Story',
-                                value=f"{hltbResult[title]['Main Story']}",
+                                value=f"{hltbResult['comp_main']}",
                                 inline=True)
             embedHltb.add_field(name='Main + Extra',
-                                value=f"{hltbResult[title]['Main + Extra']}",
+                                value=f"{hltbResult['comp_plus']}",
                                 inline=True)
             embedHltb.add_field(name='Completionist',
-                                value=f"{hltbResult[title]['Completionist']}",
+                                value=f"{hltbResult['comp_100']}",
                                 inline=True)
-        except:
-            pass
-        try:
-            embedHltb.add_field(name='Solo',
-                                value=f"{hltbResult[title]['Solo']}",
-                                inline=True)
-        except:
-            pass
-        try:
-            embedHltb.add_field(name='Co-Op',
-                                value=f"{hltbResult[title]['Co-Op']}",
-                                inline=True)
-        except:
-            pass
-        try:
-            embedHltb.add_field(name='Vs.',
-                                value=f"{hltbResult[title]['Vs.']}",
-                                inline=True)
-        except:
-            pass
+
+        else:
+            if hltbResult['flag_combine'] & hltbResult['flag_sp']:
+                embedHltb.add_field(name='Solo',
+                                    value=f"{hltbResult['comp_all']}",
+                                    inline=True)
+
+            if hltbResult['flag_co']:
+                embedHltb.add_field(name='Co-Op',
+                                    value=f"{hltbResult['invested_co']}",
+                                    inline=True)
+
+            if hltbResult['flag_mp']:
+                embedHltb.add_field(name='Vs.',
+                                    value=f"{hltbResult['invested_mp']}",
+                                    inline=True)
 
         await ctx.send(embed=embedHltb)
 
-
-# Copied and modified from: https://github.com/fuzzylimes/howlongtobeat-scraper
 ### Main Function ###
 async def HLTB(title):
-    try:
-        times, title, url = await FindGame(title)
-        hltbResult = {
-            title: {
-                'url': url,
-            }
-        }
-        for i in range(0, len(times)):
-            hltbResult[title].update({times[i][0]: times[i][1]})
-        return hltbResult
-    except:
-        raise
+    data = await getHltbApiResponse(title)
+    if data == -1:
+        return -1
 
-
-#######################################
-# Helpers
-#######################################
-async def FindGame(title):
-    soup = BeautifulSoup(await GetPage(title), 'html.parser')
-    try:
-        page = soup.findAll("div", class_="search_list_details")[0]
-    except IndexError:
-        raise Exception('{} Not Found'.format(title))
-    tmp = page.find("a", title=True, href=True)
-    #title,url = tmp['title'], HLTB_PRE + tmp['href'] ORIGINAL
-    title, url = tmp.text, HLTB_PRE + tmp['href']
-    scrape = page.findAll("div", class_="search_list_tidbit")
-    result = []
-    try:
-        result = [
-            (scrape[0].text, "{} Hrs".format(scrape[1].text.split(' ')[0])),
-            (scrape[2].text, "{} Hrs".format(scrape[3].text.split(' ')[0])),
-            (scrape[4].text, "{} Hrs".format(scrape[5].text.split(' ')[0]))
-        ]
-    except IndexError:
-        pass
-    scrape = [
-        page.findAll("div", class_="search_list_tidbit_short"),
-        page.findAll("div", class_="search_list_tidbit_long")
-    ]
-    try:
-        for i in range(0, len(scrape[0])):
-            result.append((scrape[0][i].text,
-                           "{} Hrs".format(scrape[1][i].text.split(' ')[0])))
-    except IndexError:
-        pass
-    return result, title, url
-
-
-async def GetPage(title):
+    hltbresult = {
+        'game_name': data['game_name'],
+        'game_id': data['game_id'],
+        'comp_main': getTimeString(data['comp_main']),
+        'comp_plus': getTimeString(data['comp_plus']),
+        'comp_100': getTimeString(data['comp_100']),
+        'comp_all': getTimeString(data['comp_all']),
+        'invested_co': getTimeString(data['invested_co']),
+        'invested_mp': getTimeString(data['invested_mp']),
+        'flag_combine': data['comp_lvl_combine'],
+        'flag_sp': data['comp_lvl_sp'],
+        'flag_co': data['comp_lvl_co'],
+        'flag_mp': data['comp_lvl_mp'],
+        'flag_spd': data['comp_lvl_spd'],
+        'image_url': data['game_image']
+    }
+    return hltbresult
+    
+async def getHltbApiResponse(title):
     headers = {
         'Content-type':
-        'application/x-www-form-urlencoded',
+        'application/json',
         'User-Agent':
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36'
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36',
+        'referer': HLTB_REFERER
     }
-    data = {
-        'queryString': title,
-        't': 'games',
-        'sorthead': 'popular',
-        'length_type': 'main'
+    payload = {
+        "searchType": "games",
+        "searchTerms": title.split(),
+        "searchPage": 1,
+        "size": 5,
+        "searchOptions": {
+            "games": {
+                "userId": 0,
+                "platform": "",
+                "sortCategory": "popular",
+                "rangeCategory": "main",
+                "rangeTime": {
+                    "min": 0,
+                    "max": 0
+                },
+                "gameplay": {
+                    "perspective": "",
+                    "flow": "",
+                    "genre": ""
+                },
+                "modifier": ""
+            },
+            "users": {
+                "sortCategory": "postcount"
+            },
+            "filter": "",
+            "sort": 0,
+            "randomizer": 0
+        }
     }
+    jpayload = json.dumps(payload)
 
     async with aiohttp.ClientSession() as session:
-        async with session.post(HLTB_URL, data=data, headers=headers) as r:
-            if r.status == 200:
-                data = await r.text()
-                return data
+        async with session.post(HLTB_SEARCH, data=jpayload, headers=headers) as r:
+            if r is not None and r.status == 200:
+                jsonresponse = await r.json()
+                if not jsonresponse['data']:
+                    return -1
+                
+                for index in range(len(jsonresponse['data'])):
+                    if jsonresponse['data'][index]['game_name'] == title:
+                        break
+                
+                if jsonresponse['data'][index]['game_name'] != title:
+                    index = 0
+                try:
+                    r = jsonresponse['data'][index]
+                except IndexError:
+                    return -1
+            else:
+                r = None
+        await session.close()
+        return r
+
+def getTimeString(timeInSeconds):
+    if timeInSeconds == 0:
+        return "-- Hrs"
+    timeString = ""
+    timeInHours = round(timeInSeconds / 3600 * 2) / 2
+    timeString += str(floor(timeInHours))
+    if timeInHours % 1 != 0:
+        timeString += "½"
+    timeString += " Hrs"
+    return timeString
 
 
 def setup(client):

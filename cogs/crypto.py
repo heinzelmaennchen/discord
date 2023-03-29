@@ -207,11 +207,9 @@ class crypto(commands.Cog):
                         if bannedCoin in result["id"]:
                             skip = True
                             break
-                    if skip:
-                        results.remove(result)
-                    else:
+                    if not skip:
                         matches.append(result["id"])
-                if len(results) > 1:
+                if len(matches) > 1:
                     r = (
                         'Leider gibt es das Symbol ' + coin + ' wohl öfter. Bitte eine dieser IDs verwenden, du Oasch: ' + ', '.join(matches))
                     return r
@@ -364,7 +362,7 @@ class crypto(commands.Cog):
         else:
             currency_symbol = 'N/A'
 
-        r = '```\n'
+        r = '```\n\u200b'
         for x in range(len(symbols)):
             r += ((symbols[x]).rjust(coinwidth) + ': ' +
                   (values[x]).rjust(valuewidth) + ' ' + currency_symbol +
@@ -385,7 +383,7 @@ class crypto(commands.Cog):
     async def getTopTenCoins(self, btc=False):
         async with aiohttp.ClientSession() as session:
             async with session.get(
-                    'https://api.coingecko.com/api/v3/coins/markets?vs_currency=EUR&order=market_cap_desc&per_page=10&page=1&sparkline=false'
+                    'https://api.coingecko.com/api/v3/coins/markets?vs_currency=EUR&order=market_cap_desc&per_page=20&page=1&sparkline=false'
             ) as r:
                 if r.status == 200:
                     topTenList = await r.json()
@@ -396,8 +394,15 @@ class crypto(commands.Cog):
                     return r
 
         topTenCoins = []
-        for i in range(10):
-            topTenCoins.append(topTenList[i]['id'])
+        for i in range(20):
+            if len(topTenCoins) == 10:
+                break
+            coin = topTenList[i]['id']
+            symbol = topTenList[i]['symbol']
+            if symbol in ('usdt, usdc, busd, dai'):
+                continue
+            else:
+                topTenCoins.append(coin)
         if btc:
             topTenCoins.remove('bitcoin')
         return ','.join(topTenCoins)

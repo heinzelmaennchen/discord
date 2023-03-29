@@ -171,6 +171,22 @@ class fun(commands.Cog):
             await message.channel.send('https://youtu.be/XebF2cgmFmU')
 
 
+    # Re-Add bot reaction if it gets deleted
+    @commands.Cog.listener()
+    async def on_reaction_remove(self, reaction, user):
+        if user != self.client.user:
+            return
+        else:
+            await reaction.message.add_reaction(reaction.emoji)
+    
+    # Re-Add bot-reactions if they get cleared
+    @commands.Cog.listener()
+    async def on_reaction_clear(self, message, reactions):
+        for reaction in reactions:
+            if reaction.me:
+                await reaction.message.add_reaction(reaction.emoji)
+
+
 def cleanupString(text):
     chars = ".,?!"  # chars which get replaced by a space
     for c in chars:
