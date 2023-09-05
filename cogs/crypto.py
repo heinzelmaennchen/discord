@@ -459,7 +459,7 @@ class crypto(commands.Cog):
                 ath_date.append('n/a')
                 pass
 
-                # Dynamic indent width.
+        # Dynamic indent width.
         coinwidth = len(max(symbols, key=len))
         athwidth = len(max(ath, key=len))
         valuewidth = len(max(values, key=len))
@@ -489,8 +489,11 @@ class crypto(commands.Cog):
 
     async def getEzkValue(self):
         """Grab secret values from environment variables."""
+        # Amounts for €zk
         amountBTC = float(os.environ['AMOUNT_BTC'])
         amountETH = float(os.environ['AMOUNT_ETH'])
+        # Amount for ¥zk
+        amountBTC2 = float(os.environ['AMOUNT_BTC2'])
 
         async with aiohttp.ClientSession() as session:
             async with session.get(
@@ -507,12 +510,26 @@ class crypto(commands.Cog):
                     await session.close()
                     return r
 
+        # Get current BTC and ETH price.
         valueBTC = float(apiRequest['bitcoin']['eur'])
         valueETH = float(apiRequest['ethereum']['eur'])
+        # Calculate total value for €zk.
         value = round(amountBTC * valueBTC + amountETH * valueETH, 2)
+        # Calculate total value for ¥zk.
+        value2 = round(amountBTC2 * valueBTC, 2)
+        # Calculate change values to baseline.
+        change = round((value / 220 - 1) * 100, 2)
+        change2 = round((value2 / 255 - 1) * 100, 2)
+        # Calculate width for dynamic indent.
+        valuewidth = len(max(str(value), str(value2)))+1
+        changewidth = len(max(str(change), str(change2)))+2
+        # Construct response and return.
         r = '```'
-        r += '€zk: ' + str(value) + ' EUR | ' + '{:+}%'.format(
-            round((value / 220 - 1) * 100, 2))
+        r += '€zk: ' + '{0:.2f}'.format(value).rjust(valuewidth) + ' EUR | ' + '{:+}%'.format(
+            change).rjust(changewidth)
+        r += '\n'
+        r += '¥zk: ' + '{0:.2f}'.format(value2).rjust(valuewidth) + ' EUR | ' + '{:+}%'.format(
+            change2).rjust(changewidth)
         r += '```'
         return r
 
