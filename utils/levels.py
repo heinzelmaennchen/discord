@@ -20,8 +20,8 @@ async def createRankcard(author, authorurl, rank, xp, level, lvlxp, nlvlxp):
     fntL = ImageFont.truetype('fonts/Poppins-Regular.ttf', 32)
     fntS = ImageFont.truetype('fonts/Poppins-Regular.ttf', 26)
     # Font heights
-    fntXL_height = fntXL.getsize('gh')[1]
-    fntL_height = fntL.getsize('gh')[1]
+    fntXL_height = fntXL.getbbox('gh')[3]
+    fntL_height = fntL.getbbox('gh')[3]
 
     # IMG Size
     (x, y) = (900, 116)
@@ -62,7 +62,7 @@ async def createRankcard(author, authorurl, rank, xp, level, lvlxp, nlvlxp):
     locProgress = (x - disProgress - sizProgress, y / 2 - sizProgress / 2)
     widthProgress = 8
     # RANK TEXT location
-    widthRank = fntL.getsize(str(rank))[0]
+    widthRank = fntL.getbbox(str(rank))[2]
     locRank = (disRankCircle + sizRankCircle / 2 - widthRank / 2,
                y / 2 - fntL_height / 2 - 1)
     # NAME Location
@@ -70,20 +70,20 @@ async def createRankcard(author, authorurl, rank, xp, level, lvlxp, nlvlxp):
     locName = (disRankCircle + sizRankCircle + disLogo + sizLogo + disName,
                y / 2 - fntXL_height / 2)
     # LEVEL location
-    widthLvl = fntXL.getsize(str(level))[0]
+    widthLvl = fntXL.getbbox(str(level))[2]
     locLvl = (locProgress[0] + sizProgress / 2 - widthLvl / 2,
               y / 2 - fntXL_height / 2 - 2)
     # EXPERIENCE TEXT & NUM location
-    xptext_width = fntS.getsize('EXPERIENCE')[0]
-    xpnum_width = fntL.getsize(strXp)[0]
+    xptext_width = fntS.getbbox('EXPERIENCE')[2]
+    xpnum_width = fntL.getbbox(strXp)[2]
     xp_width = max(xptext_width, xpnum_width)
 
     disXp = 35
     locXptext = (x - disProgress - sizProgress - disXp - xptext_width, 20)
     locXpnum = (x - disProgress - sizProgress - disXp - xpnum_width, 50)
     # MSG 2 LVLUP TEXT  & NUM location
-    msgtext_width = fntS.getsize('^ MSGS')[0]
-    msgnum_width = fntL.getsize(msgtolvlup)[0]
+    msgtext_width = fntS.getbbox('^ MSGS')[2]
+    msgnum_width = fntL.getbbox(msgtolvlup)[2]
 
     disMsg = 35
     locMsgText = (x - disProgress - sizProgress - disXp - xp_width - disMsg -
@@ -135,8 +135,8 @@ async def createRankcard(author, authorurl, rank, xp, level, lvlxp, nlvlxp):
     draw = ImageDraw.Draw(img)
     # Username - Text
     name = author
-    if fntXL.getsize(name)[0] > 271:
-        while fntXL.getsize(name)[0] > 250:
+    if fntXL.getbbox(name)[2] > 271:
+        while fntXL.getbbox(name)[2] > 250:
             name = name[:-1]
         name += '...'
     draw.text((locName[0], locName[1]), name, font=fntXL, fill=(255, 255, 255))
@@ -171,8 +171,8 @@ async def createLeaderboard(author, authorurl, level, xp, lvlxp, nlvlxp):
     fntL = ImageFont.truetype('fonts/Poppins-Regular.ttf', 32)
     fntS = ImageFont.truetype('fonts/Poppins-Regular.ttf', 26)
     # Font heights
-    fntXL_height = fntXL.getsize('gh')[1]
-    fntL_height = fntL.getsize('gh')[1]
+    fntXL_height = fntXL.getbbox('gh')[3]
+    fntL_height = fntL.getbbox('gh')[3]
 
     # IMG Size
     (x, y) = (960, 116)
@@ -192,8 +192,8 @@ async def createLeaderboard(author, authorurl, level, xp, lvlxp, nlvlxp):
         strXp = '{:,}'.format(xp[i]).replace(',', ' ')
         msgtolvlup = '{:,}'.format(math.ceil(
             (nlvlxp[i] - lvlxp[i]) / 20)).replace(',', ' ')
-        if fntL.getsize(msgtolvlup)[0] > maxM2L_width:
-            maxM2L_width = fntL.getsize(msgtolvlup)[0]
+        if fntL.getbbox(msgtolvlup)[2] > maxM2L_width:
+            maxM2L_width = fntL.getbbox(msgtolvlup)[2]
 
     for i in range(0, len(author)):
         # Parameter Aufbereitung
@@ -232,7 +232,7 @@ async def createLeaderboard(author, authorurl, level, xp, lvlxp, nlvlxp):
         locProgress = (x - disProgress - sizProgress, y / 2 - sizProgress / 2)
         widthProgress = 8
         # RANK TEXT location
-        widthRank = fntL.getsize(str(i + 1))[0]
+        widthRank = fntL.getbbox(str(i + 1))[2]
         locRank = (disRankCircle + sizRankCircle / 2 - widthRank / 2,
                    y / 2 - fntL_height / 2 - 1)
         # NAME Location
@@ -240,24 +240,24 @@ async def createLeaderboard(author, authorurl, level, xp, lvlxp, nlvlxp):
         locName = (disRankCircle + sizRankCircle + disLogo + sizLogo + disName,
                    y / 2 - fntXL_height / 2 - 2)
         # LEVEL location
-        widthLvl = fntXL.getsize(str(level[i]))[0]
+        widthLvl = fntXL.getbbox(str(level[i]))[2]
         locLvl = (locProgress[0] + sizProgress / 2 - widthLvl / 2,
                   y / 2 - fntXL_height / 2 - 2)
         # EXPERIENCE TEXT & NUM location
-        xptext_width = fntS.getsize('EXPERIENCE')[0]
-        xpnum_width = fntL.getsize(strXp)[0]
+        xptext_width = fntS.getbbox('EXPERIENCE')[2]
+        xpnum_width = fntL.getbbox(strXp)[2]
         xp_width = max(xptext_width, maxXp_width)
 
         disXp = 35
         locXptext = (x - disProgress - sizProgress - disXp - xptext_width, 20)
         locXpnum = (x - disProgress - sizProgress - disXp - xpnum_width, 50)
         # MSG 2 LVLUP & RANKUP TEXT  & NUM location
-        msgLtext_width = fntS.getsize('LVL^')[0]
-        msglvl_width = fntL.getsize(msgtolvlup)[0]
+        msgLtext_width = fntS.getbbox('LVL^')[2]
+        msglvl_width = fntL.getbbox(msgtolvlup)[2]
         msgL_width = max(maxM2L_width, msgLtext_width)
 
-        msgRtext_width = fntS.getsize('RANK^')[0]
-        msgrank_width = fntL.getsize(msgtorank)[0]
+        msgRtext_width = fntS.getbbox('RANK^')[2]
+        msgrank_width = fntL.getbbox(msgtorank)[2]
         if i > 0:
             msgR_width = max(msgrank_width, msgRtext_width)
         else:
@@ -321,8 +321,8 @@ async def createLeaderboard(author, authorurl, level, xp, lvlxp, nlvlxp):
         # Username - Text
         maxname = 271
         maxname = x - disRankCircle - sizRankCircle - disLogo - sizLogo - disName - disProgress - sizProgress - disXp - xp_width - disMsg - msgL_width - disMsg - msgR_width - 20
-        if fntXL.getsize(author[i])[0] > maxname:
-            while fntXL.getsize(author[i])[0] > maxname - 21:
+        if fntXL.getbbox(author[i])[2] > maxname:
+            while fntXL.getbbox(author[i])[2] > maxname - 21:
                 author[i] = author[i][:-1]
             author[i] += '...'
         draw.text((locName[0], locName[1]),
