@@ -1,5 +1,5 @@
 from discord.ext import commands
-from datetime import timedelta
+from datetime import date, datetime, timedelta
 from utils.db import check_connection
 from utils.db import init_db
 
@@ -15,10 +15,14 @@ class gamenight(commands.Cog):
     async def shift(self, ctx):
         '''returns this weeks and next weeks shift from db'''
 
+        today = datetime.today()
+        firstweekday = today - timedelta(days=today.weekday() % 7)
+        firstday = date(firstweekday.year, firstweekday.month, firstweekday.day)
+        lastday = firstday + timedelta(days=13)
+
         query = (f"""SELECT date, WEEKDAY(date) as day, shift
                  FROM schicht
-                 WHERE WEEK(CURDATE(),1)=WEEK(date,1)
-                 OR (WEEK(CURDATE(),1)+1)=WEEK(date,1)""")
+                 WHERE date BETWEEN DATE("{firstday}") AND DATE("{lastday}")""")
 
         # Check DB connection
         self.cnx = check_connection(self.cnx)
@@ -29,15 +33,13 @@ class gamenight(commands.Cog):
 
         if self.cursor.rowcount > 0:
             rows = self.cursor.fetchall()
-            dateStart1 = rows[0][0]
-            sixdays = timedelta(days=6)
-            dateEnd1 = dateStart1 + sixdays
-            dateEnd2 = rows[-1][0]
-            r = f"```Diese Woche ({dateStart1.day}.{dateStart1.month}. - {dateEnd1.day}.{dateEnd1.month}.):\n"
+            dateEnd1 = firstday + timedelta(days=6)
+            dateStart2 = firstday + timedelta(days=7)
+
+            r = f"```Diese Woche ({firstday.day}.{firstday.month}. - {dateEnd1.day}.{dateEnd1.month}.):\n"
             for row in rows:
                 if row[1] == 0 and not row == rows[0]:
-                    dateStart2 = row[0]
-                    r = r[:-2] + f"\n\nNächste Woche ({dateStart2.day}.{dateStart2.month}. - {dateEnd2.day}.{dateEnd2.month}.):\n"
+                    r = r[:-2] + f"\n\nNächste Woche ({dateStart2.day}.{dateStart2.month}. - {lastday.day}.{lastday.month}.):\n"
                 day = self.getDayString(row[1])
                 r += f'{day}: {row[2]} | '
             r = r[:-2] + "```"            
