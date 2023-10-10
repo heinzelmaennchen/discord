@@ -528,8 +528,8 @@ class crypto(commands.Cog):
         # Calculate change values to baseline.
         change = round((value / 220 - 1) * 100, 2)
         change2 = round((value2 / 255 - 1) * 100, 2)
-        change3 = round((value2 / 250 - 1) * 100, 2)
-        change4 = round((value2 / 250 - 1) * 100, 2)
+        change3 = round((value3 / 250 - 1) * 100, 2)
+        change4 = round((value4 / 250 - 1) * 100, 2)
         # Calculate width for dynamic indent.
         valuewidth = len(max(str(value), str(value2), str(value3), str(value4)))+1
         changewidth = len(max(str(change), str(change2), str(change3), str(change4)))+2
