@@ -215,7 +215,7 @@ class crypto(commands.Cog):
                     return r
                 else:
                     coinDict[list(
-                        filter(lambda x: x["symbol"] == coin.lower(), apiResponseCoinList))[0]["id"]] = coin.lower()
+                        filter(lambda x: x["symbol"] == coin.lower() and x["id"] == matches[0], apiResponseCoinList))[0]["id"]] = coin.lower()
             except IndexError:
                 r = (
                     'Heast du elelelendige Scheißkreatur, schau amoi wos du für an'
@@ -494,6 +494,10 @@ class crypto(commands.Cog):
         amountETH = float(os.environ['AMOUNT_ETH'])
         # Amount for ¥zk
         amountBTC2 = float(os.environ['AMOUNT_BTC2'])
+        # Amount for ¢zk
+        amountBTC3 = float(os.environ['AMOUNT_BTC3']) 
+        # Amount for ₪zk
+        amountBTC4 = float(os.environ['AMOUNT_BTC4'])
 
         async with aiohttp.ClientSession() as session:
             async with session.get(
@@ -517,12 +521,18 @@ class crypto(commands.Cog):
         value = round(amountBTC * valueBTC + amountETH * valueETH, 2)
         # Calculate total value for ¥zk.
         value2 = round(amountBTC2 * valueBTC, 2)
+        # Calculate total value for ¢zk.
+        value3 = round(amountBTC3 * valueBTC, 2)
+        # Calculate total value for ₪zk.
+        value4 = round(amountBTC4 * valueBTC, 2)
         # Calculate change values to baseline.
         change = round((value / 220 - 1) * 100, 2)
         change2 = round((value2 / 255 - 1) * 100, 2)
+        change3 = round((value2 / 250 - 1) * 100, 2)
+        change4 = round((value2 / 250 - 1) * 100, 2)
         # Calculate width for dynamic indent.
-        valuewidth = len(max(str(value), str(value2)))+1
-        changewidth = len(max(str(change), str(change2)))+2
+        valuewidth = len(max(str(value), str(value2), str(value3), str(value4)))+1
+        changewidth = len(max(str(change), str(change2), str(change3), str(change4)))+2
         # Construct response and return.
         r = '```'
         r += '€zk: ' + '{0:.2f}'.format(value).rjust(valuewidth) + ' EUR | ' + '{:+}%'.format(
@@ -530,6 +540,12 @@ class crypto(commands.Cog):
         r += '\n'
         r += '¥zk: ' + '{0:.2f}'.format(value2).rjust(valuewidth) + ' EUR | ' + '{:+}%'.format(
             change2).rjust(changewidth)
+        r += '\n'
+        r += '¢zk: ' + '{0:.2f}'.format(value3).rjust(valuewidth) + ' EUR | ' + '{:+}%'.format(
+            change3).rjust(changewidth)
+        r += '\n'
+        r += '₪zk: ' + '{0:.2f}'.format(value4).rjust(valuewidth) + ' EUR | ' + '{:+}%'.format(
+            change4).rjust(changewidth)
         r += '```'
         return r
 
