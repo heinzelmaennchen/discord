@@ -4,7 +4,8 @@ import aiohttp
 import os
 from utils.db import check_connection
 from utils.db import init_db
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
+from pytz import timezone
 import re
 
 
@@ -110,6 +111,12 @@ class crypto(commands.Cog):
     async def history(self, ctx):
         await self.checkChannelAndSend(ctx.message, await
                                        self.getHistoricalPrices())
+
+    @commands.command()
+    @commands.guild_only()
+    async def halving(self, ctx):
+        await self.checkChannelAndSend(ctx.message, await
+                                       self.getHalvingTime())
 
     @commands.command(
         aliases=['priceon', 'wasletztepreisam', 'warderpreisheißam', 'wasletztepreis', 'ytd'])
@@ -722,6 +729,32 @@ class crypto(commands.Cog):
         else:
             pass
         return r
+
+    # Get most recent block height and calculate time until next halving
+    async def getHalvingTime(self):
+        async with aiohttp.ClientSession() as session:
+            async with session.get(
+                'https://mempool.space/api/blocks/tip/height') as r:
+                if r.status == 200:
+                    currentBlockHeight = int(await r.text())
+                    await session.close()
+                elif r.status == 429:
+                    r = 'Spammen einstellen, sonst fahrst morgen mit dem Zahnbürscht\'l in\'s Leere!'
+                    await session.close()
+                    return r
+                else:
+                    r = r.status
+                    await session.close()
+                    return r
+        halvingInterval = 210000
+        remainingBlocks = halvingInterval - (currentBlockHeight % halvingInterval)
+        predictedHalvingDate = datetime.now(timezone('Europe/Vienna')) + timedelta(minutes = remainingBlocks * 10)
+        r = '```\n'
+        r += 'Next halving approximately on: ' + predictedHalvingDate.strftime('%Y-%m-%d %H:%M') + '\n'
+        r += 'Current block height: ' + str(currentBlockHeight) + '\n'
+        r += 'Blocks remaining: ' + str(remainingBlocks)
+        r += '```'
+        return r 
 
     # Check if the channel is crypto or test, otherwise Eierklatscher
     async def checkChannelAndSend(self, message, function):
