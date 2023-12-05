@@ -501,7 +501,7 @@ class crypto(commands.Cog):
         amountETH = float(os.environ['AMOUNT_ETH'])
         # Amount for ¥zk
         amountBTC2 = float(os.environ['AMOUNT_BTC2'])
-        # Amount for ¢zk
+        # Amount for ₴zk
         amountBTC3 = float(os.environ['AMOUNT_BTC3'])
 
         async with aiohttp.ClientSession() as session:
@@ -526,7 +526,7 @@ class crypto(commands.Cog):
         value = round(amountBTC * valueBTC + amountETH * valueETH, 0)
         # Calculate total value for ¥zk.
         value2 = round(amountBTC2 * valueBTC, 0)
-        # Calculate total value for ¢zk.
+        # Calculate total value for ₴zk.
         value3 = round(amountBTC3 * valueBTC, 0)
         # Calculate change values to baseline.
         change = round((value / 220 - 1) * 100, 0)
