@@ -16,7 +16,7 @@ class crypto(commands.Cog):
         self.gurkerl_string = ':cucumber: :cucumber: :cucumber:'
         self.ripperl_string = ':meat_on_bone: :meat_on_bone: :meat_on_bone:'
         self.ourCoins = os.environ['OUR_COINS']
-        self.api_key = os.environ['API_KEY']
+        self.api_key = os.environ['COINGECKO_KEY']
         self.bannedCoins = os.environ['COINFILTER']
         self.cnx = init_db()
 
@@ -179,7 +179,7 @@ class crypto(commands.Cog):
                                currency='EUR'):
         # Based on an ID get the corresponding symbol, or, if supplying a symbol, get the corresponding ID from Coingecko.
         async with aiohttp.ClientSession() as session:
-            async with session.get('https://api.coingecko.com/api/v3/coins/list') as r:
+            async with session.get('https://api.coingecko.com/api/v3/coins/list?x_cg_demo_api_key=' + self.api_key) as r:
                 if r.status == 200:
                     apiResponseCoinList = await r.json()
                     await session.close()
@@ -241,7 +241,8 @@ class crypto(commands.Cog):
                         + '&tickers=false'
                         + '&market_data=true'
                         + '&community_data=false'
-                        + '&developer_data=false') as r:
+                        + '&developer_data=false'
+                        + '&x_cg_demo_api_key=' + self.api_key) as r:
                     if r.status == 200:
                         marketDict[coin] = await r.json()
                         await session.close()
@@ -264,7 +265,7 @@ class crypto(commands.Cog):
 
             async with aiohttp.ClientSession() as session:
                 async with session.get(
-                        'https://api.coingecko.com/api/v3/global') as r:
+                        'https://api.coingecko.com/api/v3/global?x_cg_demo_api_key=' + self.api_key) as r:
                     if r.status == 200:
                         json = await r.json()
                         apiResponseGlobal = json['data']
@@ -390,7 +391,8 @@ class crypto(commands.Cog):
     async def getTopTenCoins(self, btc=False):
         async with aiohttp.ClientSession() as session:
             async with session.get(
-                    'https://api.coingecko.com/api/v3/coins/markets?vs_currency=EUR&order=market_cap_desc&per_page=20&page=1&sparkline=false'
+                    'https://api.coingecko.com/api/v3/coins/markets?vs_currency=EUR&order=market_cap_desc&per_page=20&page=1&sparkline=false&x_cg_demo_api_key='
+                    + self.api_key
             ) as r:
                 if r.status == 200:
                     topTenList = await r.json()
@@ -406,7 +408,7 @@ class crypto(commands.Cog):
                 break
             coin = topTenList[i]['id']
             symbol = topTenList[i]['symbol']
-            if symbol in ('usdt, usdc, busd, dai'):
+            if symbol in ('usdt, usdc, busd, dai, steth'):
                 continue
             else:
                 topTenCoins.append(coin)
@@ -506,7 +508,7 @@ class crypto(commands.Cog):
 
         async with aiohttp.ClientSession() as session:
             async with session.get(
-                    'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin%2Cethereum&vs_currencies=eur') as r:
+                    'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin%2Cethereum&vs_currencies=eur&x_cg_demo_api_key=' + self.api_key) as r:
                 if r.status == 200:
                     apiRequest = await r.json()
                     await session.close()
@@ -553,7 +555,7 @@ class crypto(commands.Cog):
         rows = []
         returns = []
 
-        # Grab current values for a coin from Cryptocompare and get the current price
+        # Grab current values for a coin from Coingecko and get the current price
         async with aiohttp.ClientSession() as session:
             async with session.get(
                     'https://api.coingecko.com/api/v3/coins/'
@@ -562,7 +564,8 @@ class crypto(commands.Cog):
                     + '&tickers=false'
                     + '&market_data=true'
                     + '&community_data=false'
-                    + '&developer_data=false') as r:
+                    + '&developer_data=false'
+                    + '&x_cg_demo_api_key=' + self.api_key) as r:
                 if r.status == 200:
                     apiRequestCoins = await r.json()
                     await session.close()
@@ -666,7 +669,8 @@ class crypto(commands.Cog):
                         + '&tickers=false'
                         + '&market_data=true'
                         + '&community_data=false'
-                        + '&developer_data=false') as r:
+                        + '&developer_data=false'
+                        + '&x_cg_demo_api_key=' + self.api_key) as r:
                     if r.status == 200:
                         apiRequestCoins = await r.json()
                         await session.close()
