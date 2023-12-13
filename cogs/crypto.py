@@ -18,6 +18,7 @@ class crypto(commands.Cog):
         self.ourCoins = os.environ['OUR_COINS']
         self.api_key = os.environ['COINGECKO_KEY']
         self.bannedCoins = os.environ['COINFILTER']
+        self.ratings = []
         self.cnx = init_db()
 
     # Use on_message if command isn't possible
@@ -358,9 +359,11 @@ class crypto(commands.Cog):
         changewidth_30d = len(max(change_30d, key=len))
 
         # Calculate rating for the first coin in the list.
-        rating_24h = self.calculateRating(change_24h[0])
-        rating_7d = self.calculateRating(change_7d[0])
-        rating_30d = self.calculateRating(change_30d[0])
+        rating_24h = self.calculateRating(change_24h[0], reactposition = 1)
+        rating_7d = self.calculateRating(change_7d[0], reactposition = 2)
+        rating_30d = self.calculateRating(change_30d[0], reactposition = 3)
+
+        self.ratings = [rating_24h, rating_7d, rating_30d]
 
         # Use currency symbols to save space.
         if currency == 'EUR':
@@ -382,10 +385,8 @@ class crypto(commands.Cog):
             r += ('\nVolume 24h: ' + totalVolume + ' Mrd. EUR')
             r += ('\nBTC dominance: ' + btcDominance + '%')
             r += '```'
-            r += rating_24h + ' ' + rating_7d + ' ' + rating_30d
         else:
             r += '```'
-            r += rating_24h + ' ' + rating_7d + ' ' + rating_30d
         return r
 
     async def getTopTenCoins(self, btc=False):
@@ -416,14 +417,32 @@ class crypto(commands.Cog):
             topTenCoins.remove('bitcoin')
         return ','.join(topTenCoins)
 
-    def calculateRating(self, change):
+    def calculateRating(self, change, reactposition):
         try:
             if float(change) <= -5:
-                rating = self.ripperl_string
+                match reactposition:
+                    case 1:
+                        rating = '<:meatonbone_mgr_1:1184563797810216980>'
+                    case 2:
+                        rating = '<:meatonbone_mgr_2:1184563834590072902>'
+                    case 3:
+                        rating = '<:meatonbone_mgr_3:1184563872024248461>'
             elif float(change) >= 5:
-                rating = self.moon_string
+                match reactposition:
+                    case 1:
+                        rating = '<:fullmoon_mgr_1:1184563679287591052>'
+                    case 2:
+                        rating = '<:fullmoon_mgr_2:1184563713907367946>'
+                    case 3:
+                        rating = '<:fullmoon_mgr_3:1184563746371272754>'
             else:
-                rating = self.gurkerl_string
+                match reactposition:
+                    case 1:
+                        rating = '<:cucumber_mgr_1:1184563462953775134>'
+                    case 2:
+                        rating = '<:cucumber_mgr_2:1184563534667972628>'
+                    case 3:
+                        rating = '<:cucumber_mgr_3:1184563581228961943>'
         except ValueError:
             rating = ''
         return rating
@@ -758,7 +777,12 @@ class crypto(commands.Cog):
     # Check if the channel is crypto or test, otherwise Eierklatscher
     async def checkChannelAndSend(self, message, function):
         if message.channel.id == 351724430306574357 or message.channel.id == 705617951440633877:
-            await message.channel.send(function)
+            sent_message = await message.channel.send(function)
+            if self.ratings:
+                await sent_message.add_reaction(self.ratings[0])
+                await sent_message.add_reaction(self.ratings[1])
+                await sent_message.add_reaction(self.ratings[2])
+                self.ratings = []
         else:
             await message.add_reaction('🥚')
             await message.add_reaction('👏')
