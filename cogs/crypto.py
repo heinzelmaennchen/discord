@@ -358,9 +358,11 @@ class crypto(commands.Cog):
         changewidth_30d = len(max(change_30d, key=len))
 
         # Calculate rating for the first coin in the list.
-        rating_24h = self.calculateRating(change_24h[0])
-        rating_7d = self.calculateRating(change_7d[0])
-        rating_30d = self.calculateRating(change_30d[0])
+        rating_24h = self.calculateRating(change_24h[0], reactposition=1)
+        rating_7d = self.calculateRating(change_7d[0], reactposition=2)
+        rating_30d = self.calculateRating(change_30d[0], reactposition=3)
+
+        self.ratings = [rating_24h, rating_7d, rating_30d]
 
         # Use currency symbols to save space.
         if currency == 'EUR':
@@ -419,13 +421,34 @@ class crypto(commands.Cog):
     def calculateRating(self, change):
         try:
             if float(change) <= -5:
-                rating = self.ripperl_string
+                if reactposition == 1:
+                    rating = '<:meatonbone_mgr_1:1184563797810216980>'
+                elif reactposition == 2:
+                    rating = '<:meatonbone_mgr_2:1184563834590072902>'
+                elif reactposition == 3:
+                    rating = '<:meatonbone_mgr_3:1184563872024248461>'
+                else:
+                    rating = '❌'
             elif float(change) >= 5:
-                rating = self.moon_string
+                if reactposition == 1:
+                    rating = '<:fullmoon_mgr_1:1184563679287591052>'
+                elif reactposition == 2:
+                    rating = '<:fullmoon_mgr_2:1184563713907367946>'
+                elif reactposition == 3:
+                    rating = '<:fullmoon_mgr_3:1184563746371272754>'
+                else:
+                    rating = '❌'
             else:
-                rating = self.gurkerl_string
+                if reactposition == 1:
+                    rating = '<:cucumber_mgr_1:1184563462953775134>'
+                elif reactposition == 2:
+                    rating = '<:cucumber_mgr_2:1184563534667972628>'
+                elif reactposition == 3:
+                    rating = '<:cucumber_mgr_3:1184563581228961943>'
+                else:
+                    rating = '❌'
         except ValueError:
-            rating = ''
+            rating = '❌'
         return rating
 
     def getAthData(self, marketDict, currency):
