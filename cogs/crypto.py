@@ -18,6 +18,7 @@ class crypto(commands.Cog):
         self.ourCoins = os.environ['OUR_COINS']
         self.api_key = os.environ['COINGECKO_KEY']
         self.bannedCoins = os.environ['COINFILTER']
+        self.ratings = []
         self.cnx = init_db()
 
     # Use on_message if command isn't possible
