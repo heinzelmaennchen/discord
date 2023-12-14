@@ -18,7 +18,6 @@ class crypto(commands.Cog):
         self.ourCoins = os.environ['OUR_COINS']
         self.api_key = os.environ['COINGECKO_KEY']
         self.bannedCoins = os.environ['COINFILTER']
-        self.ratings = []
         self.cnx = init_db()
 
     # Use on_message if command isn't possible
@@ -385,8 +384,10 @@ class crypto(commands.Cog):
             r += ('\nVolume 24h: ' + totalVolume + ' Mrd. EUR')
             r += ('\nBTC dominance: ' + btcDominance + '%')
             r += '```'
+            r += rating_24h + ' ' + rating_7d + ' ' + rating_30d
         else:
             r += '```'
+            r += rating_24h + ' ' + rating_7d + ' ' + rating_30d
         return r
 
     async def getTopTenCoins(self, btc=False):
@@ -417,7 +418,7 @@ class crypto(commands.Cog):
             topTenCoins.remove('bitcoin')
         return ','.join(topTenCoins)
 
-    def calculateRating(self, change, reactposition):
+    def calculateRating(self, change):
         try:
             if float(change) <= -5:
                 if reactposition == 1:
@@ -780,12 +781,7 @@ class crypto(commands.Cog):
     # Check if the channel is crypto or test, otherwise Eierklatscher
     async def checkChannelAndSend(self, message, function):
         if message.channel.id == 351724430306574357 or message.channel.id == 705617951440633877:
-            sent_message = await message.channel.send(function)
-            if self.ratings:
-                await sent_message.add_reaction(self.ratings[0])
-                await sent_message.add_reaction(self.ratings[1])
-                await sent_message.add_reaction(self.ratings[2])
-                self.ratings = []
+            await message.channel.send(function)
         else:
             await message.add_reaction('🥚')
             await message.add_reaction('👏')
