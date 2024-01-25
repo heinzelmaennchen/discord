@@ -844,26 +844,6 @@ class crypto(commands.Cog):
             await message.add_reaction('🥚')
             await message.add_reaction('👏')
             await message.channel.send('fc, heast!')
-    
-    # Get OurCoins and BannedCoins from DB
-    def getOurBannedCoins(self):
-        query = ('SELECT * FROM `our_banned_coins`')
-        ourCoins = ""
-        bannedCoins = ""
-        # Check DB connection
-        self.cnx = check_connection(self.cnx)
-        self.cursor = self.cnx.cursor(buffered=True)
-        # Execute query
-        self.cursor.execute(query)
-        self.cnx.commit()
-        rows = self.cursor.fetchall()
-        for r in rows:
-            if r[1] == 0:
-                ourCoins += f'{r[0]},'
-            else:
-                bannedCoins += f'{r[0]},'
-        return ourCoins[:-1], bannedCoins[:-1]
-
 
 def setup(client):
     client.add_cog(crypto(client))
