@@ -769,9 +769,11 @@ class crypto(commands.Cog):
             (currentBlockHeight % halvingInterval)
         predictedHalvingDate = datetime.now(
             timezone('Europe/Vienna')) + timedelta(minutes=remainingBlocks * 10)
+        timeUntilHalving = predictedHalvingDate - datetime.now(timezone('Europe/Vienna'))
         r = '```\n'
         r += 'Next halving approximately on: ' + \
             predictedHalvingDate.strftime('%Y-%m-%d %H:%M') + '\n'
+        r += 'Time until halving: ' + str(timeUntilHalving.days) + ' days ' + str(int(timeUntilHalving.seconds / 3600)) + ' hours\n'
         r += 'Current block height: ' + str(currentBlockHeight) + '\n'
         r += 'Blocks remaining: ' + str(remainingBlocks)
         r += '```'
