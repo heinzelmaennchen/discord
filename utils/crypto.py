@@ -1,8 +1,8 @@
 from utils.db import check_connection
   
 # Get OurCoins and BannedCoins from DB
-def getOurBannedCoins(self):
-    query = ('SELECT coin, is_banned FROM `our_banned_coins`')
+def getTrackedBannedCoins(self):
+    query = ('SELECT coin, is_banned FROM `tracked_banned_coins`')
     ourCoins = ""
     bannedCoins = ""
     # Check DB connection

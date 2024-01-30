@@ -28,7 +28,12 @@ def isDevServer(ctx):
         return True
     else:
         return False
-
+    
+def isCChannel(ctx):
+    if ctx.channel.id == 351724430306574357 or isDevServer(ctx):
+        return True
+    else:
+        return False
 
 def isDev(ctx):
     if ctx.author.id in devs:
