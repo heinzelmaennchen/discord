@@ -1,13 +1,12 @@
 import discord
 from discord.ext import commands
-import openai
+from openai import OpenAI
 import os
 
-# Connect to the OpenAI API
-openai.api_key = os.environ['OPENAI_KEY']
+# Start OpenAI client
+ai = OpenAI(api_key=os.environ['OPENAI_KEY'])
 # You can change this to a different model if desired
 model = "gpt-3.5-turbo"  # You can change this to a different model if desired
-
 
 class chatgpt(commands.Cog):
     def __init__(self, client):
@@ -17,14 +16,14 @@ class chatgpt(commands.Cog):
     async def generate_text(self, ctx, *, prompt):
         try:
             # Generate text using the OpenAI API
-            response = openai.ChatCompletion.create(
+            completion = ai.chat.completions.create(
                 model=model,
                 messages=[
                     {"role": "user", "content": prompt}
                 ],
                 max_tokens=500,
             )
-            message = response.choices[0].message.content
+            message = completion.choices[0].message.content
             # Send the generated text as a message in the Discord channel
             embed = discord.Embed(colour=discord.Colour.from_rgb(47, 49, 54))
             embed.set_author(
@@ -41,12 +40,13 @@ class chatgpt(commands.Cog):
         try:
             # Generate image using the OpenAI API
             # generate 1 image, 1024x1024px
-            response = openai.Image.create(
+            response = ai.images.generate(
+                model="dall-e-3",
                 prompt=prompt,
                 n=1,
                 size="1024x1024"
             )
-            image_url = response['data'][0]['url']
+            image_url = response.data[0].url
             # Send the generated image as an embed in the Discord channel
             embed = discord.Embed(colour=discord.Colour.from_rgb(47, 49, 54))
             embed.set_author(
