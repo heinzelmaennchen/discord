@@ -4,6 +4,8 @@ import aiohttp
 import os
 from utils.db import check_connection
 from utils.db import init_db
+from utils.crypto import getTrackedBannedCoins
+from utils.misc import isDev, isCChannel
 from datetime import date, datetime, timedelta
 from pytz import timezone
 import re
@@ -15,11 +17,10 @@ class crypto(commands.Cog):
         self.moon_string = ':full_moon: :full_moon: :full_moon:'
         self.gurkerl_string = ':cucumber: :cucumber: :cucumber:'
         self.ripperl_string = ':meat_on_bone: :meat_on_bone: :meat_on_bone:'
-        self.ourCoins = os.environ['OUR_COINS']
         self.api_key = os.environ['COINGECKO_KEY']
-        self.bannedCoins = os.environ['COINFILTER']
         self.ratings = []
         self.cnx = init_db()
+        self.ourCoins, self.bannedCoins = getTrackedBannedCoins(self)
 
     # Use on_message if command isn't possible
     @commands.Cog.listener()
@@ -172,6 +173,122 @@ class crypto(commands.Cog):
 
         await self.checkChannelAndSend(
             ctx.message, self.getKrakenChartUrl(first, second, status))
+        
+    @commands.command()
+    @commands.guild_only()
+    @commands.check(isDev)
+    @commands.check(isCChannel)
+    async def addcoin(self, ctx, arg):
+        query = (f'INSERT INTO `tracked_banned_coins` (coin, is_banned) VALUES (%s, %s)')
+        data = (arg, 0)
+        # Check DB connection
+        self.cnx = check_connection(self.cnx)
+        self.cursor = self.cnx.cursor(buffered=True)
+        # Execute query
+        try:
+            self.cursor.execute(query, data)
+            self.cnx.commit()
+        except:
+            return
+        return
+    
+    @commands.command()
+    @commands.guild_only()
+    @commands.check(isDev)
+    @commands.check(isCChannel)
+    async def removecoin(self, ctx, arg):
+        query = (f'DELETE FROM `tracked_banned_coins` WHERE id = %s AND is_banned = %s')
+        data = (arg, 0)
+        # Check DB connection
+        self.cnx = check_connection(self.cnx)
+        self.cursor = self.cnx.cursor(buffered=True)
+        # Execute query
+        try:
+            self.cursor.execute(query, data)
+            self.cnx.commit()
+        except:
+            return
+        return
+    
+    @commands.command()
+    @commands.guild_only()
+    @commands.check(isDev)
+    @commands.check(isCChannel)
+    async def bancoin(self, ctx, arg):
+        query = (f'INSERT INTO `tracked_banned_coins` (coin, is_banned) VALUES (%s, %s)')
+        data = (arg, 1)
+        # Check DB connection
+        self.cnx = check_connection(self.cnx)
+        self.cursor = self.cnx.cursor(buffered=True)
+        # Execute query
+        try:
+            self.cursor.execute(query, data)
+            self.cnx.commit()
+        except:
+            return
+        return
+    
+    @commands.command()
+    @commands.guild_only()
+    @commands.check(isDev)
+    @commands.check(isCChannel)
+    async def unbancoin(self, ctx, arg):
+        query = (f'DELETE FROM `tracked_banned_coins` WHERE id = %s AND is_banned = %s')
+        data = (arg, 1)
+        # Check DB connection
+        self.cnx = check_connection(self.cnx)
+        self.cursor = self.cnx.cursor(buffered=True)
+        # Execute query
+        try:
+            self.cursor.execute(query, data)
+            self.cnx.commit()
+        except:
+            return
+        return
+    
+    @commands.command()
+    @commands.guild_only()
+    @commands.check(isDev)
+    @commands.check(isCChannel)
+    async def listtracked(self, ctx):
+        query = (f'SELECT id, coin FROM `tracked_banned_coins` WHERE is_banned = 0')
+        # Check DB connection
+        self.cnx = check_connection(self.cnx)
+        self.cursor = self.cnx.cursor(buffered=True)
+        # Execute query
+        try:
+            self.cursor.execute(query)
+            self.cnx.commit()
+            rows = self.cursor.fetchall()
+        except:
+            return
+        r = "```\n"
+        for row in rows:
+            r += f'{row[0]}: {row[1]}\n'
+        r += "```"
+        await self.checkChannelAndSend(ctx.message, r)
+    
+    @commands.command()
+    @commands.guild_only()
+    @commands.check(isDev)
+    @commands.check(isCChannel)
+    async def listbanned(self, ctx):
+        query = (f'SELECT id, coin FROM `tracked_banned_coins` WHERE is_banned = 1')
+        # Check DB connection
+        self.cnx = check_connection(self.cnx)
+        self.cursor = self.cnx.cursor(buffered=True)
+        # Execute query
+        try:
+            self.cursor.execute(query)
+            self.cnx.commit()
+            rows = self.cursor.fetchall()
+        except:
+            return
+        r = "```\n"
+        for row in rows:
+            r += f'{row[0]}: {row[1]}\n'
+        r += "```"
+        await self.checkChannelAndSend(ctx.message, r)
 
     async def getCurrentValues(self,
                                coinList,
@@ -792,7 +909,6 @@ class crypto(commands.Cog):
             await message.add_reaction('🥚')
             await message.add_reaction('👏')
             await message.channel.send('fc, heast!')
-
 
 def setup(client):
     client.add_cog(crypto(client))
