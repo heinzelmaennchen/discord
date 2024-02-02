@@ -2,6 +2,8 @@ import discord
 from discord.ext import commands
 from openai import OpenAI
 import os
+import io
+import aiohttp
 
 # Start OpenAI client
 ai = OpenAI(api_key=os.environ['OPENAI_KEY'])
@@ -48,17 +50,23 @@ class chatgpt(commands.Cog):
                 size="1024x1024"
             )
             image_url = response.data[0].url
+            image_name = f"img-{ctx.message.id}.png"
+            async with aiohttp.ClientSession() as session:
+                async with session.get(image_url) as resp:
+                    if resp.status != 200:
+                        raise Exception('Could not download file...')
+                    data = io.BytesIO(await resp.read())
+                    img = discord.File(data, image_name)
             # Send the generated image as an embed in the Discord channel
             embed = discord.Embed(colour=discord.Colour.from_rgb(47, 49, 54))
             embed.set_author(
                 name="WLC GPT",
                 icon_url="https://townsquare.media/site/295/files/2019/10/Terminator-Orion.jpg")
-            embed.set_image(url=image_url)
-            await ctx.send(embed=embed)
+            embed.set_image(url=f"attachment://{image_name}")
+            await ctx.send(file=img, embed=embed)
         except Exception as e:
             # Send an error message to the Discord channel if there was an issue with the API request
             await ctx.send(f"Sorry, there was an error generating the image. Error message: {str(e)}")
-
 
 # Initialize the Discord bot and add the GPT cog
 def setup(client):
