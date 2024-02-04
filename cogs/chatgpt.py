@@ -1,5 +1,6 @@
 import discord
 from discord.ext import commands
+from utils.db import check_connection, init_db
 from openai import OpenAI
 import os
 import io
@@ -13,6 +14,8 @@ model = "gpt-3.5-turbo"  # You can change this to a different model if desired
 class chatgpt(commands.Cog):
     def __init__(self, client):
         self.client = client
+        self.cnx = init_db()
+        self.cursor = self.cnx.cursor(buffered=True)
 
     @commands.command(name="gpt")
     async def generate_text(self, ctx, *, prompt):
@@ -67,6 +70,24 @@ class chatgpt(commands.Cog):
         except Exception as e:
             # Send an error message to the Discord channel if there was an issue with the API request
             await ctx.send(f"Sorry, there was an error generating the image. Error message: {str(e)}")
+        # Update command invoke counter
+        else:
+            try:
+                self.update_img_invokes(self, ctx.author.id)
+            except Exception as e:
+                await ctx.send(f'```Error: 666```')
+
+    def update_img_invokes(self, id):
+        # Check DB connection
+        self.cnx = check_connection(self.cnx)
+        self.cursor = self.cnx.cursor(buffered=True)
+        # DB query: Insert new entry if user doesn't exist, or update existing row value+1
+        query = (
+            f'INSERT INTO img_invokes (userid, invokes) VALUES ({id}, 1) ON DUPLICATE KEY UPDATE invokes=invokes+1;'
+        )
+        self.cursor.execute(query)
+        self.cnx.commit()
+        return
 
 # Initialize the Discord bot and add the GPT cog
 def setup(client):
