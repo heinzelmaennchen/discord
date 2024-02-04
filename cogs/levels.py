@@ -68,9 +68,9 @@ class levels(commands.Cog):
                 if ctx.author.id == row[0]:
                     break
 
-            await createRankcard(name, ctx.author.avatar_url, rank, xp,
+            imgRankcard = await createRankcard(name, ctx.author.avatar_url, rank, xp,
                                  level_current, rest_xp, nlvlxp)
-            await ctx.send(file=discord.File(f"storage/levels/{name}.png"))
+            await ctx.send(file=discord.File(imgRankcard, filename=f"{name}.png"))
 
     @commands.command()
     @commands.guild_only()
@@ -115,10 +115,9 @@ class levels(commands.Cog):
                             break
                     lvlxp.append(rest_xp)
                 # create Image
-                await createLeaderboard(author, authorurl, level, xp, lvlxp,
+                imgLeaderboard = await createLeaderboard(author, authorurl, level, xp, lvlxp,
                                         nlvlxp)
-                await ctx.send(
-                    file=discord.File('storage/levels/leaderboard.png'))
+                await ctx.send(file=discord.File(imgLeaderboard, filename="leaderboard.png"))
 
     # Runs in its own thread and updates the author's XP in the database
     async def updateXp(self, message, keyword=None):
