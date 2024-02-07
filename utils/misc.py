@@ -1,4 +1,5 @@
 import discord
+from discord.ext import commands
 import os
 from datetime import datetime
 from pytz import timezone
@@ -14,45 +15,12 @@ def getMessageTime(snowflake):
     time = datetime.fromtimestamp(ms / 1000, timezone('Europe/Vienna'))
     return time
 
-
 def getNick(user):
     if user.nick is not None:
         name = user.nick
     else:
         name = user.name
     return name
-
-
-def isDevServer(ctx):
-    if ctx.guild.id == 405433814114893835:
-        return True
-    else:
-        return False
-    
-def isCChannel(ctx):
-    if ctx.channel.id == 351724430306574357 or isDevServer(ctx):
-        return True
-    else:
-        return False
-
-def isDev(ctx):
-    if ctx.author.id in devs:
-        return True
-    else:
-        return False
-
-
-async def sendLongMsg(channel, response):
-    # Embeds haben max size von 6000 > wird bei uns nie vorkommen
-    # Won't check - infeasible
-    if type(response) == discord.embeds.Embed:
-        await channel.send(embed=response)
-        return
-
-    responses = msgSplitter(response)
-    for response in responses:
-        await channel.send(response)
-
 
 def msgSplitter(response):
     responses = []
@@ -75,3 +43,37 @@ def msgSplitter(response):
         responses[-1] = f'```\n{responses[-1]}'
         addCb = False
     return responses
+
+async def sendLongMsg(channel, response):
+    # Embeds haben max size von 6000 > wird bei uns nie vorkommen
+    # Won't check - infeasible
+    if type(response) == discord.embeds.Embed:
+        await channel.send(embed=response)
+        return
+
+    responses = msgSplitter(response)
+    for response in responses:
+        await channel.send(response)
+
+# Custom Checks
+# CheckFailure argument codes. Codes are handled in main.py in the on_command_error section:
+# '1': no dev permissions
+# '2': wrong channel
+
+def isDevServer(ctx):
+    if ctx.guild.id == 405433814114893835:
+        return True
+    else:
+        return False
+
+def isDev(ctx):
+    if ctx.author.id in devs:
+        return True
+    else:
+        raise commands.CheckFailure('1')
+        
+def isCryptoChannel(ctx):
+    if ctx.channel.id == 351724430306574357 or isDevServer(ctx):
+        return True
+    else:
+        raise commands.CheckFailure('2')

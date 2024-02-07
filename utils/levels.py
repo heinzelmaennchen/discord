@@ -152,8 +152,11 @@ async def createRankcard(author, authorurl, rank, xp, level, lvlxp, nlvlxp):
     draw.text(locRank, str(rank), font=fntL, fill='white')
     # PASTE IMAGE into Rankcard
     imgRankcard.paste(img, (border, border))
-    # SAVE RANKCARD as .png
-    imgRankcard.save(f'storage/levels/{author}.png')
+    # SAVE RANKCARD to BytesIO stream
+    imgRCBytesIO = io.BytesIO()
+    imgRankcard.save(imgRCBytesIO, format='PNG')
+    imgRCBytesIO.seek(0)
+    return imgRCBytesIO
 
 
 # Create a leaderboard image (for !levels command in Cog levels)
@@ -344,5 +347,8 @@ async def createLeaderboard(author, authorurl, level, xp, lvlxp, nlvlxp):
         draw.text(locRank, str(i + 1), font=fntL, fill='white')
         # PASTE IMAGE into LEADERBOARD
         imgLevels.paste(img, (border, border + (y + space) * i))
-    # SAVE LEADERBOARD as .png
-    imgLevels.save('storage/levels/leaderboard.png')
+    # SAVE LEADERBOARD to BytesIO stream
+    imgLBBytesIO = io.BytesIO()
+    imgLevels.save(imgLBBytesIO, format='PNG')
+    imgLBBytesIO.seek(0)
+    return imgLBBytesIO
