@@ -941,5 +941,5 @@ class crypto(commands.Cog):
             await message.add_reaction('👏')
             await message.channel.send('fc, heast!')
 
-def setup(client):
-    client.add_cog(crypto(client))
+async def setup(client):
+    await client.add_cog(crypto(client))

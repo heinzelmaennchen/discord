@@ -59,5 +59,5 @@ class imagealbum(commands.Cog):
                 await message.add_reaction('❌')
 
 
-def setup(client):
-    client.add_cog(imagealbum(client))
+async def setup(client):
+    await client.add_cog(imagealbum(client))

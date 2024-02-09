@@ -90,5 +90,5 @@ class chatgpt(commands.Cog):
         return
 
 # Initialize the Discord bot and add the GPT cog
-def setup(client):
-    client.add_cog(chatgpt(client))
+async def setup(client):
+    await client.add_cog(chatgpt(client))

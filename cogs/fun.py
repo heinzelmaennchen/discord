@@ -136,7 +136,7 @@ class fun(commands.Cog):
                                              or isDevServer(message)):
             user = await self.client.fetch_user(int(os.environ['RINO_ID']))
             embed = discord.Embed(colour=discord.Colour.from_rgb(47, 49, 54))
-            embed.set_author(name="Rino", icon_url=user.avatar_url)
+            embed.set_author(name="Rino", icon_url=user.display_avatar)
             embed.description = "Bin gleich da."
             await message.channel.send(embed=embed)
         elif 'peda' in cleanMsg.split() and (message.channel.id
@@ -195,5 +195,5 @@ def cleanupString(text):
     return text
 
 
-def setup(client):
-    client.add_cog(fun(client))
+async def setup(client):
+    await client.add_cog(fun(client))

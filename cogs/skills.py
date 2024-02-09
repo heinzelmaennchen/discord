@@ -59,8 +59,10 @@ class skills(commands.Cog):
                     r = "https://i.imgur.com/C38uPeQ.jpg"
             except SyntaxError:
                 r = 'I glaub des is a Bledsinn'
+            except ValueError:
+                r = "https://i.imgur.com/C38uPeQ.jpg"
             except:
-                r = None
+                r = '🤷'
 
         #    return r
         else:
@@ -247,7 +249,7 @@ class skills(commands.Cog):
 
             r = '```\n'
 
-            messages = await ctx.channel.history(limit=depth + 1).flatten()
+            messages = [message async for message in ctx.channel.history(limit=depth + 1)]
             result_found = False
 
             # Loop through messages and build response string (based on filter)
@@ -258,7 +260,10 @@ class skills(commands.Cog):
                 time = getMessageTime(
                     message.id).strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
                 author = getNick(message.author)
-                content = message.content
+                if message.content == '' and len(message.attachments) > 0:
+                    content = f'[{len(message.attachments)} attachment(s)]'
+                else: 
+                    content = message.content
                 if '```' in content:
                     content = content.replace('```', '')
                     content = content.replace('[', '--- [')
@@ -291,7 +296,7 @@ class skills(commands.Cog):
             name = ctx.author.name
         else:
             name = ctx.author.nick
-        embed.set_author(name=name, icon_url=ctx.author.avatar_url)
+        embed.set_author(name=name, icon_url=ctx.author.display_avatar)
         await ctx.send(embed=embed)
         await ctx.message.delete()
 
@@ -315,5 +320,5 @@ class skills(commands.Cog):
         await ctx.send(r)
 
 
-def setup(client):
-    client.add_cog(skills(client))
+async def setup(client):
+    await client.add_cog(skills(client))

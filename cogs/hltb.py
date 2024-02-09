@@ -154,5 +154,5 @@ def getTimeString(timeInSeconds):
     return timeString
 
 
-def setup(client):
-    client.add_cog(hltb(client))
+async def setup(client):
+    await client.add_cog(hltb(client))

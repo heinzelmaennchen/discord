@@ -284,5 +284,5 @@ class botpm(commands.Cog):
                 egglist_active[egg.id] = egg
 
 
-def setup(client):
-    client.add_cog(botpm(client))
+async def setup(client):
+    await client.add_cog(botpm(client))
