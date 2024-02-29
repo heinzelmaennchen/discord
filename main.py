@@ -69,6 +69,16 @@ async def on_command_error(ctx, error):
         else:
             await ctx.message.add_reaction('🥚')
             await ctx.message.add_reaction('👏')
+    elif isinstance(error, commands.CheckFailure):
+        # CheckFailure error codes (see utils/misc.py)
+        # '1': no dev permissions
+        # '2': wrong channel
+        if error.args[0] == '1':
+            await ctx.send('🚫 keine Dev Berechtigung')
+            await ctx.message.add_reaction('🚫')
+        elif error.args[0] == '2':
+            await ctx.send('🚫 not in this channel, oida!')
+            await ctx.message.add_reaction('🚫')
     else:
         print(error)
 

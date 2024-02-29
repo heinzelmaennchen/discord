@@ -2,13 +2,14 @@ import discord
 from discord.ext import commands
 import aiohttp
 import os
+import re
+from datetime import date, datetime, timedelta
+from pytz import timezone
+
 from utils.db import check_connection
 from utils.db import init_db
 from utils.crypto import getTrackedBannedCoins
-from utils.misc import isDev, isCChannel
-from datetime import date, datetime, timedelta
-from pytz import timezone
-import re
+from utils.misc import isDev, isCryptoChannel
 
 
 class crypto(commands.Cog):
@@ -78,14 +79,14 @@ class crypto(commands.Cog):
     async def top(self, ctx):
         globalStats = True
         await self.checkChannelAndSend(
-            ctx.message, await self.getCurrentValues(self.ourCoins,
+            ctx.message, await self.getCurrentValues(','.join(self.ourCoins),
                                                      globalStats))
 
     @commands.command(aliases=['topbtc', 'topBtc'])
     @commands.guild_only()
     async def topBTC(self, ctx):
         await self.checkChannelAndSend(
-            ctx.message, await self.getCurrentValues(self.ourCoins, currency='BTC'))
+            ctx.message, await self.getCurrentValues(','.join(self.ourCoins), currency='BTC'))
 
     @commands.command(aliases=['top10'])
     @commands.guild_only()
@@ -132,7 +133,7 @@ class crypto(commands.Cog):
     async def ath(self, ctx, *args):
         if not args:
             await self.checkChannelAndSend(ctx.message, await
-                                           self.getCurrentValues(self.ourCoins, ath=True))
+                                           self.getCurrentValues(','.join(self.ourCoins), ath=True))
         else:
             await self.checkChannelAndSend(ctx.message, await
                                            self.getCurrentValues(','.join(args), ath=True))
@@ -142,7 +143,7 @@ class crypto(commands.Cog):
     async def athbtc(self, ctx, *args):
         if not args:
             await self.checkChannelAndSend(ctx.message, await
-                                           self.getCurrentValues(self.ourCoins, ath=True, currency='BTC'))
+                                           self.getCurrentValues(','.join(self.ourCoins), ath=True, currency='BTC'))
         else:
             await self.checkChannelAndSend(ctx.message, await
                                            self.getCurrentValues(','.join(args), ath=True, currency='BTC'))
@@ -177,9 +178,13 @@ class crypto(commands.Cog):
     @commands.command()
     @commands.guild_only()
     @commands.check(isDev)
-    @commands.check(isCChannel)
+    @commands.check(isCryptoChannel)
     async def addcoin(self, ctx, arg):
+        if arg in self.ourCoins:
+            await ctx.send(f'```\'{arg}\' is already in tracked coins```')
+            return
         query = (f'INSERT INTO `tracked_banned_coins` (coin, is_banned) VALUES (%s, %s)')
+        # arg = coin, 0 or 1 (0: tracked, 1: banned)
         data = (arg, 0)
         # Check DB connection
         self.cnx = check_connection(self.cnx)
@@ -188,16 +193,23 @@ class crypto(commands.Cog):
         try:
             self.cursor.execute(query, data)
             self.cnx.commit()
-        except:
-            return
+        except Exception as e:
+            await ctx.send(f'```Error:\n{str(e)}```')
+        else:
+            self.ourCoins.append(arg)
+            await ctx.send(f'```Added \'{arg}\' to tracking.```')
         return
     
     @commands.command()
     @commands.guild_only()
     @commands.check(isDev)
-    @commands.check(isCChannel)
+    @commands.check(isCryptoChannel)
     async def removecoin(self, ctx, arg):
-        query = (f'DELETE FROM `tracked_banned_coins` WHERE id = %s AND is_banned = %s')
+        if arg not in self.ourCoins:
+            await ctx.send(f'```\'{arg}\' is not in tracked coins```')
+            return
+        query = (f'DELETE FROM `tracked_banned_coins` WHERE coin = %s AND is_banned = %s')
+        # arg = coin, 0 or 1 (0: tracked, 1: banned)
         data = (arg, 0)
         # Check DB connection
         self.cnx = check_connection(self.cnx)
@@ -206,16 +218,23 @@ class crypto(commands.Cog):
         try:
             self.cursor.execute(query, data)
             self.cnx.commit()
-        except:
-            return
+        except Exception as e:
+            await ctx.send(f'```Error:\n{str(e)}```')
+        else:
+            self.ourCoins.remove(arg)
+            await ctx.send(f'```Removed \'{arg}\' from tracking.```')
         return
     
     @commands.command()
     @commands.guild_only()
     @commands.check(isDev)
-    @commands.check(isCChannel)
+    @commands.check(isCryptoChannel)
     async def bancoin(self, ctx, arg):
+        if arg in self.bannedCoins:
+            await ctx.send(f'```\'{arg}\' is already in banned coins```')
+            return
         query = (f'INSERT INTO `tracked_banned_coins` (coin, is_banned) VALUES (%s, %s)')
+        # arg = coin, 0 or 1 (0: tracked, 1: banned)
         data = (arg, 1)
         # Check DB connection
         self.cnx = check_connection(self.cnx)
@@ -224,16 +243,23 @@ class crypto(commands.Cog):
         try:
             self.cursor.execute(query, data)
             self.cnx.commit()
-        except:
-            return
+        except Exception as e:
+            await ctx.send(f'```Error:\n{str(e)}```')
+        else:
+            self.bannedCoins.append(arg)
+            await ctx.send(f'```Banned \'{arg}\'.```')
         return
     
     @commands.command()
     @commands.guild_only()
     @commands.check(isDev)
-    @commands.check(isCChannel)
+    @commands.check(isCryptoChannel)
     async def unbancoin(self, ctx, arg):
-        query = (f'DELETE FROM `tracked_banned_coins` WHERE id = %s AND is_banned = %s')
+        if arg not in self.bannedCoins:
+            await ctx.send(f'```\'{arg}\' is not in banned coins```')
+            return
+        query = (f'DELETE FROM `tracked_banned_coins` WHERE coin = %s AND is_banned = %s')
+        # arg = coin, 0 or 1 (0: tracked, 1: banned)
         data = (arg, 1)
         # Check DB connection
         self.cnx = check_connection(self.cnx)
@@ -242,16 +268,19 @@ class crypto(commands.Cog):
         try:
             self.cursor.execute(query, data)
             self.cnx.commit()
-        except:
-            return
+        except Exception as e:
+            await ctx.send(f'```Error:\n{str(e)}```')
+        else:
+            self.bannedCoins.remove(arg)
+            await ctx.send(f'```Unbanned \'{arg}\'.```')
         return
     
     @commands.command()
     @commands.guild_only()
     @commands.check(isDev)
-    @commands.check(isCChannel)
+    @commands.check(isCryptoChannel)
     async def listtracked(self, ctx):
-        query = (f'SELECT id, coin FROM `tracked_banned_coins` WHERE is_banned = 0')
+        query = (f'SELECT coin FROM `tracked_banned_coins` WHERE is_banned = 0')
         # Check DB connection
         self.cnx = check_connection(self.cnx)
         self.cursor = self.cnx.cursor(buffered=True)
@@ -260,20 +289,21 @@ class crypto(commands.Cog):
             self.cursor.execute(query)
             self.cnx.commit()
             rows = self.cursor.fetchall()
-        except:
-            return
-        r = "```\n"
-        for row in rows:
-            r += f'{row[0]}: {row[1]}\n'
-        r += "```"
-        await self.checkChannelAndSend(ctx.message, r)
+        except Exception as e:
+            await ctx.send(f'```Error:\n{str(e)}```')
+        else:
+            r = "```\n"
+            for row in rows:
+                r += f'{row[0]}\n'
+            r += "```"
+            await self.checkChannelAndSend(ctx.message, r)
     
     @commands.command()
     @commands.guild_only()
     @commands.check(isDev)
-    @commands.check(isCChannel)
+    @commands.check(isCryptoChannel)
     async def listbanned(self, ctx):
-        query = (f'SELECT id, coin FROM `tracked_banned_coins` WHERE is_banned = 1')
+        query = (f'SELECT coin FROM `tracked_banned_coins` WHERE is_banned = 1')
         # Check DB connection
         self.cnx = check_connection(self.cnx)
         self.cursor = self.cnx.cursor(buffered=True)
@@ -282,13 +312,14 @@ class crypto(commands.Cog):
             self.cursor.execute(query)
             self.cnx.commit()
             rows = self.cursor.fetchall()
-        except:
-            return
-        r = "```\n"
-        for row in rows:
-            r += f'{row[0]}: {row[1]}\n'
-        r += "```"
-        await self.checkChannelAndSend(ctx.message, r)
+        except Exception as e:
+            await ctx.send(f'```Error:\n{str(e)}```')
+        else:
+            r = "```\n"
+            for row in rows:
+                r += f'{row[0]}\n'
+            r += "```"
+            await self.checkChannelAndSend(ctx.message, r)
 
     async def getCurrentValues(self,
                                coinList,
@@ -309,7 +340,7 @@ class crypto(commands.Cog):
                     r = r.status
                     await session.close()
                     return r
-
+        
         coins = coinList.split(',')
         coinDict = {}
 
@@ -324,7 +355,7 @@ class crypto(commands.Cog):
                 results = list(
                     filter(lambda x: x["symbol"] == coin.lower(), apiResponseCoinList))
                 # If more than one result is found, first kick out banned coins:
-                bannedCoins = self.bannedCoins.split(',')
+                bannedCoins = self.bannedCoins
                 matches = []
                 for result in results:
                     skip = False

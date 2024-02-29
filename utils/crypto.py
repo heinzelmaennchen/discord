@@ -3,8 +3,8 @@ from utils.db import check_connection
 # Get OurCoins and BannedCoins from DB
 def getTrackedBannedCoins(self):
     query = ('SELECT coin, is_banned FROM `tracked_banned_coins`')
-    ourCoins = ""
-    bannedCoins = ""
+    ourCoins = []
+    bannedCoins = []
     # Check DB connection
     self.cnx = check_connection(self.cnx)
     self.cursor = self.cnx.cursor(buffered=True)
@@ -14,7 +14,7 @@ def getTrackedBannedCoins(self):
     rows = self.cursor.fetchall()
     for r in rows:
         if r[1] == 0:
-            ourCoins += f'{r[0]},'
+            ourCoins.append(r[0])
         else:
-            bannedCoins += f'{r[0]},'
-    return ourCoins[:-1], bannedCoins[:-1]
+            bannedCoins.append(r[0])
+    return ourCoins, bannedCoins
