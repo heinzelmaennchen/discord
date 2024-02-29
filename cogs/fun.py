@@ -171,7 +171,7 @@ class fun(commands.Cog):
             await message.channel.send('https://youtu.be/XebF2cgmFmU')
 
 
-    # Re-Add bot reaction if it gets deleted
+    # Re-Add bot reaction if it gets removed
     @commands.Cog.listener()
     async def on_reaction_remove(self, reaction, user):
         if user != self.client.user:
@@ -179,12 +179,18 @@ class fun(commands.Cog):
         else:
             await reaction.message.add_reaction(reaction.emoji)
     
-    # Re-Add bot-reactions if they get cleared
+    # Re-Add bot-reactions if they get all cleared
     @commands.Cog.listener()
     async def on_reaction_clear(self, message, reactions):
         for reaction in reactions:
             if reaction.me:
                 await reaction.message.add_reaction(reaction.emoji)
+
+    # Re-Add bot-reactions if it gets cleared
+    @commands.Cog.listener()
+    async def on_reaction_clear_emoji(self, reaction):
+        if reaction.me:
+            await reaction.message.add_reaction(reaction.emoji)
 
 
 def cleanupString(text):

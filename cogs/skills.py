@@ -51,10 +51,10 @@ class skills(commands.Cog):
                 result = eval(calcStr,
                               {'__builtins__': None},{'factorial':factorial})
                 if result % 1 == 0:
-                    r = int(result)
+                    r = f'{int(result):,}'.replace(",", " ")
                 else:
-                    r = f'{round(float(result), 8):.8f}'.rstrip('0').rstrip(
-                        '.')
+                    r = f'{round(float(result), 8):,.8f}'.rstrip('0').rstrip(
+                        '.').replace(",", " ")
                 if len(str(r)) > 2000:
                     r = "https://i.imgur.com/C38uPeQ.jpg"
             except SyntaxError:
