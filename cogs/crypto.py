@@ -565,7 +565,7 @@ class crypto(commands.Cog):
         valuewidth = len(max(str(value), str(value2),
                          str(value3), str(value4)))-1
         changewidth = len(max(str(change), str(
-            change2), str(change3), str(value4)))
+            change2), str(change3), str(value4)))+1
         # Construct response and return.
         r = '```'
         r += '€zk: ' + '{0:.0f}'.format(value).rjust(valuewidth) + ' € | ' + '{:+.0f}%'.format(
