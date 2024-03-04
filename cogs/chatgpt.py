@@ -73,7 +73,7 @@ class chatgpt(commands.Cog):
         # Update command invoke counter
         else:
             try:
-                self.update_img_invokes(self, ctx.author.id)
+                self.update_img_invokes(ctx.author.id)
             except Exception as e:
                 await ctx.send(f'```Error: 666```')
 
