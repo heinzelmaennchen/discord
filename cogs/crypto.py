@@ -527,6 +527,8 @@ class crypto(commands.Cog):
         amountBTC2 = float(os.environ['AMOUNT_BTC2'])
         # Amount for ₴zk
         amountBTC3 = float(os.environ['AMOUNT_BTC3'])
+        # Amount for £zk
+        amountBTC4 = float(os.environ['AMOUNT_BTC4'])
 
         async with aiohttp.ClientSession() as session:
             async with session.get(
@@ -552,13 +554,18 @@ class crypto(commands.Cog):
         value2 = round(amountBTC2 * valueBTC, 0)
         # Calculate total value for ₴zk.
         value3 = round(amountBTC3 * valueBTC, 0)
+        # Calculate total value for £zk.
+        value4 = round(amountBTC4 * valueBTC, 0)
         # Calculate change values to baseline.
         change = round((value / 220 - 1) * 100, 0)
         change2 = round((value2 / 255 - 1) * 100, 0)
         change3 = round((value3 / 250 - 1) * 100, 0)
+        change4 = round((value4 / 230 - 1) * 100, 0)
         # Calculate width for dynamic indent.
-        valuewidth = len(max(str(value), str(value2), str(value3)))-1
-        changewidth = len(max(str(change), str(change2), str(change3)))
+        valuewidth = len(max(str(value), str(value2),
+                         str(value3), str(value4)))-1
+        changewidth = len(max(str(change), str(
+            change2), str(change3), str(value4)))
         # Construct response and return.
         r = '```'
         r += '€zk: ' + '{0:.0f}'.format(value).rjust(valuewidth) + ' € | ' + '{:+.0f}%'.format(
@@ -569,6 +576,9 @@ class crypto(commands.Cog):
         r += '\n'
         r += '₴zk: ' + '{0:.0f}'.format(value3).rjust(valuewidth) + ' € | ' + '{:+.0f}%'.format(
             change3).rjust(changewidth)
+        r += '\n'
+        r += '£zk: ' + '{0:.0f}'.format(value4).rjust(valuewidth) + ' € | ' + '{:+.0f}%'.format(
+            change4).rjust(changewidth)
         r += '```'
         return r
 
@@ -769,11 +779,13 @@ class crypto(commands.Cog):
             (currentBlockHeight % halvingInterval)
         predictedHalvingDate = datetime.now(
             timezone('Europe/Vienna')) + timedelta(minutes=remainingBlocks * 10)
-        timeUntilHalving = predictedHalvingDate - datetime.now(timezone('Europe/Vienna'))
+        timeUntilHalving = predictedHalvingDate - \
+            datetime.now(timezone('Europe/Vienna'))
         r = '```\n'
         r += 'Next halving approximately on: ' + \
             predictedHalvingDate.strftime('%Y-%m-%d %H:%M') + '\n'
-        r += 'Time until halving: ' + str(timeUntilHalving.days) + ' days ' + str(int(timeUntilHalving.seconds / 3600)) + ' hours\n'
+        r += 'Time until halving: ' + str(timeUntilHalving.days) + ' days ' + str(
+            int(timeUntilHalving.seconds / 3600)) + ' hours\n'
         r += 'Current block height: ' + str(currentBlockHeight) + '\n'
         r += 'Blocks remaining: ' + str(remainingBlocks)
         r += '```'
