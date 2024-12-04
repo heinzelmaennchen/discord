@@ -85,6 +85,7 @@ def getRequestHeaders():
     headers = {
         'Content-type':
         'application/json',
+        'accept': '*/*',
         'User-Agent':
         'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36',
         'referer': HLTB_REFERER
@@ -110,8 +111,14 @@ def getRequestPayload(title):
                 "gameplay": {
                     "perspective": "",
                     "flow": "",
-                    "genre": ""
+                    "genre": "",
+                    "subGenre": " "
                 },
+                'rangeYear':
+                    {
+                        'max': "",
+                        'min': ""
+                    },
                 "modifier": ""
             },
             "users": {
@@ -120,7 +127,8 @@ def getRequestPayload(title):
             "filter": "",
             "sort": 0,
             "randomizer": 0
-        }
+        },
+        "useCache": True
     }
     return json.dumps(payload)
 
@@ -183,10 +191,10 @@ async def getHltbKey(parse_all: bool):
                         async with session.get(script_url, headers = headers) as r_script:
                             if r_script is not None and r_script.status == 200:
                                 response_script = await r_script.text()
-                                pattern = r'"/api/search/".concat\("([a-zA-Z0-9]+)"\)'
+                                pattern = r'"/api/search/".concat\("([a-zA-Z0-9]+)"\).concat\("([a-zA-Z0-9]+)"\)'
                                 matches = re.findall(pattern, response_script)
-                                for match in matches:
-                                    return match
+                                key = matches[0][0]+matches[0][1]
+                                return key
                             else:
                                 return None
             else:
