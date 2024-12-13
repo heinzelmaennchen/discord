@@ -7,7 +7,7 @@ import json
 import re
 
 HLTB_URL = 'https://howlongtobeat.com/'
-HLTB_SEARCH = HLTB_URL + 'api/search/'
+HLTB_SEARCH = HLTB_URL + 'api/find/'
 HLTB_REFERER = HLTB_URL
 
 
@@ -83,51 +83,54 @@ async def HLTB(title):
 
 def getRequestHeaders():
     headers = {
+        'Accept': '*/*',
         'Content-type':
         'application/json',
-        'accept': '*/*',
+        'Referer': HLTB_REFERER,
         'User-Agent':
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36',
-        'referer': HLTB_REFERER
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36'
     }
     return headers
 
 def getRequestPayload(title):
     payload = {
-        "searchType": "games",
-        "searchTerms": title.split(),
-        "searchPage": 1,
-        "size": 5,
         "searchOptions": {
+            "filter": "",
             "games": {
-                "userId": 0,
+                "gameplay": {
+                    "difficulty": "",
+                    "flow": "",
+                    "genre": "",
+                    "perspective": ""
+                },
+                "modifier": "",
                 "platform": "",
-                "sortCategory": "popular",
                 "rangeCategory": "main",
                 "rangeTime": {
                     "min": 0,
                     "max": 0
-                },
-                "gameplay": {
-                    "perspective": "",
-                    "flow": "",
-                    "genre": "",
-                    "subGenre": " "
                 },
                 'rangeYear':
                     {
                         'max': "",
                         'min': ""
                     },
-                "modifier": ""
+                "sortCategory": "popular",
+                "userId": 0
             },
-            "users": {
+            "lists": {
                 "sortCategory": "postcount"
             },
-            "filter": "",
+            "randomizer": 0,
             "sort": 0,
-            "randomizer": 0
+            "users": {
+                "sortCategory": "postcount"
+            }            
         },
+        "searchPage": 1,
+        "searchTerms": title.split(),
+        "searchType": "games",
+        "size": 5,
         "useCache": True
     }
     return json.dumps(payload)
@@ -191,7 +194,7 @@ async def getHltbKey(parse_all: bool):
                         async with session.get(script_url, headers = headers) as r_script:
                             if r_script is not None and r_script.status == 200:
                                 response_script = await r_script.text()
-                                pattern = r'"/api/search/".concat\("([a-zA-Z0-9]+)"\).concat\("([a-zA-Z0-9]+)"\)'
+                                pattern = r'"/api/find/".concat\("([a-zA-Z0-9]+)"\).concat\("([a-zA-Z0-9]+)"\)'
                                 matches = re.findall(pattern, response_script)
                                 key = matches[0][0]+matches[0][1]
                                 return key
