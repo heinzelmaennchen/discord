@@ -7,7 +7,7 @@ import json
 import re
 
 HLTB_URL = 'https://howlongtobeat.com/'
-HLTB_SEARCH = HLTB_URL + 'api/find/'
+HLTB_SEARCH = HLTB_URL + 'api/lookup/'
 HLTB_REFERER = HLTB_URL
 
 
@@ -194,7 +194,7 @@ async def getHltbKey(parse_all: bool):
                         async with session.get(script_url, headers = headers) as r_script:
                             if r_script is not None and r_script.status == 200:
                                 response_script = await r_script.text()
-                                pattern = r'"/api/find/".concat\("([a-zA-Z0-9]+)"\).concat\("([a-zA-Z0-9]+)"\)'
+                                pattern = r'"/api/lookup/".concat\("([a-zA-Z0-9]+)"\).concat\("([a-zA-Z0-9]+)"\)'
                                 matches = re.findall(pattern, response_script)
                                 key = matches[0][0]+matches[0][1]
                                 return key
