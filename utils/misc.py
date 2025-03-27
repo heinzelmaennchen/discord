@@ -15,6 +15,10 @@ def getMessageTime(snowflake):
     time = datetime.fromtimestamp(ms / 1000, timezone('Europe/Vienna'))
     return time
 
+def isleap(year):
+    """Return True for leap years, False for non-leap years."""
+    return year % 4 == 0 and (year % 100 != 0 or year % 400 == 0)
+
 def getNick(user):
     if user.nick is not None:
         name = user.nick

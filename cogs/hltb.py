@@ -1,11 +1,13 @@
 from math import floor
 import discord
 from discord.ext import commands
+from bs4 import BeautifulSoup
 import aiohttp
 import json
+import re
 
 HLTB_URL = 'https://howlongtobeat.com/'
-HLTB_SEARCH = HLTB_URL + 'api/search'
+HLTB_SEARCH = HLTB_URL + 'api/s/'
 HLTB_REFERER = HLTB_URL
 
 
@@ -27,7 +29,7 @@ class hltb(commands.Cog):
                                   url=url,
                                   colour=discord.Colour.from_rgb(255, 128, 0))
         embedHltb.set_thumbnail(url = HLTB_URL + 'games/' + hltbResult['image_url'])
-        if hltbResult['flag_combine'] == 0 and hltbResult['flag_sp'] == 1 and hltbResult['flag_spd'] == 1:
+        if hltbResult['flag_combine'] == 0 and hltbResult['flag_sp'] == 1:
             embedHltb.add_field(name='Main Story',
                                 value=f"{hltbResult['comp_main']}",
                                 inline=True)
@@ -75,53 +77,74 @@ async def HLTB(title):
         'flag_sp': data['comp_lvl_sp'],
         'flag_co': data['comp_lvl_co'],
         'flag_mp': data['comp_lvl_mp'],
-        'flag_spd': data['comp_lvl_spd'],
         'image_url': data['game_image']
     }
     return hltbresult
-    
-async def getHltbApiResponse(title):
+
+def getRequestHeaders():
     headers = {
+        'Accept': '*/*',
         'Content-type':
         'application/json',
+        'Referer': HLTB_REFERER,
         'User-Agent':
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36',
-        'referer': HLTB_REFERER
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36'
     }
+    return headers
+
+def getRequestPayload(title):
     payload = {
-        "searchType": "games",
-        "searchTerms": title.split(),
-        "searchPage": 1,
-        "size": 5,
         "searchOptions": {
+            "filter": "",
             "games": {
-                "userId": 0,
+                "gameplay": {
+                    "difficulty": "",
+                    "flow": "",
+                    "genre": "",
+                    "perspective": ""
+                },
+                "modifier": "",
                 "platform": "",
-                "sortCategory": "popular",
                 "rangeCategory": "main",
                 "rangeTime": {
                     "min": 0,
                     "max": 0
                 },
-                "gameplay": {
-                    "perspective": "",
-                    "flow": "",
-                    "genre": ""
-                },
-                "modifier": ""
+                'rangeYear':
+                    {
+                        'max': "",
+                        'min': ""
+                    },
+                "sortCategory": "popular",
+                "userId": 0
             },
-            "users": {
+            "lists": {
                 "sortCategory": "postcount"
             },
-            "filter": "",
+            "randomizer": 0,
             "sort": 0,
-            "randomizer": 0
-        }
+            "users": {
+                "sortCategory": "postcount"
+            }            
+        },
+        "searchPage": 1,
+        "searchTerms": title.split(),
+        "searchType": "games",
+        "size": 5,
+        "useCache": True
     }
-    jpayload = json.dumps(payload)
+    return json.dumps(payload)
+
+    
+async def getHltbApiResponse(title):
+    headers = getRequestHeaders()
+    payload = getRequestPayload(title)
+    HLTB_KEY = await getHltbKey(False)
+    if HLTB_KEY is None:
+        HLTB_KEY = await getHltbKey(True)
 
     async with aiohttp.ClientSession() as session:
-        async with session.post(HLTB_SEARCH, data=jpayload, headers=headers) as r:
+        async with session.post(HLTB_SEARCH + HLTB_KEY, data=payload, headers=headers) as r:
             if r is not None and r.status == 200:
                 jsonresponse = await r.json()
                 if not jsonresponse['data']:
@@ -153,6 +176,32 @@ def getTimeString(timeInSeconds):
     timeString += " Hrs"
     return timeString
 
+async def getHltbKey(parse_all: bool):
+    headers = getRequestHeaders()
+    async with aiohttp.ClientSession() as session:
+        async with session.get(HLTB_URL, headers=headers) as r:
+            if r is not None and r.status == 200:
+                response = await r.text()
+                soup = BeautifulSoup(response, 'html.parser')
+                scripts = soup.find_all('script', src=True)
+                if parse_all:
+                    matching_scripts = [script['src'] for script in scripts]
+                else:
+                    matching_scripts = [script['src'] for script in scripts if '_app-' in script['src']]
+                for script_url in matching_scripts:
+                    script_url = HLTB_URL + script_url
+                    async with aiohttp.ClientSession() as session:
+                        async with session.get(script_url, headers = headers) as r_script:
+                            if r_script is not None and r_script.status == 200:
+                                response_script = await r_script.text()
+                                pattern = r'"/api/s/".concat\("([a-zA-Z0-9]+)"\).concat\("([a-zA-Z0-9]+)"\)'
+                                matches = re.findall(pattern, response_script)
+                                key = matches[0][0]+matches[0][1]
+                                return key
+                            else:
+                                return None
+            else:
+                return None
 
 async def setup(client):
     await client.add_cog(hltb(client))
