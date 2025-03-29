@@ -9,7 +9,7 @@ import aiohttp
 # Start OpenAI client
 ai = OpenAI(api_key=os.environ['OPENAI_KEY'])
 # You can change this to a different model if desired
-model = "gpt-3.5-turbo"  # You can change this to a different model if desired
+model = "gpt-4o"  # You can change this to a different model if desired
 
 class chatgpt(commands.Cog):
     def __init__(self, client):
