@@ -100,13 +100,12 @@ class fun(commands.Cog):
         server = ctx.guild
         emojis = await server.fetch_emojis()
 
-        output = '```\n'
+        output = ''
         for emoji in emojis:
             if emoji.animated:
-                output += f'<a:{emoji.name}:{emoji.id}+>\n'
+                output += f'{emoji} - `<a:{emoji.name}:{emoji.id}+>`\n'
             else:
-                output += f'<:{emoji.name}:{emoji.id}+>\n'
-        output += '```'
+                output += f'{emoji} - `<:{emoji.name}:{emoji.id}+>`\n'
         await sendLongMsg(ctx, output)
 
     # Good bot, bad bot, thx bot
@@ -136,7 +135,7 @@ class fun(commands.Cog):
                                              or isDevServer(message)):
             user = await self.client.fetch_user(int(os.environ['RINO_ID']))
             embed = discord.Embed(colour=discord.Colour.from_rgb(47, 49, 54))
-            embed.set_author(name="Rino", icon_url=user.avatar_url)
+            embed.set_author(name="Rino", icon_url=user.display_avatar)
             embed.description = "Bin gleich da."
             await message.channel.send(embed=embed)
         elif 'peda' in cleanMsg.split() and (message.channel.id
@@ -171,7 +170,7 @@ class fun(commands.Cog):
             await message.channel.send('https://youtu.be/XebF2cgmFmU')
 
 
-    # Re-Add bot reaction if it gets deleted
+    # Re-Add bot reaction if it gets removed
     @commands.Cog.listener()
     async def on_reaction_remove(self, reaction, user):
         if user != self.client.user:
@@ -179,12 +178,18 @@ class fun(commands.Cog):
         else:
             await reaction.message.add_reaction(reaction.emoji)
     
-    # Re-Add bot-reactions if they get cleared
+    # Re-Add bot-reactions if they get all cleared
     @commands.Cog.listener()
     async def on_reaction_clear(self, message, reactions):
         for reaction in reactions:
             if reaction.me:
                 await reaction.message.add_reaction(reaction.emoji)
+
+    # Re-Add bot-reactions if it gets cleared
+    @commands.Cog.listener()
+    async def on_reaction_clear_emoji(self, reaction):
+        if reaction.me:
+            await reaction.message.add_reaction(reaction.emoji)
 
 
 def cleanupString(text):
@@ -195,5 +200,5 @@ def cleanupString(text):
     return text
 
 
-def setup(client):
-    client.add_cog(fun(client))
+async def setup(client):
+    await client.add_cog(fun(client))

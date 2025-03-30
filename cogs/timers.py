@@ -209,7 +209,7 @@ def getTimerResponse(reason):
 
 
 async def createTimer(bot, timer):
-    # timer[0:AuthorId, 1:ChannelId, 2:duration, 3:reason, 4:respone, 5:tId]
+    # timer[0:AuthorId, 1:ChannelId, 2:duration, 3:reason, 4:response, 5:tId]
     await asyncio.sleep(timer[2])
     await bot.get_channel(timer[1]
                           ).send(timer[4][1].format(bot.get_user(timer[0]),
@@ -304,5 +304,5 @@ def secondsToReadable(seconds=600):
     return readable
 
 
-def setup(client):
-    client.add_cog(timers(client))
+async def setup(client):
+    await client.add_cog(timers(client))

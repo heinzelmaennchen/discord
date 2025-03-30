@@ -203,5 +203,5 @@ async def getHltbKey(parse_all: bool):
             else:
                 return None
 
-def setup(client):
-    client.add_cog(hltb(client))
+async def setup(client):
+    await client.add_cog(hltb(client))

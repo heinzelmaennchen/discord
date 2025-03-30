@@ -62,5 +62,5 @@ class quote(commands.Cog):
             await ctx.send("Kaputt.")
 
 
-def setup(client):
-    client.add_cog(quote(client))
+async def setup(client):
+    await client.add_cog(quote(client))

@@ -67,8 +67,8 @@ class levels(commands.Cog):
                 rank += 1
                 if ctx.author.id == row[0]:
                     break
-
-            imgRankcard = await createRankcard(name, ctx.author.avatar_url, rank, xp,
+            
+            imgRankcard = await createRankcard(name, ctx.author.display_avatar.url, rank, xp,
                                  level_current, rest_xp, nlvlxp)
             await ctx.send(file=discord.File(imgRankcard, filename=f"{name}.png"))
 
@@ -101,7 +101,7 @@ class levels(commands.Cog):
                     else:  # User in guild > check if Nick or use Name instead
                         name = getNick(user)
                     author.append(name)
-                    authorurl.append(user.avatar_url)
+                    authorurl.append(user.display_avatar.url)
                     xp.append(row[1])
                     level.append(row[2])
 
@@ -195,5 +195,5 @@ class levels(commands.Cog):
             return
 
 
-def setup(client):
-    client.add_cog(levels(client))
+async def setup(client):
+    await client.add_cog(levels(client))

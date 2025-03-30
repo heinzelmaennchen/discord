@@ -352,5 +352,5 @@ class asdf(commands.Cog):
             await ctx.send(embed=asdfEmbed)
 
 
-def setup(client):
-    client.add_cog(asdf(client))
+async def setup(client):
+    await client.add_cog(asdf(client))

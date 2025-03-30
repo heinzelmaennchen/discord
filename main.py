@@ -12,8 +12,11 @@ from config.cogs import __cogs__
 from config.botactivity import __activities__, __activityTimer__
 
 load_dotenv()
+intents = discord.Intents.default()
+intents.members = True
+intents.message_content = True
 
-client = commands.Bot(command_prefix='!')
+client = commands.Bot(command_prefix='!', intents = intents)
 taskDict = {
 }  # used in cog 'skills' for saving the Timer Tasks, but saved in main, if cog gets reloaded
 
@@ -25,7 +28,7 @@ async def on_ready():
     print('Loading cogs...')
     for cog in __cogs__:
         try:
-            client.load_extension(cog)
+            await client.load_extension(cog)
             print(f'{cog} loaded')
         except Exception as e:
             print(f'Couldn\'t load cog {cog}: {e}')
@@ -49,14 +52,14 @@ async def change_status():
 # Reload a specific cog
 @client.command(hidden=True)
 async def reload(ctx, extension):
-    client.unload_extension(f'cogs.{extension}')
-    client.load_extension(f'cogs.{extension}')
+    await client.unload_extension(f'cogs.{extension}')
+    await client.load_extension(f'cogs.{extension}')
 
 
 # Load a specific cog that hasn't been loaded
 @client.command(hidden=True)
 async def load(ctx, extension):
-    client.load_extension(f'cogs.{extension}')
+    await client.load_extension(f'cogs.{extension}')
 
 
 # Invalid command
