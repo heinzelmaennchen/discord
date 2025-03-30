@@ -100,13 +100,12 @@ class fun(commands.Cog):
         server = ctx.guild
         emojis = await server.fetch_emojis()
 
-        output = '```\n'
+        output = ''
         for emoji in emojis:
             if emoji.animated:
-                output += f'<a:{emoji.name}:{emoji.id}+>\n'
+                output += f'{emoji} - `<a:{emoji.name}:{emoji.id}+>`\n'
             else:
-                output += f'<:{emoji.name}:{emoji.id}+>\n'
-        output += '```'
+                output += f'{emoji} - `<:{emoji.name}:{emoji.id}+>`\n'
         await sendLongMsg(ctx, output)
 
     # Good bot, bad bot, thx bot
