@@ -1,14 +1,31 @@
-from discord.ext import commands
-from datetime import date, datetime, timedelta
+import discord
+import os
+import zoneinfo
+import ast
+
+from discord.ext import commands, tasks
+from datetime import time, date, datetime, timedelta
+
 from utils.db import check_connection
 from utils.db import init_db
 
+my_timezone = zoneinfo.ZoneInfo("Europe/Vienna")
+task_exec_time = time(1, 0, 0, tzinfo=my_timezone)
 
 class gamenight(commands.Cog):
     def __init__(self, client):
         self.client = client
         self.cnx = init_db()
         self.cursor = self.cnx.cursor(buffered=True)
+        self.guild_id = ast.literal_eval(os.environ['GUILD_IDS'])["default"]
+        self.channel_id = ast.literal_eval(os.environ['CHANNEL_IDS'])["bottest"]
+        self.test_task.start()
+
+    @tasks.loop(time=task_exec_time)
+    async def test_task(self) -> None:
+        guild = self.client.get_guild(self.guild_id)
+        channel = guild.get_channel(self.channel_id)
+        await channel.send("Es ist 01:00 Uhr!")
 
     @commands.command()
     @commands.guild_only()

@@ -20,7 +20,9 @@ def isleap(year):
     return year % 4 == 0 and (year % 100 != 0 or year % 400 == 0)
 
 def getNick(user):
-    if user.nick is not None:
+    if user.display_name is not None:
+        name = user.display_name
+    elif user.nick is not None:
         name = user.nick
     else:
         name = user.name
