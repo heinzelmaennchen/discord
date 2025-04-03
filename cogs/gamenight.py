@@ -9,7 +9,7 @@ from utils.db import check_connection
 from utils.db import init_db
 
 my_timezone = zoneinfo.ZoneInfo("Europe/Vienna")
-task_exec_time = time(1, 0, 0, tzinfo=my_timezone)
+task_exec_time = time(8, 0, 0, tzinfo=my_timezone)
 
 class gamenight(commands.Cog):
     def __init__(self, client):
@@ -24,7 +24,7 @@ class gamenight(commands.Cog):
     async def test_task(self) -> None:
         guild = self.client.get_guild(self.guild_id)
         channel = guild.get_channel(self.channel_id)
-        await channel.send("Es ist 01:00 Uhr!")
+        await channel.send("Es ist 08:00 Uhr!")
 
     @commands.command()
     @commands.guild_only()
