@@ -1,4 +1,3 @@
-import discord
 import os
 import zoneinfo
 import ast
