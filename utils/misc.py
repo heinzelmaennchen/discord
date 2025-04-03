@@ -20,7 +20,9 @@ def isleap(year):
     return year % 4 == 0 and (year % 100 != 0 or year % 400 == 0)
 
 def getNick(user):
-    if user.nick is not None:
+    if user.display_name is not None:
+        name = user.display_name
+    elif user.nick is not None:
         name = user.nick
     else:
         name = user.name
@@ -81,3 +83,12 @@ def isCryptoChannel(ctx):
         return True
     else:
         raise commands.CheckFailure('2')
+    
+def isGameChannel(ctx):
+    if ctx.channel.id == 156059122792398857 or isDevServer(ctx):
+        return True
+    else:
+        if isinstance(ctx, discord.Interaction):
+            raise discord.app_commands.CheckFailure('2')
+        if isinstance(ctx, commands.Context):
+            raise commands.CheckFailure('2')
