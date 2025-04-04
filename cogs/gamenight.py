@@ -9,7 +9,7 @@ from utils.db import check_connection
 from utils.db import init_db
 
 my_timezone = zoneinfo.ZoneInfo("Europe/Vienna")
-task_exec_time = time(19, 0, 0, tzinfo=my_timezone)
+task_exec_time = time(8, 0, 0, tzinfo=my_timezone)
 
 class gamenight(commands.Cog):
     def __init__(self, client):
