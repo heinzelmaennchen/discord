@@ -9,7 +9,7 @@ from utils.db import check_connection
 from utils.db import init_db
 
 my_timezone = zoneinfo.ZoneInfo("Europe/Vienna")
-task_exec_time = time(8, 0, 0, tzinfo=my_timezone)
+task_exec_time = time(19, 0, 0, tzinfo=my_timezone)
 
 class gamenight(commands.Cog):
     def __init__(self, client):
@@ -17,12 +17,8 @@ class gamenight(commands.Cog):
         self.cnx = init_db()
         self.cursor = self.cnx.cursor(buffered=True)
         self.guild_id = int(ast.literal_eval(os.environ['GUILD_IDS'])['default'])
-        print(self.guild_id)
-        print(type(self.guild_id))
-        #self.channel_id = int(ast.literal_eval(os.environ['CHANNEL_IDS'])['bottest'])
-        #print(self.channel_id)
-        #print(type(self.channel_id))
-        #self.test_task.start()
+        self.channel_id = int(ast.literal_eval(os.environ['CHANNEL_IDS'])['bottest'])
+        self.test_task.start()
 
     @tasks.loop(time=task_exec_time)
     async def test_task(self) -> None:

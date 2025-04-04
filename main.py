@@ -33,7 +33,6 @@ async def on_ready():
             print(f'{cog} loaded')
         except Exception as e:
             print(f'Couldn\'t load cog {cog}: {e}')
-            await client.get_channel(int(os.environ['BOTTEST'])).send(f'Couldn\'t load cog {cog}: {e}')
     print('Loading cogs finished')
     initTimerJSON()
     from cogs.timers import restartTimersOnBoot
@@ -41,8 +40,6 @@ async def on_ready():
     if not change_status.is_running():
         change_status.start()
     print('Let\'s go!')
-    await client.get_channel(int(os.environ['BOTTEST'])).send('`' + os.environ['GUILD_IDS'] + '`')
-    await client.get_channel(int(os.environ['BOTTEST'])).send('```' + ast.literal_eval(os.environ['GUILD_IDS']) + '\n' + type(ast.literal_eval(os.environ['GUILD_IDS'])) + '```')
 
 
 # Loops through different activities as defined in config.botactivity.py
