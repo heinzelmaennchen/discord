@@ -3,6 +3,7 @@ import os
 import random
 import re
 import json
+import ast
 
 from discord.ext import commands, tasks
 from discord.ext.commands import Bot
@@ -32,6 +33,7 @@ async def on_ready():
             print(f'{cog} loaded')
         except Exception as e:
             print(f'Couldn\'t load cog {cog}: {e}')
+            await client.get_channel(int(os.environ['BOTTEST'])).send(f'Couldn\'t load cog {cog}: {e}')   
     print('Loading cogs finished')
     initTimerJSON()
     from cogs.timers import restartTimersOnBoot
@@ -39,6 +41,8 @@ async def on_ready():
     if not change_status.is_running():
         change_status.start()
     print('Let\'s go!')
+    await client.get_channel(int(os.environ['BOTTEST'])).send('`' + os.environ['GUILD_IDS'] + '`')
+    await client.get_channel(int(os.environ['BOTTEST'])).send('```' + ast.literal_eval(os.environ['GUILD_IDS']) + '\n' + type(ast.literal_eval(os.environ['GUILD_IDS'])) + '```')
 
 
 # Loops through different activities as defined in config.botactivity.py
@@ -52,14 +56,26 @@ async def change_status():
 # Reload a specific cog
 @client.command(hidden=True)
 async def reload(ctx, extension):
-    await client.unload_extension(f'cogs.{extension}')
-    await client.load_extension(f'cogs.{extension}')
+    try:
+        await client.unload_extension(f'cogs.{extension}')
+        print(f'{extension} unloaded')
+    except Exception as e:
+        print(f'Couldn\'t unload cog {extension}: {e}')
+    try:
+        await client.load_extension(f'cogs.{extension}')
+        print(f'{extension} loaded')
+    except Exception as e:
+        print(f'Couldn\'t load cog {extension}: {e}')
 
 
 # Load a specific cog that hasn't been loaded
 @client.command(hidden=True)
 async def load(ctx, extension):
-    await client.load_extension(f'cogs.{extension}')
+    try:
+        await client.load_extension(f'cogs.{extension}')
+        print(f'{extension} loaded')
+    except Exception as e:
+        print(f'Couldn\'t load cog {extension}: {e}')
 
 
 # Invalid command
