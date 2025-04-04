@@ -16,9 +16,9 @@ class gamenight(commands.Cog):
         self.client = client
         self.cnx = init_db()
         self.cursor = self.cnx.cursor(buffered=True)
-        #self.guild_id = ast.literal_eval(os.environ['GUILD_IDS'])["default"]
-        #self.channel_id = ast.literal_eval(os.environ['CHANNEL_IDS'])["bottest"]
-        #self.test_task.start()
+        self.guild_id = ast.literal_eval(os.environ['GUILD_IDS'])["default"]
+        self.channel_id = ast.literal_eval(os.environ['CHANNEL_IDS'])["bottest"]
+        self.test_task.start()
 
     @tasks.loop(time=task_exec_time)
     async def test_task(self) -> None:
