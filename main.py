@@ -3,16 +3,16 @@ import os
 import random
 import re
 import json
-import ast
 
 from discord.ext import commands, tasks
-from discord.ext.commands import Bot
 from dotenv import load_dotenv
 
 from config.cogs import __cogs__
 from config.botactivity import __activities__, __activityTimer__
+from utils.misc import getDatetimeNow
 
 load_dotenv()
+
 intents = discord.Intents.default()
 intents.members = True
 intents.message_content = True
@@ -20,7 +20,7 @@ intents.message_content = True
 client = commands.Bot(command_prefix='!', intents = intents)
 taskDict = {
 }  # used in cog 'skills' for saving the Timer Tasks, but saved in main, if cog gets reloaded
-
+startuptime = getDatetimeNow()
 
 @client.event
 async def on_ready():
@@ -74,6 +74,12 @@ async def load(ctx, extension):
     except Exception as e:
         print(f'Couldn\'t load cog {extension}: {e}')
 
+# returns Uptime of Bot
+@client.command(hidden=True)
+async def uptime(ctx):
+    uptime = getDatetimeNow() - startuptime
+    uptimeString = f'Uptime: `{str(uptime).split(".")[0]}`'
+    await ctx.send(uptimeString)
 
 # Invalid command
 @client.event

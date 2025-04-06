@@ -2,13 +2,17 @@ import discord
 from discord.ext import commands
 import os
 from datetime import datetime
+import zoneinfo
 from pytz import timezone
 
 DISCORD_EPOCH = 1420070400000
 MAX_MESSAGE_LENGTH = 1980
 
-devs = list(map(int, os.environ['DEVS'].split(",")))
+my_timezone = zoneinfo.ZoneInfo("Europe/Vienna")
 
+def getDatetimeNow() -> datetime:
+    now = datetime.now(tz=my_timezone)
+    return now
 
 def getMessageTime(snowflake):
     ms = (snowflake >> 22) + DISCORD_EPOCH
@@ -73,6 +77,7 @@ def isDevServer(ctx):
         return False
 
 def isDev(ctx):
+    devs = list(map(int, os.environ['DEVS'].split(",")))
     if ctx.author.id in devs:
         return True
     else:
