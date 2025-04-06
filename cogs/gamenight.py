@@ -20,7 +20,7 @@ class gamenight(commands.Cog):
         self.cnx = init_db()
         self.cursor = self.cnx.cursor(buffered=True)
         self.guild_id = int(ast.literal_eval(os.environ['GUILD_IDS'])['default'])
-        self.channel_id = int(ast.literal_eval(os.environ['CHANNEL_IDS'])['bottest'])
+        self.channel_id = int(ast.literal_eval(os.environ['CHANNEL_IDS'])['gaming'])
         self.users_channel_id = int(ast.literal_eval(os.environ['CHANNEL_IDS'])['gaming_users'])
         if not self.gn_pollthread.is_running():
             self.gn_pollthread.start()
