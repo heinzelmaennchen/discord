@@ -7,7 +7,7 @@ import json
 import re
 
 HLTB_URL = 'https://howlongtobeat.com/'
-HLTB_SEARCH = HLTB_URL + 'api/s/'
+HLTB_ENDPOINT = 'api/ouch/'
 HLTB_REFERER = HLTB_URL
 
 
@@ -144,7 +144,7 @@ async def getHltbApiResponse(title):
         HLTB_KEY = await getHltbKey(True)
 
     async with aiohttp.ClientSession() as session:
-        async with session.post(HLTB_SEARCH + HLTB_KEY, data=payload, headers=headers) as r:
+        async with session.post(HLTB_URL + HLTB_ENDPOINT + HLTB_KEY, data=payload, headers=headers) as r:
             if r is not None and r.status == 200:
                 jsonresponse = await r.json()
                 if not jsonresponse['data']:
@@ -194,9 +194,13 @@ async def getHltbKey(parse_all: bool):
                         async with session.get(script_url, headers = headers) as r_script:
                             if r_script is not None and r_script.status == 200:
                                 response_script = await r_script.text()
-                                pattern = r'"/api/s/".concat\("([a-zA-Z0-9]+)"\).concat\("([a-zA-Z0-9]+)"\)'
+                                pattern = r'await fetch\("\/api\/(\w+)\/".concat\("(\w+)"\).concat\("(\w+)"\)'
                                 matches = re.findall(pattern, response_script)
-                                key = matches[0][0]+matches[0][1]
+                                endpoint = "api/" + str(matches[0][0]) + "/"
+                                global HLTB_ENDPOINT
+                                if HLTB_ENDPOINT != endpoint:
+                                    HLTB_ENDPOINT = endpoint
+                                key = matches[0][1]+matches[0][2]
                                 return key
                             else:
                                 return None
