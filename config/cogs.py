@@ -2,5 +2,5 @@
 __cogs__ = [
     'cogs.crypto', 'cogs.fun', 'cogs.hltb', 'cogs.quote', 'cogs.skills',
     'cogs.timers', 'cogs.levels', 'cogs.asdf', 'cogs.imagealbum', 'cogs.botpm',
-    'cogs.chatgpt', 'cogs.gamenight'
+    'cogs.chatgpt', 'cogs.gamenight', 'cogs.deathroll'
 ]
