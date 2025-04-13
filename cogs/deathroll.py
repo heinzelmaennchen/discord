@@ -9,11 +9,13 @@ START_VALUE = 1337
 TEST = True
 TEST_PLAYER = ""
 
+
 class DeathrollButton(discord.ui.Button['DeathRoll']):
     def __init__(self):
         super().__init__(style=discord.ButtonStyle.primary, label="DEATHROLL!!!")
 
     async def callback(self, interaction: discord.Interaction):
+        embed = None
         view: DeathRoll = self.view
         if view.current_player == view.player1:
             if not TEST:
@@ -25,7 +27,7 @@ class DeathrollButton(discord.ui.Button['DeathRoll']):
                 view.current_player = view.player2
                 self.style = discord.ButtonStyle.danger
             self.label = view.roll_value
-            content = f"## Deathroll\n{getNick(view.player1)} vs. {getNick(view.player2)}\n{getNick(view.player1)} rolled a {view.roll_value}.\nIt's now {view.current_player.mention}'s turn:"
+            embed = view.get_deathroll_game_embed()
 
         elif view.current_player == view.player2:
             if not TEST:
@@ -37,7 +39,7 @@ class DeathrollButton(discord.ui.Button['DeathRoll']):
                 view.current_player = view.player1
                 self.style = discord.ButtonStyle.success
             self.label = view.roll_value
-            content = f"## Deathroll\n{getNick(view.player1)} vs. {getNick(view.player2)}\n{getNick(view.player2)} rolled a {view.roll_value}.\nIt's now {view.current_player.mention}'s turn:"
+            embed = view.get_deathroll_game_embed()
 
         else:
             if not TEST:
@@ -48,48 +50,88 @@ class DeathrollButton(discord.ui.Button['DeathRoll']):
                 view.player2 = TEST_PLAYER
 
             view.current_player = view.player1
-            content = f"## Deathroll\n{view.player1} vs. {view.player2}\n It's {view.current_player.mention}'s turn:"
             self.style = discord.ButtonStyle.success
             self.label = view.roll_value
-
+            embed = view.get_deathroll_start_embed()
         
         if view.roll_value == 1:
             loser = view.current_player
-            content = f'{loser.mention} lost\n{len(view.history)} Rolls:\n' + view.get_history_string()
-            
             for child in view.children:
                 child.disabled = True
-            
+            embed = view.get_deathroll_end_embed()
             view.stop()
         
-        await interaction.response.edit_message(content=content, view=view)
+        await interaction.response.edit_message(content=None, embed=embed, view=view)
+
 
 class DeathRoll(discord.ui.View):
-
-    history = []
-
     def __init__(self, player):
         super().__init__(timeout=None)
         self.current_player = 'START'
         self.player1 = player
         self.player2 = None
         self.roll_value = START_VALUE
+        self.history = [START_VALUE]
         self.add_item(DeathrollButton())
     
-    def get_history_string(self):
-        history_str = f'```\nStart: {START_VALUE}\n'
-        for i in range(len(self.history)):
-            if i % 2 == 0:
-                player = self.player1
+    def get_deathroll_start_embed(self):
+        embed = discord.Embed(
+            title = "Deathroll",
+            description = f'**{getNick(self.player1)} vs. {getNick(self.player2)}**',
+            colour=discord.Colour.dark_embed()
+        )
+        embed.set_thumbnail(url="https://c.tenor.com/I7QkHH-wak4AAAAd/tenor.gif")
+        embed.add_field(name="\u200B", value=f"{self.player1.mention} start rolling!")
+
+        return embed
+    
+    def get_deathroll_game_embed(self):
+        if self.current_player == self.player1:
+            player_roll = self.player2
+            player_next = self.player1
+        else:
+            player_roll = self.player1
+            player_next = self.player2
+        
+        embed = discord.Embed(
+            title = "Deathroll",
+            description = f'**{getNick(self.player1)} vs. {getNick(self.player2)}**',
+            colour=discord.Colour.dark_embed()
+        )
+        embed.set_thumbnail(url="https://c.tenor.com/Li11L5d4GakAAAAd/tenor.gif")
+        embed.add_field(name="\u200B", value=f"{getNick(player_roll)} rolled a **{self.roll_value}**. ({round(self.roll_value/self.history[-2]*100,1)}% of {self.history[-2]})\nIt's now {player_next.mention}'s turn:")
+        
+        return embed
+    
+    def get_deathroll_end_embed(self):
+        p1_value = ""
+        p2_value = "\u200B"
+        pct_value = ""
+
+        value_width = len(str(self.history[1]))
+
+        for i in range(1, len(self.history)):
+            if i % 2 == 1:
+                p1_value = p1_value + f'` {str(self.history[i]).rjust(value_width)} `\n'
+                p2_value = p2_value + "\n"
             else:
-                player = self.player2
-            history_str = history_str + f'{getNick(player)}: {self.history[i]} '
-            if i == 0:
-                history_str = history_str + f'({round(self.history[i]/START_VALUE*100,1)}%)\n'
-            else:
-                history_str = history_str + f'({round(self.history[i]/self.history[i-1]*100,1)}%)\n'
-        history_str = history_str + '```'
-        return history_str
+                p1_value = p1_value + "\n"
+                p2_value = p2_value + f'` {str(self.history[i]).rjust(value_width)} `\n' 
+            pct_value = pct_value + f'` {str(round(self.history[i]/self.history[i-1]*100,1)).rjust(5)}% `\n'
+
+        embed = discord.Embed(
+            title="Deathroll concluded",
+            description=f"{self.current_player.mention} lost!",
+            colour=discord.Colour.dark_embed()
+        )
+        embed.set_thumbnail(url="https://c.tenor.com/F3qTVd9MfTgAAAAd/tenor.gif")
+        embed.add_field(name=f'Rolls: ` {len(self.history)-1} `', value="", inline=False)
+        embed.add_field(name=getNick(self.player1), value=p1_value, inline=True)
+        embed.add_field(name=getNick(self.player2), value=p2_value, inline=True)
+        embed.add_field(name="%", value=pct_value, inline=True)
+
+        return embed
+
 
 class deathroll(commands.Cog):
     def __init__(self, client):
@@ -105,25 +147,54 @@ class deathroll(commands.Cog):
     async def deathroll(self, ctx):
         await ctx.send(f'## Deathroll\n@everyone, who clicks the button and dares to deathroll against {ctx.author.mention}?', view=DeathRoll(ctx.author))
 
+
+
+    # TEST EMBEDS BEGIN ===============================================================================================
+
     @commands.command()
     @commands.check(isDev)
     @commands.guild_only()
     async def drembed(self, ctx):
+        history = [133337, 105784, 75545, 74123, 68914, 24133, 7085, 1337, 223, 147, 53, 22, 13, 5, 3, 2, 1]
+        player1 = "Stefan"
+        player2 = "Benny"
+
+        value_width = len(str(history[1]))
+
+        p1_value = ""
+        p2_value = "\u200B"
+        pct_value = ""
+        for i in range(1, len(history)):
+            if i % 2 == 1:
+                p1_value = p1_value + f'` {str(history[i]).rjust(value_width)} `\n'
+                p2_value = p2_value + "\n"
+            else:
+                p1_value = p1_value + "\n"
+                p2_value = p2_value + f'` {str(history[i]).rjust(value_width)} `\n' 
+            pct_value = pct_value + f'` {str(round(history[i]/history[i-1]*100,1)).rjust(4)}% `\n'
+
         endembed = discord.Embed(
             title="Deathroll",
-            description="Player X lost!",
+            description=f"{player1} lost!",
             colour=discord.Colour.dark_embed(),
         )
         endembed.set_thumbnail(url="https://c.tenor.com/F3qTVd9MfTgAAAAd/tenor.gif")
-        endembed.add_field(name="Rolls: ` 6 `", value="", inline=False)
-        endembed.add_field(name="Player1", value="` 133333 `\n\n` 111111 `\n\n`  88888 `", inline=True)
-        endembed.add_field(name="Player2", value="\u200B\n` 122222 `\n\n`  99999 `\n\n`  77777 `", inline=True)
-        endembed.add_field(name="%", value="` 95% `\n` 90% `\n` 80% `\n` 70% `\n` 90% `\n`  8% `", inline=True)
-        
+        endembed.add_field(name=f'Rolls: ` {len(history)-1} `', value="", inline=False)
+        endembed.add_field(name=player1, value=p1_value, inline=True)
+        endembed.add_field(name=player2, value=p2_value, inline=True)
+        endembed.add_field(name="%", value=pct_value, inline=True)
 
-        await ctx.send(embeds=[endembed])
-        
+        playembed = discord.Embed(
+            title="Deathroll",
+            #description="Player1 vs. Player2\nPlayer1 rolled a ###.\nIt's now {Player2's.mention} turn:"
+            description="**Player1 vs. Player2**"
+        )
+        playembed.set_thumbnail(url="https://c.tenor.com/Li11L5d4GakAAAAd/tenor.gif")
+        playembed.add_field(name="\u200B", value="Player1 rolled a ###. (xx.x% of OLDVALUE)\nIt's now {Player2's.mention} turn:")
 
+        await ctx.send(embeds=[playembed, endembed])
+        
+    # TEST EMBEDS END =================================================================================================
 
 
 
