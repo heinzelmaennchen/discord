@@ -1,17 +1,15 @@
 import discord
 import os
-import zoneinfo
 import ast
 import random
 
 from discord.ext import commands, tasks
 from datetime import time, date, datetime, timedelta
 
-from utils.db import check_connection
-from utils.db import init_db
-from utils.misc import getDatetimeNow
+from utils.db import check_connection, init_db
+from utils.misc import getDatetimeNow, getTimezone
 
-my_timezone = zoneinfo.ZoneInfo("Europe/Vienna")
+my_timezone = getTimezone()
 gn_pollthread_time = time(20, 0, 0, tzinfo=my_timezone)
 
 class gamenight(commands.Cog):

@@ -10,6 +10,9 @@ MAX_MESSAGE_LENGTH = 1980
 
 my_timezone = zoneinfo.ZoneInfo("Europe/Vienna")
 
+def getTimezone():
+    return my_timezone
+
 def getDatetimeNow() -> datetime:
     now = datetime.now(tz=my_timezone)
     return now
