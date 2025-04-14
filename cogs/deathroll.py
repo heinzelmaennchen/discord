@@ -22,7 +22,7 @@ class DeathrollButton(discord.ui.Button['DeathRoll']):
         if view.current_player == view.player1:
             if not TEST:
                 if interaction.user != view.player1:
-                    await interaction.response.send_message(content=f"Du bist nicht {getNick(view.player1)}", ephemeral=True, delete_after=30)
+                    await interaction.response.send_message(content=f"Du bist nicht {getNick(view.player1)}", ephemeral=True, delete_after=10)
                     return
             view.roll_value = random.randint(1, view.roll_value)
             view.history.append(view.roll_value)
@@ -35,7 +35,7 @@ class DeathrollButton(discord.ui.Button['DeathRoll']):
         elif view.current_player == view.player2:
             if not TEST:
                 if interaction.user != view.player2:
-                    await interaction.response.send_message(content=f"Du bist nicht {getNick(view.player2)}", ephemeral=True, delete_after=30)
+                    await interaction.response.send_message(content=f"Du bist nicht {getNick(view.player2)}", ephemeral=True, delete_after=10)
                     return
             view.roll_value = random.randint(1, view.roll_value)
             view.history.append(view.roll_value)
@@ -48,7 +48,7 @@ class DeathrollButton(discord.ui.Button['DeathRoll']):
         else:
             if not TEST:
                 if interaction.user == view.player1:
-                    await interaction.response.send_message(content="Du kannst nicht gegen dich selbst spielen!\nWarte auf einen Gegner.", ephemeral=True, delete_after=30)
+                    await interaction.response.send_message(content="Du kannst nicht gegen dich selbst spielen!\nWarte auf einen Gegner.", ephemeral=True, delete_after=10)
                     return
                 view.player2 = interaction.user
             else:
