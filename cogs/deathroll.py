@@ -8,8 +8,8 @@ from config.deathrollgifs import gifdict
 import random
 from datetime import datetime
 
-START_VALUE = 1337
-TEST = True
+START_VALUE = 133337
+TEST = False
 TEST_PLAYER = ""
 
 
@@ -132,7 +132,7 @@ class DeathRoll(discord.ui.View):
             colour=discord.Colour.dark_embed()
         )
         embed.set_image(url=self.get_deathroll_gif())
-        embed.add_field(name="\u200B", value=f"{getNick(player_roll)} rolled a **{self.roll_value}**. ({round(self.roll_value/self.history[-2]*100,1)}% of {self.history[-2]})\nIt's now {player_next.mention}'s turn:")
+        embed.add_field(name="\u200B", value=f"{getNick(player_roll)} rolled a **{self.roll_value}**. ({round(self.roll_value/self.history[-2]*100,1)}% of {self.history[-2]})\n\nIt's now {player_next.mention}'s turn:")
         
         return embed
     
