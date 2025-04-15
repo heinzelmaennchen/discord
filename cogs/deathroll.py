@@ -105,17 +105,19 @@ class DeathRoll(discord.ui.View):
         self.history = [START_VALUE]
         self.add_item(DeathrollButton())
     
+    # START EMBED
     def get_deathroll_start_embed(self):
         embed = discord.Embed(
             title = "Deathroll",
             description = f'**{getNick(self.player1)} vs. {getNick(self.player2)}**',
             colour=discord.Colour.dark_embed()
         )
-        embed.set_thumbnail(url=self.get_deathroll_gif(start=True))
+        embed.set_image(url=self.get_deathroll_gif(start=True))
         embed.add_field(name="\u200B", value=f"{self.player1.mention} start rolling!")
 
         return embed
     
+    # GAME EMBED
     def get_deathroll_game_embed(self):
         if self.current_player == self.player1:
             player_roll = self.player2
@@ -129,11 +131,12 @@ class DeathRoll(discord.ui.View):
             description = f'**{getNick(self.player1)} vs. {getNick(self.player2)}**',
             colour=discord.Colour.dark_embed()
         )
-        embed.set_thumbnail(url=self.get_deathroll_gif())
+        embed.set_image(url=self.get_deathroll_gif())
         embed.add_field(name="\u200B", value=f"{getNick(player_roll)} rolled a **{self.roll_value}**. ({round(self.roll_value/self.history[-2]*100,1)}% of {self.history[-2]})\nIt's now {player_next.mention}'s turn:")
         
         return embed
     
+    # END EMBED
     def get_deathroll_end_embed(self, db_lastrow = None, db_exception = None):
         embed_value = ""
         value_width = len(str(self.history[1]))
@@ -144,9 +147,9 @@ class DeathRoll(discord.ui.View):
 
         for i in range(1, len(self.history)):
             if i % 2 == 1:
-                embed_value = embed_value + f'`{getNick(self.player1).ljust(player_width)}:` `{str(self.history[i]).rjust(value_width)}` `{str(round(self.history[i]/self.history[i-1]*100,1)).rjust(5)}%`\n'
+                embed_value = embed_value + f'` {getNick(self.player1).ljust(player_width)}: ` ` {str(self.history[i]).rjust(value_width)} ` ` {str(round(self.history[i]/self.history[i-1]*100,1)).rjust(5)}% `\n'
             else:
-                embed_value = embed_value + f'`{getNick(self.player2).ljust(player_width)}:` `{str(self.history[i]).rjust(value_width)}` `{str(round(self.history[i]/self.history[i-1]*100,1)).rjust(5)}%`\n'
+                embed_value = embed_value + f'` {getNick(self.player2).ljust(player_width)}: ` ` {str(self.history[i]).rjust(value_width)} ` ` {str(round(self.history[i]/self.history[i-1]*100,1)).rjust(5)}% `\n'
         
         # winner or loser get's mentioned in the end_embed, win used in get_deathroll_gif to select a fitting thumbnail
         win = random.choice([True, False])
@@ -160,7 +163,7 @@ class DeathRoll(discord.ui.View):
             description=embed_desc,
             colour=discord.Colour.dark_embed()
         )
-        embed.set_thumbnail(url=self.get_deathroll_gif(winner=win))
+        embed.set_image(url=self.get_deathroll_gif(winner=win))
         embed.add_field(name=f'Rolls: ` {len(self.history)-1} `', value=embed_value, inline=False)
         if db_exception is not None:
             embed.set_footer(text=f'Error occured during storing this game to db:\n{db_exception}')
