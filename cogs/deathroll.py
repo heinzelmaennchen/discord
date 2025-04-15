@@ -2,9 +2,9 @@ import os
 import discord
 from discord.ext import commands
 
-from utils.misc import getNick, isDev, getTimezone
+from utils.misc import getNick, getTimezone
 from utils.db import check_connection, init_db
-from config.deathrollgifs import gifdict
+from utils.deathrollgifs import gifdict
 
 import random
 import ast
@@ -134,7 +134,7 @@ class DeathRoll(discord.ui.View):
             colour=discord.Colour.dark_embed()
         )
         embed.set_image(url=self.get_deathroll_gif())
-        embed.add_field(name="\u200B", value=f"{getNick(player_roll)} rolled a **{self.roll_value}**. ({int(self.roll_value/self.history[-2]*1000)/10}% of {self.history[-2]})\n\nIt's now {player_next.mention}'s turn:")
+        embed.add_field(name="\u200B", value=f"{getNick(player_roll)} rolled **{self.roll_value}**. ({int(self.roll_value/self.history[-2]*1000)/10}% of {self.history[-2]})\n\nNext roll: {player_next.mention}")
         
         return embed
     
@@ -227,7 +227,7 @@ class deathroll(commands.Cog):
     @commands.command()
     @commands.guild_only()
     async def deathroll(self, ctx):
-        await ctx.send(f'## Deathroll\n@everyone, who clicks the button and dares to deathroll against {ctx.author.mention}?', view=DeathRoll(self, ctx.author))
+        await ctx.send(f'## Deathroll\n@here, who clicks the button and dares to deathroll against {ctx.author.mention}?', view=DeathRoll(self, ctx.author))
 
     
     def store_deathroll_to_db(self, channelid, player1id, player2id, sequence, winner, loser):
