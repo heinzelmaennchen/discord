@@ -225,7 +225,6 @@ class deathroll(commands.Cog):
             TEST_PLAYER = guild.get_member(706072542334550048)
             
     @commands.command()
-    @commands.check(isDev)
     @commands.guild_only()
     async def deathroll(self, ctx):
         await ctx.send(f'## Deathroll\n@everyone, who clicks the button and dares to deathroll against {ctx.author.mention}?', view=DeathRoll(self, ctx.author))
