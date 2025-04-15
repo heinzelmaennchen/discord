@@ -10,7 +10,7 @@ from utils.db import check_connection, init_db
 from utils.misc import getDatetimeNow, getTimezone
 
 my_timezone = getTimezone()
-gn_pollthread_time = time(20, 0, 0, tzinfo=my_timezone)
+gn_pollthread_time = time(21, 33, 37, tzinfo=my_timezone)
 
 class gamenight(commands.Cog):
     def __init__(self, client):
@@ -30,7 +30,7 @@ class gamenight(commands.Cog):
     async def gn_pollthread(self) -> None:
         now = getDatetimeNow()
         weekday = now.isoweekday()
-        if weekday % 5 == 0:    # True if weekday is %1: Monday, %2: Tuesday, %3: Wednesday, %4: Thursday, %5: Friday, %6: Saturday, %7: Sunday
+        if weekday % 4 == 0:    # True if weekday is %1: Monday, %2: Tuesday, %3: Wednesday, %4: Thursday, %5: Friday, %6: Saturday, %7: Sunday
             guild = self.client.get_guild(self.guild_id)
             channel = guild.get_channel(self.channel_id)
             emojis = guild.emojis

@@ -1,3 +1,4 @@
+import os
 import discord
 from discord.ext import commands
 
@@ -6,6 +7,7 @@ from utils.db import check_connection, init_db
 from config.deathrollgifs import gifdict
 
 import random
+import ast
 from datetime import datetime
 
 START_VALUE = 133337
@@ -132,7 +134,7 @@ class DeathRoll(discord.ui.View):
             colour=discord.Colour.dark_embed()
         )
         embed.set_image(url=self.get_deathroll_gif())
-        embed.add_field(name="\u200B", value=f"{getNick(player_roll)} rolled a **{self.roll_value}**. ({round(self.roll_value/self.history[-2]*100,1)}% of {self.history[-2]})\n\nIt's now {player_next.mention}'s turn:")
+        embed.add_field(name="\u200B", value=f"{getNick(player_roll)} rolled a **{self.roll_value}**. ({int(self.roll_value/self.history[-2]*1000)/10}% of {self.history[-2]})\n\nIt's now {player_next.mention}'s turn:")
         
         return embed
     
@@ -147,9 +149,9 @@ class DeathRoll(discord.ui.View):
 
         for i in range(1, len(self.history)):
             if i % 2 == 1:
-                embed_value = embed_value + f'` {getNick(self.player1).ljust(player_width)}: ` ` {str(self.history[i]).rjust(value_width)} ` ` {str(round(self.history[i]/self.history[i-1]*100,1)).rjust(5)}% `\n'
+                embed_value = embed_value + f'` {getNick(self.player1).ljust(player_width)}: ` ` {str(self.history[i]).rjust(value_width)} ` ` {str(int(self.history[i]/self.history[i-1]*1000)/10).rjust(5)}% `\n'
             else:
-                embed_value = embed_value + f'` {getNick(self.player2).ljust(player_width)}: ` ` {str(self.history[i]).rjust(value_width)} ` ` {str(round(self.history[i]/self.history[i-1]*100,1)).rjust(5)}% `\n'
+                embed_value = embed_value + f'` {getNick(self.player2).ljust(player_width)}: ` ` {str(self.history[i]).rjust(value_width)} ` ` {str(int(self.history[i]/self.history[i-1]*1000)/10).rjust(5)}% `\n'
         
         # winner or loser get's mentioned in the end_embed, win used in get_deathroll_gif to select a fitting thumbnail
         win = random.choice([True, False])
@@ -219,7 +221,7 @@ class deathroll(commands.Cog):
 
         if TEST:
             global TEST_PLAYER
-            guild = self.client.get_guild(405433814114893835)
+            guild = self.client.get_guild(int(ast.literal_eval(os.environ['GUILD_IDS'])['dev']))
             TEST_PLAYER = guild.get_member(706072542334550048)
             
     @commands.command()
