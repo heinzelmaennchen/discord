@@ -3,6 +3,7 @@ from discord.ext import commands
 
 from utils.misc import getNick, isDev, getTimezone
 from utils.db import check_connection, init_db
+from config.deathrollgifs import gifdict
 
 import random
 from datetime import datetime
@@ -110,7 +111,7 @@ class DeathRoll(discord.ui.View):
             description = f'**{getNick(self.player1)} vs. {getNick(self.player2)}**',
             colour=discord.Colour.dark_embed()
         )
-        embed.set_thumbnail(url="https://c.tenor.com/I7QkHH-wak4AAAAd/tenor.gif")
+        embed.set_thumbnail(url=self.get_deathroll_gif(start=True))
         embed.add_field(name="\u200B", value=f"{self.player1.mention} start rolling!")
 
         return embed
@@ -159,7 +160,7 @@ class DeathRoll(discord.ui.View):
             description=embed_desc,
             colour=discord.Colour.dark_embed()
         )
-        embed.set_thumbnail(url=self.get_deathroll_gif(win))
+        embed.set_thumbnail(url=self.get_deathroll_gif(winner=win))
         embed.add_field(name=f'Rolls: ` {len(self.history)-1} `', value=embed_value, inline=False)
         if db_exception is not None:
             embed.set_footer(text=f'Error occured during storing this game to db:\n{db_exception}')
@@ -168,46 +169,12 @@ class DeathRoll(discord.ui.View):
 
         return embed
     
-    def get_deathroll_gif(self, winner=None):
+    def get_deathroll_gif(self, start=False, winner=None):
         
-        gifdict = {
-            'bigloss': ['https://c.tenor.com/0YKj8P76e98AAAAd/tenor.gif', 
-                        'https://c.tenor.com/WvotbqtvuRUAAAAd/tenor.gif', 
-                        'https://c.tenor.com/mU8Le3LX3MEAAAAd/tenor.gif'],
-            'highroll': ['https://c.tenor.com/y0pu4r01MXkAAAAd/tenor.gif', 
-                         'https://c.tenor.com/Ho6Eh52Aw50AAAAd/tenor.gif', 
-                         'https://c.tenor.com/RWmF33lS6_UAAAAd/tenor.gif'],
-            'leet': ['https://c.tenor.com/yt-NsmpTN54AAAAd/tenor.gif', 
-                     'https://c.tenor.com/IE_r1q13XpUAAAAd/tenor.gif', 
-                     'https://c.tenor.com/aMO9r7Pq19AAAAAd/tenor.gif'],
-            'loser': ['https://c.tenor.com/RearbC1HzewAAAAd/tenor.gif', 
-                      'https://c.tenor.com/OUn0kZK9dB0AAAAd/tenor.gif', 
-                      'https://c.tenor.com/1fpEjOn5W3QAAAAd/tenor.gif', 
-                      'https://c.tenor.com/YMz2WAFV-GcAAAAd/tenor.gif', 
-                      'https://c.tenor.com/eTqdoJ96YP4AAAAd/tenor.gif', 
-                      'https://c.tenor.com/85iMZeffHQYAAAAC/tenor.gif', 
-                      'https://c.tenor.com/Eo_uafpjWDMAAAAC/tenor.gif'],
-            'lowroll': ['https://c.tenor.com/JbNlXxXl91QAAAAd/tenor.gif', 
-                        'https://c.tenor.com/aWUHvMsuYFkAAAAd/tenor.gif', 
-                        'https://c.tenor.com/e_vPwqBG5WUAAAAC/tenor.gif'],
-            'roll': ['https://c.tenor.com/_f47EOhUYLQAAAAd/tenor.gif', 
-                     'https://c.tenor.com/InKwoemL4EAAAAAd/tenor.gif', 
-                     'https://c.tenor.com/5PepR8rD4U0AAAAd/tenor.gif', 
-                     'https://c.tenor.com/qeyYUP1MXJMAAAAd/tenor.gif', 
-                     'https://c.tenor.com/nVFR4jC3GZwAAAAd/tenor.gif'],
-            'whew': ['https://c.tenor.com/OsBUnbQbfsEAAAAC/tenor.gif', 
-                     'https://c.tenor.com/8gE5vCt_XIoAAAAC/tenor.gif', 
-                     'https://c.tenor.com/Li11L5d4GakAAAAC/tenor.gif', 
-                     'https://c.tenor.com/D4TuNIn61aEAAAAd/tenor.gif', 
-                     'https://c.tenor.com/NqhZNESuzusAAAAC/tenor.gif'],
-            'winner': ['https://c.tenor.com/Zx4EYt-kXmMAAAAd/tenor.gif', 
-                       'https://c.tenor.com/nwY77jVH52oAAAAC/tenor.gif', 
-                       'https://c.tenor.com/MTGiVk7eL9gAAAAC/tenor.gif', 
-                       'https://c.tenor.com/Z2HxUamVZTMAAAAd/tenor.gif', 
-                       'https://c.tenor.com/9mUqamN2SOIAAAAC/tenor.gif', 
-                       'https://c.tenor.com/xlhV0tC8tMUAAAAd/tenor.gif', 
-                       'https://c.tenor.com/1WQApj0YBeUAAAAd/tenor.gif']
-        }
+        # Check if the deathroll starts and return a starter gif
+        # must before definition of prev_roll because index out of range
+        if start:
+            return random.choice(gifdict['start'])
 
         new_roll = self.history[-1]
         prev_roll = self.history[-2]
