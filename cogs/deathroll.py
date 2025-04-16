@@ -50,15 +50,28 @@ class DeathrollButton(discord.ui.Button['DeathRoll']):
 
         else:
             if not TEST:
+                if view.player2 != None and interaction.user != view.player2:
+                    await interaction.response.send_message(content=f"{getNick(view.player2)} wurde herausgefordert. Nicht du, du Heisl!", ephemeral=True, delete_after=10)
+                    return
                 if interaction.user == view.player1:
                     await interaction.response.send_message(content="Du kannst nicht gegen dich selbst spielen!\nWarte auf einen Gegner.", ephemeral=True, delete_after=10)
                     return
-                view.player2 = interaction.user
+                if view.player2 == None:
+                    view.player2 = interaction.user
             else:
+                if view.player2 != None and interaction.user != view.player2:
+                    await interaction.response.send_message(content=f"{getNick(view.player2)} wurde herausgefordert. Nicht du, du Heisl!", ephemeral=True, delete_after=10)
+                    return
                 view.player2 = TEST_PLAYER
 
-            view.current_player = view.player1
-            self.style = discord.ButtonStyle.success
+            # Randomize starting player
+            currentplayer = random.choice([view.player1, view.player2])
+            if currentplayer == view.player1:
+                view.current_player = view.player1
+                self.style = discord.ButtonStyle.success
+            else:
+                view.current_player = view.player2
+                self.style = discord.ButtonStyle.danger
             self.label = view.roll_value
             embed = view.get_deathroll_start_embed()
         
@@ -95,12 +108,12 @@ class DeathrollButton(discord.ui.Button['DeathRoll']):
 
 
 class DeathRoll(discord.ui.View):
-    def __init__(self, cog, player):
+    def __init__(self, cog, player, challenged_user):
         super().__init__(timeout=None)
         self.cog = cog
         self.current_player = 'START'
         self.player1 = player
-        self.player2 = None
+        self.player2 = challenged_user
         self.winner = None
         self.loser = None
         self.roll_value = START_VALUE
@@ -115,7 +128,7 @@ class DeathRoll(discord.ui.View):
             colour=discord.Colour.dark_embed()
         )
         embed.set_image(url=self.get_deathroll_gif(start=True))
-        embed.add_field(name="\u200B", value=f"{self.player1.mention} start rolling!")
+        embed.add_field(name="\u200B", value=f"{self.current_player.mention} start rolling!")
 
         return embed
     
@@ -147,11 +160,18 @@ class DeathRoll(discord.ui.View):
         else:
             player_width = len(getNick(self.player1))
 
+        # Calculate starting player from losing player (view.current_player) and length of roll history for alternating player in end embed 
         for i in range(1, len(self.history)):
             if i % 2 == 1:
-                embed_value = embed_value + f'` {getNick(self.player1).ljust(player_width)}: ` ` {str(self.history[i]).rjust(value_width)} ` ` {str(int(self.history[i]/self.history[i-1]*1000)/10).rjust(5)}% `\n'
+                if ((self.current_player == self.player1 and len(self.history) % 2 == 0) or (self.current_player == self.player2 and len(self.history) % 2 == 1)):
+                    embed_value = embed_value + f'` {getNick(self.player1).ljust(player_width)}: ` ` {str(self.history[i]).rjust(value_width)} ` ` {str(int(self.history[i]/self.history[i-1]*1000)/10).rjust(5)}% `\n'
+                else:
+                    embed_value = embed_value + f'` {getNick(self.player2).ljust(player_width)}: ` ` {str(self.history[i]).rjust(value_width)} ` ` {str(int(self.history[i]/self.history[i-1]*1000)/10).rjust(5)}% `\n'
             else:
-                embed_value = embed_value + f'` {getNick(self.player2).ljust(player_width)}: ` ` {str(self.history[i]).rjust(value_width)} ` ` {str(int(self.history[i]/self.history[i-1]*1000)/10).rjust(5)}% `\n'
+                if ((self.current_player == self.player1 and len(self.history) % 2 == 0) or (self.current_player == self.player2 and len(self.history) % 2 == 1)):
+                    embed_value = embed_value + f'` {getNick(self.player2).ljust(player_width)}: ` ` {str(self.history[i]).rjust(value_width)} ` ` {str(int(self.history[i]/self.history[i-1]*1000)/10).rjust(5)}% `\n'
+                else:
+                    embed_value = embed_value + f'` {getNick(self.player1).ljust(player_width)}: ` ` {str(self.history[i]).rjust(value_width)} ` ` {str(int(self.history[i]/self.history[i-1]*1000)/10).rjust(5)}% `\n'
         
         # winner or loser get's mentioned in the end_embed, win used in get_deathroll_gif to select a fitting thumbnail
         win = random.choice([True, False])
@@ -227,7 +247,13 @@ class deathroll(commands.Cog):
     @commands.command()
     @commands.guild_only()
     async def deathroll(self, ctx):
-        await ctx.send(f'## Deathroll\n@here, who clicks the button and dares to deathroll against {ctx.author.mention}?', view=DeathRoll(self, ctx.author))
+        if len(ctx.message.mentions) == 0:
+            await ctx.send(f'## Deathroll\n@here, who clicks the button and dares to deathroll against {ctx.author.mention}?', view=DeathRoll(self, ctx.author, None))
+        else:
+            if not ctx.message.mentions[0].bot:                
+                await ctx.send(f'## Deathroll\n{ctx.author.mention} challenged {ctx.message.mentions[0].mention}!', view=DeathRoll(self, ctx.author, ctx.message.mentions[0]))
+            else:
+                await ctx.reply(f'-# Du kannst keinen Bot herausfordern.', ephemeral=True)
 
     
     def store_deathroll_to_db(self, channelid, player1id, player2id, sequence, winner, loser):
