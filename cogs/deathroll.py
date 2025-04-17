@@ -250,7 +250,9 @@ class deathroll(commands.Cog):
         if len(ctx.message.mentions) == 0:
             await ctx.send(f'## Deathroll\n@here, who clicks the button and dares to deathroll against {ctx.author.mention}?', view=DeathRoll(self, ctx.author, None))
         else:
-            if not ctx.message.mentions[0].bot:                
+            if ctx.author == ctx.message.mentions[0]:
+                await ctx.reply(f'-# Du kannst dich nicht selbst herausfordern.', ephemeral=True)
+            elif not ctx.message.mentions[0].bot:                
                 await ctx.send(f'## Deathroll\n{ctx.author.mention} challenged {ctx.message.mentions[0].mention}!', view=DeathRoll(self, ctx.author, ctx.message.mentions[0]))
             else:
                 await ctx.reply(f'-# Du kannst keinen Bot herausfordern.', ephemeral=True)

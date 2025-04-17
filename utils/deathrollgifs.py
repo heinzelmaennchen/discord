@@ -7,7 +7,8 @@ gifdict = {
                          'https://c.tenor.com/NKqSjU199eYAAAAd/tenor.gif',
                          'https://c.tenor.com/LywHByAmbkwAAAAd/tenor.gif',
                          'https://c.tenor.com/3vXSnnaDEpsAAAAd/tenor.gif',
-                         'https://c.tenor.com/JiddDtSQKJwAAAAd/tenor.gif'],
+                         'https://c.tenor.com/JiddDtSQKJwAAAAd/tenor.gif',
+                         'https://c.tenor.com/MbxyaFe84VYAAAAd/tenor.gif'],
             'bigloss':  ['https://c.tenor.com/0YKj8P76e98AAAAd/tenor.gif',
                          'https://c.tenor.com/WvotbqtvuRUAAAAd/tenor.gif',
                          'https://c.tenor.com/mU8Le3LX3MEAAAAd/tenor.gif',
@@ -32,7 +33,9 @@ gifdict = {
                          'https://c.tenor.com/hduLb3FY_JMAAAAd/tenor.gif',
                          'https://c.tenor.com/1cd4rNbBLagAAAAd/tenor.gif',
                          'https://c.tenor.com/i14tqo0LZPIAAAAd/tenor.gif',
-                         'https://c.tenor.com/5t7dwIkeSioAAAAd/tenor.gif'],
+                         'https://c.tenor.com/5t7dwIkeSioAAAAd/tenor.gif',
+                         'https://c.tenor.com/eFwAowaXPfMAAAAd/tenor.gif',
+                         'https://c.tenor.com/BA0iIbcLm4AAAAAd/tenor.gif'],
             'lowroll':  ['https://c.tenor.com/JbNlXxXl91QAAAAd/tenor.gif',
                          'https://c.tenor.com/aWUHvMsuYFkAAAAd/tenor.gif',
                          'https://c.tenor.com/e_vPwqBG5WUAAAAC/tenor.gif',
@@ -64,7 +67,8 @@ gifdict = {
                          'https://c.tenor.com/2uHmVoZGMecAAAAd/tenor.gif',
                          'https://c.tenor.com/FTxtRehmCc4AAAAd/tenor.gif',
                          'https://c.tenor.com/87QKarbzVisAAAAd/tenor.gif',
-                         'https://c.tenor.com/g_d3iHyzc68AAAAd/tenor.gif'],
+                         'https://c.tenor.com/g_d3iHyzc68AAAAd/tenor.gif',
+                         'https://c.tenor.com/_vTVykiMmKMAAAAd/tenor.gif'],
             'winner':   ['https://c.tenor.com/Zx4EYt-kXmMAAAAd/tenor.gif',
                          'https://c.tenor.com/nwY77jVH52oAAAAC/tenor.gif',
                          'https://c.tenor.com/MTGiVk7eL9gAAAAC/tenor.gif',
@@ -81,5 +85,6 @@ gifdict = {
                          'https://c.tenor.com/VfBGHQrPHOsAAAAd/tenor.gif',
                          'https://c.tenor.com/w6NNS1UO3aIAAAAd/tenor.gif',
                          'https://c.tenor.com/N342b6qb0soAAAAd/tenor.gif',
-                         'https://c.tenor.com/XEPLVNSYtIAAAAAd/tenor.gif']
+                         'https://c.tenor.com/XEPLVNSYtIAAAAAd/tenor.gif',
+                         'https://c.tenor.com/4HB6Vl3KgYEAAAAd/tenor.gif']
         }
