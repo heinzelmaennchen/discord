@@ -8,15 +8,8 @@ from utils.deathrollgifs import gifdict
 
 import random
 import pandas as pd
-import numpy as np
 import ast
 from datetime import datetime
-
-# @TODO(ben): remove this
-from warnings import filterwarnings
-
-filterwarnings("ignore", category=UserWarning,
-               message='.*pandas only supports SQLAlchemy connectable.*')
 
 START_VALUE = 133337
 TEST = False
