@@ -10,30 +10,39 @@ MAX_MESSAGE_LENGTH = 1980
 
 my_timezone = zoneinfo.ZoneInfo("Europe/Vienna")
 
+
 def getTimezone():
     return my_timezone
+
 
 def getDatetimeNow() -> datetime:
     now = datetime.now(tz=my_timezone)
     return now
+
 
 def getMessageTime(snowflake):
     ms = (snowflake >> 22) + DISCORD_EPOCH
     time = datetime.fromtimestamp(ms / 1000, timezone('Europe/Vienna'))
     return time
 
+
 def isleap(year):
     """Return True for leap years, False for non-leap years."""
     return year % 4 == 0 and (year % 100 != 0 or year % 400 == 0)
 
+
 def getNick(user):
-    if user.display_name is not None:
-        name = user.display_name
-    elif user.nick is not None:
-        name = user.nick
+    if user is None:
+        return 'n/a'
     else:
-        name = user.name
-    return name
+        if user.display_name is not None:
+            name = user.display_name
+        elif user.nick is not None:
+            name = user.nick
+        else:
+            name = user.name
+        return name
+
 
 def msgSplitter(response):
     responses = []
@@ -57,6 +66,7 @@ def msgSplitter(response):
         addCb = False
     return responses
 
+
 async def sendLongMsg(channel, response):
     # Embeds haben max size von 6000 > wird bei uns nie vorkommen
     # Won't check - infeasible
@@ -73,11 +83,13 @@ async def sendLongMsg(channel, response):
 # '1': no dev permissions
 # '2': wrong channel
 
+
 def isDevServer(ctx):
     if ctx.guild.id == 405433814114893835:
         return True
     else:
         return False
+
 
 def isDev(ctx):
     devs = list(map(int, os.environ['DEVS'].split(",")))
@@ -85,7 +97,8 @@ def isDev(ctx):
         return True
     else:
         raise commands.CheckFailure('1')
-        
+
+
 def isCryptoChannel(ctx):
     if ctx.channel.id == 351724430306574357 or isDevServer(ctx):
         return True
