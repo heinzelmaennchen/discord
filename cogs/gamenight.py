@@ -38,14 +38,14 @@ class gamenight(commands.Cog):
         guild = self.client.get_guild(self.guild_id)
         channel = guild.get_channel(self.channel_id)
         emojis = guild.emojis
-
-        thread = await channel.create_thread(name=f'Zocktag {(now + timedelta(days=3)).strftime("%d.%m.")}-{(now + timedelta(days=7)).strftime("%d.%m.")}', auto_archive_duration=10080)
+        days_to_monday = timedelta(days=(7-weekday%7+1))
+        thread = await channel.create_thread(name=f'Zocktag {(now + days_to_monday).strftime("%d.%m.")}-{(now + days_to_monday + timedelta(days=4)).strftime("%d.%m.")}', auto_archive_duration=10080)
         poll = discord.Poll(question="Zockermittwoch wen wen wen?", duration=timedelta(days=3), multiple=True)
-        poll.add_answer(text=f'Montag {(now + timedelta(days=3)).strftime("%d.%m.")}', emoji=random.choice(emojis))
-        poll.add_answer(text=f'Dienstag {(now + timedelta(days=4)).strftime("%d.%m.")}', emoji=random.choice(emojis))
-        poll.add_answer(text=f'Mittwoch {(now + timedelta(days=5)).strftime("%d.%m.")}', emoji=random.choice(emojis))
-        poll.add_answer(text=f'Donnerstag {(now + timedelta(days=6)).strftime("%d.%m.")}', emoji=random.choice(emojis))
-        poll.add_answer(text=f'Freitag {(now + timedelta(days=7)).strftime("%d.%m.")}', emoji=random.choice(emojis))
+        poll.add_answer(text=f'Montag {(now + days_to_monday).strftime("%d.%m.")}', emoji=random.choice(emojis))
+        poll.add_answer(text=f'Dienstag {(now + days_to_monday + timedelta(days=1)).strftime("%d.%m.")}', emoji=random.choice(emojis))
+        poll.add_answer(text=f'Mittwoch {(now + days_to_monday + timedelta(days=2)).strftime("%d.%m.")}', emoji=random.choice(emojis))
+        poll.add_answer(text=f'Donnerstag {(now + days_to_monday + timedelta(days=3)).strftime("%d.%m.")}', emoji=random.choice(emojis))
+        poll.add_answer(text=f'Freitag {(now + days_to_monday + timedelta(days=4)).strftime("%d.%m.")}', emoji=random.choice(emojis))
         await thread.send(poll=poll)
         mention_members = self.getMembers(guild.get_channel(self.users_channel_id))
         r = f''
