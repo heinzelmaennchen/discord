@@ -160,18 +160,21 @@ class DeathRoll(discord.ui.View):
         else:
             player_width = len(getNick(self.player1))
 
-        # Calculate starting player from losing player (view.current_player) and length of roll history for alternating player in end embed 
+        # Calculate starting player and second player from length of roll history
+        rolls = len(self.history)-1
+        if rolls % 2 == 1:
+            starting_player = self.loser
+            second_player = self.winner
+        else:
+            starting_player = self.winner
+            second_player = self.loser
+
         for i in range(1, len(self.history)):
             if i % 2 == 1:
-                if ((self.current_player == self.player1 and len(self.history) % 2 == 0) or (self.current_player == self.player2 and len(self.history) % 2 == 1)):
-                    embed_value = embed_value + f'` {getNick(self.player1).ljust(player_width)}: ` ` {str(self.history[i]).rjust(value_width)} ` ` {str(int(self.history[i]/self.history[i-1]*1000)/10).rjust(5)}% `\n'
-                else:
-                    embed_value = embed_value + f'` {getNick(self.player2).ljust(player_width)}: ` ` {str(self.history[i]).rjust(value_width)} ` ` {str(int(self.history[i]/self.history[i-1]*1000)/10).rjust(5)}% `\n'
+                player = starting_player
             else:
-                if ((self.current_player == self.player1 and len(self.history) % 2 == 0) or (self.current_player == self.player2 and len(self.history) % 2 == 1)):
-                    embed_value = embed_value + f'` {getNick(self.player2).ljust(player_width)}: ` ` {str(self.history[i]).rjust(value_width)} ` ` {str(int(self.history[i]/self.history[i-1]*1000)/10).rjust(5)}% `\n'
-                else:
-                    embed_value = embed_value + f'` {getNick(self.player1).ljust(player_width)}: ` ` {str(self.history[i]).rjust(value_width)} ` ` {str(int(self.history[i]/self.history[i-1]*1000)/10).rjust(5)}% `\n'
+                player = second_player
+            embed_value = embed_value + f'` {getNick(player).ljust(player_width)}: ` ` {str(self.history[i]).rjust(value_width)} ` ` {str(int(self.history[i]/self.history[i-1]*1000)/10).rjust(5)}% `\n'
         
         # winner or loser get's mentioned in the end_embed, win used in get_deathroll_gif to select a fitting thumbnail
         win = random.choice([True, False])
