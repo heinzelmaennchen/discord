@@ -73,6 +73,7 @@ async def load(ctx, extension):
         print(f'{extension} loaded')
     except Exception as e:
         print(f'Couldn\'t load cog {extension}: {e}')
+        await ctx.reply(f'-# {e}')
 
 # returns Uptime of Bot
 @client.command(hidden=True)
