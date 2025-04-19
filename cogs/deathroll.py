@@ -345,6 +345,8 @@ class deathroll(commands.Cog):
             {'total_games': games_played, 'total_wins': games_won, 'total_losses': games_lost})
         player_stats['total_wins'] = player_stats['total_wins'].fillna(
             0).astype(int)
+        player_stats['total_losses'] = player_stats['total_losses'].fillna(
+            0).astype(int)
         player_stats['win_percentage'] = (
             player_stats['total_wins'] / player_stats['total_games']) * 100
         ranked_players = player_stats.sort_values(
