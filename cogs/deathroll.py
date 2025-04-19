@@ -291,6 +291,7 @@ class deathroll(commands.Cog):
     @commands.command()
     @commands.guild_only()
     async def deathrollstats(self, ctx):
+
         # Check DB connection
         self.cnx = check_connection(self.cnx)
         self.cursor = self.cnx.cursor(buffered=True)
@@ -379,7 +380,6 @@ class deathroll(commands.Cog):
                                + final_df.to_string(index=False, header=False))
 
         await ctx.send(embed=drStatsEmbed)
-
 
 async def setup(client):
     await client.add_cog(deathroll(client))

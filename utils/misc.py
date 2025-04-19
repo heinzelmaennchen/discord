@@ -34,14 +34,14 @@ def isleap(year):
 def getNick(user):
     if user is None:
         return 'n/a'
+    
+    if user.display_name is not None:
+        name = user.display_name
+    elif user.nick is not None:
+        name = user.nick
     else:
-        if user.display_name is not None:
-            name = user.display_name
-        elif user.nick is not None:
-            name = user.nick
-        else:
-            name = user.name
-        return name
+        name = user.name
+    return name
 
 
 def msgSplitter(response):
