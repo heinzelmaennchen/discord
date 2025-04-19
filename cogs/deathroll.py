@@ -287,7 +287,8 @@ class deathroll(commands.Cog):
         # return .lastrowid to show the id in the Embed footer
         return self.cursor.lastrowid
 
-    @commands.command()
+    # Global Deathroll stats
+    @commands.group(aliases=['drstats'], invoke_without_command=True)
     @commands.guild_only()
     async def deathrollstats(self, ctx):
         # Check DB connection
@@ -301,7 +302,7 @@ class deathroll(commands.Cog):
         self.cnx.close()
 
         drStatsEmbed = discord.Embed(
-            title=f'Deathroll Global Stats',
+            title=f'Global Deathroll Stats',
             colour=discord.Colour.from_rgb(220, 20, 60))
         drStatsEmbed.set_thumbnail(
             url='https://cdn.discordapp.com/attachments/723670062023704578/1362911780313108611/unnamed.png?ex=68041e02&is=6802cc82&hm=cb5879590b96bbbd69476fc88ff355e07dc9cdcdbfc27adafde77abe1bf31df3&')
@@ -378,6 +379,164 @@ class deathroll(commands.Cog):
                             + final_df.to_string(index=False, header=False))
 
         await ctx.send(embed=drStatsEmbed)
+
+    # Individual Deathroll stats
+    @deathrollstats.command(name='player')
+    @commands.guild_only()
+    async def deathrollstats_player(self, ctx):
+        # Check DB connection
+        self.cnx = check_connection(self.cnx)
+        self.cursor = self.cnx.cursor(buffered=True)
+        # Grab all records
+        query = (
+            f'SELECT datetime, channel, message, player1, player2, sequence, rolls, winner, loser FROM deathroll_history')
+        df = pd.read_sql(query, con=self.cnx)
+        self.cnx.commit()
+        self.cnx.close()
+
+        # Calculations
+        player_id = ctx.author.id
+
+        # Filter dataframe to only games with that player
+        player_games = df[
+            (df['player1'] == player_id) | (
+                df['player2'] == player_id)
+        ].copy()
+        # 1. Total games, wins, losses
+        total_games = len(player_games)
+        total_wins = (df['winner'] == player_id).sum()
+        total_losses = total_games - total_wins
+
+        # 2. Calculate Win Percentage
+        if total_games == 0:
+            win_percentage = 0.0
+        else:
+            win_percentage = (total_wins / total_games) * 100
+        win_percentage = '{:.0f}%'.format(win_percentage)
+
+        # 3. Calculate roll stats
+        total_rolls = player_games['rolls'].sum()
+        average_rolls = player_games['rolls'].mean()
+        average_rolls = '{:.1f}'.format(average_rolls)
+        max_rolls = player_games['rolls'].max()
+        min_rolls = player_games['rolls'].min()
+
+        # 4. Calculate top opponents
+        # Most games played against
+        player_games['opponent'] = player_games.apply(
+            lambda row: row['player2'] if row['player1'] == player_id else row['player1'],
+            axis=1
+        )
+        opponent_counts = player_games['opponent'].value_counts()
+        top_opponent_id = opponent_counts.idxmax()
+        top_opponent = ctx.guild.get_member(top_opponent_id)
+        # output fields
+        top_opponent_name = getNick(top_opponent)
+        top_opponent_count = opponent_counts.max()
+
+        # Most wins against
+        wins_df = player_games[player_games['winner'] == player_id]
+        wins_vs_counts = wins_df['opponent'].value_counts()
+        wins_vs_opponent_id = wins_vs_counts.idxmax()
+        wins_vs_opponent = ctx.guild.get_member(wins_vs_opponent_id)
+        # output fields
+        wins_vs_opponent_name = getNick(wins_vs_opponent)
+        wins_vs_opponent_count = wins_vs_counts.max()
+
+        # Most losses against
+        losses_df = player_games[player_games['loser'] == player_id]
+        losses_vs_counts = losses_df['opponent'].value_counts()
+        losses_vs_opponent_id = losses_vs_counts.idxmax()
+        losses_vs_opponent = ctx.guild.get_member(losses_vs_opponent_id)
+        # output fields
+        losses_vs_opponent_name = getNick(losses_vs_opponent)
+        losses_vs_opponent_count = losses_vs_counts.max()
+
+        # 5. Calculate lowest % roll
+        # Calculate Minimum Sequence Ratio
+        all_player_ratios = []
+        biggest_loss_numbers = []
+        for index, game_row in player_games.iterrows():
+            sequence_str = game_row.get('sequence')
+            p1_id = game_row['player1']
+            p2_id = game_row['player2']
+            loser_id = game_row['loser']
+            is_player_loser = (loser_id == player_id)
+
+            if not isinstance(sequence_str, str) or not sequence_str:
+                continue  # Skip if sequence is not a valid string
+
+            seq_numbers = [float(n) for n in sequence_str.split('|')]
+
+            num_elements = len(seq_numbers)
+
+            # Determine player assignment rule based on loser and length
+            is_odd_length = (num_elements % 2 != 0)
+            p1_gets_odd_indices = (loser_id == p2_id and is_odd_length) or \
+                (loser_id == p1_id and not is_odd_length)
+
+            # Calculate ratios where the target player owns the current number
+            for i in range(1, num_elements):
+                prev_num = seq_numbers[i-1]
+                curr_num = seq_numbers[i]
+
+                # Determine owner of the current number (at index i)
+                # 0-based index i means 1st element is even, 2nd is odd, etc.
+                index_is_odd = (i % 2 != 0)
+                # If p1 gets odd indices (1, 3, 5..) and current index i is odd -> p1 owns it
+                # If p1 gets even indices (0, 2, 4..) and current index i is even -> p1 owns it
+                current_owner_is_p1 = (p1_gets_odd_indices == index_is_odd)
+                current_owner_id = p1_id if current_owner_is_p1 else p2_id
+
+                # If the target player owns the current number, calculate and store ratio
+                if current_owner_id == player_id:
+                    ratio = curr_num / prev_num
+                    all_player_ratios.append(ratio)
+
+            if is_player_loser:
+                second_last_str = sequence_str.split('|')[-2]
+                second_last_num = int(second_last_str)
+                biggest_loss_numbers.append(second_last_num)
+
+        # Find the biggest loss
+        biggest_loss = max(biggest_loss_numbers)
+
+        # Find the minimum ratio
+        min_ratio = min(all_player_ratios) * 100
+        min_ratio = '{:.2f}%'.format(min_ratio)
+
+        # Adjust player name depending on ending (Klaus')
+        player_name = getNick(ctx.author)
+        if player_name.endswith('s'):
+            player_name += "'"
+        else:
+            player_name += "'s"
+
+        drPlayerStatsEmbed = discord.Embed(
+            title=f'{player_name} Deathroll Stats',
+            colour=discord.Colour.from_rgb(220, 20, 60))
+        drPlayerStatsEmbed.set_thumbnail(
+            url='https://cdn.discordapp.com/attachments/723670062023704578/1363260251339620352/unnamed.png?ex=6805628c&is=6804110c&hm=b0156321aa65223c6cf1ae1664756bcb1b6efb85a6260c79570ca67f16faf5e5&')
+
+        # Construct embed with links
+        drPlayerStatsEmbed.add_field(name=f'Total games: {total_games}',
+                                     value=f'Record: ({total_wins}-{total_losses}), {win_percentage} won\n\n'
+                                     + f'**Total rolls: {total_rolls}**\n'
+                                     + f'Average: {average_rolls}\n'
+                                     + f'Most rolls: {max_rolls} , fewest: {min_rolls}\n\n'
+                                     + f'**Opponents**\n'
+                                     + f'Top rival: **{top_opponent_name}**, {top_opponent_count} played\n'
+                                     + f'Top victim: **{wins_vs_opponent_name}**, {wins_vs_opponent_count} won\n'
+                                     + f'Top nemesis: **{losses_vs_opponent_name}**, {losses_vs_opponent_count} lost\n\n'
+                                     + f'**Special stats**\n'
+                                     + f'Biggest loss: from **{biggest_loss}** down to **1**, propz! \n'
+                                     + f'Lowest % roll: **{min_ratio}**')
+
+        await ctx.send(embed=drPlayerStatsEmbed)
+
+        # highest big loss
+        # lowest % roll
+
 
 async def setup(client):
     await client.add_cog(deathroll(client))
