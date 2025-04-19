@@ -291,95 +291,97 @@ class deathroll(commands.Cog):
     @commands.command()
     @commands.guild_only()
     async def deathrollstats(self, ctx):
+        try:
+            # Check DB connection
+            self.cnx = check_connection(self.cnx)
+            self.cursor = self.cnx.cursor(buffered=True)
+            # Grab all records
+            query = (
+                f'SELECT datetime, channel, message, player1, player2, sequence, rolls, winner, loser FROM deathroll_history')
+            df = pd.read_sql(query, con=self.cnx)
+            self.cnx.commit()
+            self.cnx.close()
 
-        # Check DB connection
-        self.cnx = check_connection(self.cnx)
-        self.cursor = self.cnx.cursor(buffered=True)
-        # Grab all records
-        query = (
-            f'SELECT datetime, channel, message, player1, player2, sequence, rolls, winner, loser FROM deathroll_history')
-        df = pd.read_sql(query, con=self.cnx)
-        self.cnx.commit()
-        self.cnx.close()
+            drStatsEmbed = discord.Embed(
+                title=f'Deathroll Global Stats',
+                colour=discord.Colour.from_rgb(220, 20, 60))
+            drStatsEmbed.set_thumbnail(
+                url='https://cdn.discordapp.com/attachments/723670062023704578/1362911780313108611/unnamed.png?ex=68041e02&is=6802cc82&hm=cb5879590b96bbbd69476fc88ff355e07dc9cdcdbfc27adafde77abe1bf31df3&')
 
-        drStatsEmbed = discord.Embed(
-            title=f'Deathroll Global Stats',
-            colour=discord.Colour.from_rgb(220, 20, 60))
-        drStatsEmbed.set_thumbnail(
-            url='https://cdn.discordapp.com/attachments/723670062023704578/1362911780313108611/unnamed.png?ex=68041e02&is=6802cc82&hm=cb5879590b96bbbd69476fc88ff355e07dc9cdcdbfc27adafde77abe1bf31df3&')
+            global_games = len(df)
 
-        global_games = len(df)
+            # Find the index (label) of the row with the maximum and the row with the minimum value in the 'rolls' column
+            idx_max_rolls = df['rolls'].idxmax()
+            idx_min_rolls = df['rolls'].idxmin()
 
-        # Find the index (label) of the row with the maximum and the row with the minimum value in the 'rolls' column
-        idx_max_rolls = df['rolls'].idxmax()
-        idx_min_rolls = df['rolls'].idxmin()
+            # Retrieve the entire rows using the indices found
+            row_with_max_rolls = df.loc[idx_max_rolls]
+            row_with_min_rolls = df.loc[idx_min_rolls]
 
-        # Retrieve the entire rows using the indices found
-        row_with_max_rolls = df.loc[idx_max_rolls]
-        row_with_min_rolls = df.loc[idx_min_rolls]
+            # Extract the 'rolls' values from these rows
+            max_rolls = row_with_max_rolls['rolls']
+            min_rolls = row_with_min_rolls['rolls']
 
-        # Extract the 'rolls' values from these rows
-        max_rolls = row_with_max_rolls['rolls']
-        min_rolls = row_with_min_rolls['rolls']
+            # Construct jump_urls
+            guild_id = int(ast.literal_eval(os.environ['GUILD_IDS'])['default'])
 
-        # Construct jump_urls
-        guild_id = int(ast.literal_eval(os.environ['GUILD_IDS'])['default'])
+            max_roll_channel = row_with_max_rolls['channel']
+            max_roll_message = row_with_max_rolls['message']
+            max_roll_jump_url = 'https://discord.com/channels/' + \
+                str(guild_id) + '/' + str(max_roll_channel) + \
+                '/' + str(max_roll_message)
 
-        max_roll_channel = row_with_max_rolls['channel']
-        max_roll_message = row_with_max_rolls['message']
-        max_roll_jump_url = 'https://discord.com/channels/' + \
-            str(guild_id) + '/' + str(max_roll_channel) + \
-            '/' + str(max_roll_message)
+            min_roll_channel = row_with_min_rolls['channel']
+            min_roll_message = row_with_min_rolls['message']
+            min_roll_jump_url = 'https://discord.com/channels/' + \
+                str(guild_id) + '/' + str(min_roll_channel) + \
+                '/' + str(min_roll_message)
 
-        min_roll_channel = row_with_min_rolls['channel']
-        min_roll_message = row_with_min_rolls['message']
-        min_roll_jump_url = 'https://discord.com/channels/' + \
-            str(guild_id) + '/' + str(min_roll_channel) + \
-            '/' + str(min_roll_message)
+            # Calculate win percentage ranking
+            all_players = pd.concat([df['player1'], df['player2']])
+            games_played = all_players.value_counts()
+            games_won = df['winner'].value_counts()
+            games_lost = df['loser'].value_counts()
+            player_stats = pd.DataFrame(
+                {'total_games': games_played, 'total_wins': games_won, 'total_losses': games_lost})
+            player_stats['total_wins'] = player_stats['total_wins'].fillna(
+                0).astype(int)
+            player_stats['total_losses'] = player_stats['total_losses'].fillna(
+                0).astype(int)
+            player_stats['win_percentage'] = (
+                player_stats['total_wins'] / player_stats['total_games']) * 100
+            ranked_players = player_stats.sort_values(
+                by='win_percentage', ascending=False)
+            ranked_players_reset = ranked_players.reset_index(names='player_id')
+            output_df = ranked_players_reset[[
+                'player_id', 'win_percentage', 'total_games', 'total_wins', 'total_losses']]
 
-        # Calculate win percentage ranking
-        all_players = pd.concat([df['player1'], df['player2']])
-        games_played = all_players.value_counts()
-        games_won = df['winner'].value_counts()
-        games_lost = df['loser'].value_counts()
-        player_stats = pd.DataFrame(
-            {'total_games': games_played, 'total_wins': games_won, 'total_losses': games_lost})
-        player_stats['total_wins'] = player_stats['total_wins'].fillna(
-            0).astype(int)
-        player_stats['total_losses'] = player_stats['total_losses'].fillna(
-            0).astype(int)
-        player_stats['win_percentage'] = (
-            player_stats['total_wins'] / player_stats['total_games']) * 100
-        ranked_players = player_stats.sort_values(
-            by='win_percentage', ascending=False)
-        ranked_players_reset = ranked_players.reset_index(names='player_id')
-        output_df = ranked_players_reset[[
-            'player_id', 'win_percentage', 'total_games', 'total_wins', 'total_losses']]
+            # Create a copy to modify for final display
+            output_df_formatted = output_df.copy()
 
-        # Create a copy to modify for final display
-        output_df_formatted = output_df.copy()
+            # Format output fields
+            output_df_formatted['player_name'] = output_df_formatted['player_id'].apply(
+                ctx.guild.get_member).apply(getNick)
+            output_df_formatted['win_percentage'] = output_df_formatted['win_percentage'].map(
+                '{:.0f}%'.format)
+            output_df_formatted['player_record'] = output_df_formatted.apply(
+                lambda row: f"({row['total_wins']}-{row['total_losses']})",
+                axis=1
+            )
 
-        # Format output fields
-        output_df_formatted['player_name'] = output_df_formatted['player_id'].apply(
-            ctx.guild.get_member).apply(getNick)
-        output_df_formatted['win_percentage'] = output_df_formatted['win_percentage'].map(
-            '{:.0f}%'.format)
-        output_df_formatted['player_record'] = output_df_formatted.apply(
-            lambda row: f"({row['total_wins']}-{row['total_losses']})",
-            axis=1
-        )
+            # Construct final dataframe for output
+            final_df = output_df_formatted[[
+                'player_name', 'win_percentage', 'player_record']]
 
-        # Construct final dataframe for output
-        final_df = output_df_formatted[[
-            'player_name', 'win_percentage', 'player_record']]
+            # Construct embed with links
+            drStatsEmbed.add_field(name=f'**Total # of games: {global_games}**',
+                                value=f'**Most rolls: [{max_rolls}]({max_roll_jump_url})**\n'
+                                + f'**Fewest rolls: [{min_rolls}]({min_roll_jump_url})**\n\n'
+                                + final_df.to_string(index=False, header=False))
 
-        # Construct embed with links
-        drStatsEmbed.add_field(name=f'**Total # of games: {global_games}**',
-                               value=f'**Most rolls: [{max_rolls}]({max_roll_jump_url})**\n'
-                               + f'**Fewest rolls: [{min_rolls}]({min_roll_jump_url})**\n\n'
-                               + final_df.to_string(index=False, header=False))
-
-        await ctx.send(embed=drStatsEmbed)
+            await ctx.send(embed=drStatsEmbed)
+        except Exception as e:
+            await ctx.reply(f'-# {e}')
 
 async def setup(client):
     await client.add_cog(deathroll(client))
