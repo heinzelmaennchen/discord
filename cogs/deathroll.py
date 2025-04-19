@@ -379,7 +379,7 @@ class deathroll(commands.Cog):
 
             await ctx.send(embed=drStatsEmbed)
         except Exception as e:
-            await ctx.reply(f'-# {e}')
+            await ctx.send(e)
 
 
 async def setup(client):
