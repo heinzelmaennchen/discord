@@ -92,6 +92,7 @@ class DeathrollButton(discord.ui.Button['DeathRoll']):
                 try:
                     lastrow = deathroll.store_deathroll_to_db(view.cog,
                                                               interaction.channel_id,
+                                                              interaction.message.id,
                                                               view.player1.id,
                                                               view.player2.id,
                                                               view.history,
@@ -127,12 +128,11 @@ class DeathRoll(discord.ui.View):
     def get_deathroll_start_embed(self):
         embed = discord.Embed(
             title="Deathroll",
-            description=f'**{getNick(self.player1)} vs. {getNick(self.player2)}**',
             colour=discord.Colour.dark_embed()
         )
         embed.set_image(url=self.get_deathroll_gif(start=True))
         embed.add_field(
-            name="\u200B", value=f"{self.current_player.mention} start rolling!")
+            name=f'**{getNick(self.player1)} vs. {getNick(self.player2)}**', value=f"{self.current_player.mention} start rolling!")
 
         return embed
 
@@ -147,12 +147,11 @@ class DeathRoll(discord.ui.View):
 
         embed = discord.Embed(
             title="Deathroll",
-            description=f'**{getNick(self.player1)} vs. {getNick(self.player2)}**',
             colour=discord.Colour.dark_embed()
         )
         embed.set_image(url=self.get_deathroll_gif())
         embed.add_field(
-            name="\u200B", value=f"{getNick(player_roll)} rolled **{self.roll_value}**. ({int(self.roll_value/self.history[-2]*1000)/10}% of {self.history[-2]})\n\nNext roll: {player_next.mention}")
+            name=f'**{getNick(self.player1)} vs. {getNick(self.player2)}**', value=f"Roll #{len(self.history)-1} - {getNick(player_roll)} rolled **{self.roll_value}**. ({int(self.roll_value/self.history[-2]*1000)/10}% of {self.history[-2]})\n\nNext roll: {player_next.mention}")
 
         return embed
 
@@ -270,12 +269,12 @@ class deathroll(commands.Cog):
             else:
                 await ctx.reply(f'-# Du kannst keinen Bot herausfordern.', ephemeral=True)
 
-    def store_deathroll_to_db(self, channelid, player1id, player2id, sequence, winner, loser):
+    def store_deathroll_to_db(self, channelid, messageid, player1id, player2id, sequence, winner, loser):
         now = datetime.now(tz=getTimezone())
         rolls = len(sequence)-1
         sequence_str = '|'.join(str(x) for x in sequence)
-        query = ('INSERT INTO `deathroll_history` (datetime, channel, player1, player2, sequence, rolls, winner, loser) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)')
-        data = (now, channelid, player1id, player2id,
+        query = ('INSERT INTO `deathroll_history` (datetime, channel, message, player1, player2, sequence, rolls, winner, loser) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)')
+        data = (now, channelid, messageid, player1id, player2id,
                 sequence_str, rolls, winner, loser)
 
         # Check DB connection
