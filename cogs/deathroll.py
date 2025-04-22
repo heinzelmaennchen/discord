@@ -256,7 +256,7 @@ class deathroll(commands.Cog):
                 int(ast.literal_eval(os.environ['GUILD_IDS'])['dev']))
             TEST_PLAYER = guild.get_member(706072542334550048)
 
-    @commands.command()
+    @commands.command(aliases=['dr'])
     @commands.guild_only()
     async def deathroll(self, ctx):
         if len(ctx.message.mentions) == 0:
