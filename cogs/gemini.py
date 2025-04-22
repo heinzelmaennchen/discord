@@ -47,7 +47,7 @@ class gemini(commands.Cog):
                 model="imagen-3.0-generate-002",
                 prompt=prompt,
                 config=types.GenerateImagesConfig(
-                    number_of_images=4,
+                    number_of_images=1,
                 )
             )
 
@@ -56,14 +56,12 @@ class gemini(commands.Cog):
             for i, generated_image in enumerate(response.generated_images):
                 # Check if image data exists
                 if generated_image.image and generated_image.image.image_bytes:
-                    # Get the raw bytes and decode them
+
                     raw_or_encoded_data = generated_image.image.image_bytes
-                    print(generated_image.image.image_bytes[:100])
-                    print(type(generated_image.image.image_bytes))
-                    image_bytes = base64.b64decode(raw_or_encoded_data)
 
                     # Wrap the bytes in a BytesIO object (acts as an in-memory file)
-                    image_file_like_object = BytesIO(image_bytes)
+                    image_file_like_object = BytesIO(
+                        raw_or_encoded_data)
 
                     # Create a discord.File object
                     discord_file = discord.File(
