@@ -2,6 +2,7 @@ discord.py
 python-dotenv
 openai
 pandas
+google-genai
 beautifulsoup4
 pytz
 tzdata
