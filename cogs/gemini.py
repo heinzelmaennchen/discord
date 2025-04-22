@@ -1,38 +1,36 @@
 import discord
 from discord.ext import commands
 from utils.db import check_connection, init_db
-from openai import OpenAI
+from google import genai
+from google.genai import types
+from io import BytesIO
+import base64
 import os
-import io
-import aiohttp
 
-# Start OpenAI client
-ai = OpenAI(api_key=os.environ['OPENAI_KEY'])
+# Set up Gemini client
+client = genai.Client(api_key=os.environ['GEMINI_KEY'])
 # You can change this to a different model if desired
-model = "gpt-4o"  # You can change this to a different model if desired
+model = "gemini-2.5-pro-preview-03-25"
 
-class chatgpt(commands.Cog):
+
+class gemini(commands.Cog):
     def __init__(self, client):
         self.client = client
         self.cnx = init_db()
         self.cursor = self.cnx.cursor(buffered=True)
 
-    @commands.command(name="gpt")
+    @commands.command(name="gem")
     async def generate_text(self, ctx, *, prompt):
         try:
+
             # Generate text using the OpenAI API
-            completion = ai.chat.completions.create(
-                model=model,
-                messages=[
-                    {"role": "user", "content": prompt}
-                ],
-                max_tokens=500,
-            )
-            message = completion.choices[0].message.content
+            response = client.models.generate_content(
+                model=model, contents=prompt)
+            message = response.text
             # Send the generated text as a message in the Discord channel
             embed = discord.Embed(colour=discord.Colour.from_rgb(47, 49, 54))
             embed.set_author(
-                name="WLC GPT",
+                name="WLC Gem",
                 icon_url="https://townsquare.media/site/295/files/2019/10/Terminator-Orion.jpg")
             embed.description = message
             await ctx.send(embed=embed)
@@ -42,31 +40,41 @@ class chatgpt(commands.Cog):
 
     @commands.command(name="img")
     async def generate_image(self, ctx, *, prompt):
+        await ctx.defer()
         try:
-            # Generate image using the OpenAI API
-            # generate 1 image, 1024x1024px
-            response = ai.images.generate(
-                model="dall-e-3",
+            # Generate image using 2.0 Flash
+            response = client.models.generate_images(
+                model="imagen-3.0-generate-002",
                 prompt=prompt,
-                n=1,
-                quality="hd",
-                size="1024x1024"
+                config=types.GenerateImagesConfig(
+                    number_of_images=4,
+                )
             )
-            image_url = response.data[0].url
-            image_name = f"img-{ctx.message.id}.png"
-            async with aiohttp.ClientSession() as session:
-                async with session.get(image_url) as resp:
-                    if resp.status != 200:
-                        raise Exception('Could not download file...')
-                    data = io.BytesIO(await resp.read())
-                    img = discord.File(data, image_name)
-            # Send the generated image as an embed in the Discord channel
-            embed = discord.Embed(colour=discord.Colour.from_rgb(47, 49, 54))
-            embed.set_author(
-                name="WLC GPT",
-                icon_url="https://townsquare.media/site/295/files/2019/10/Terminator-Orion.jpg")
-            embed.set_image(url=f"attachment://{image_name}")
-            await ctx.send(file=img, embed=embed)
+
+            images_to_send = []
+
+            for i, generated_image in enumerate(response.generated_images):
+                # Check if image data exists
+                if generated_image.image and generated_image.image.image_bytes:
+                    # Get the raw bytes and decode them
+                    raw_or_encoded_data = generated_image.image.image_bytes
+                    image_bytes = base64.b64decode(raw_or_encoded_data)
+
+                    # Wrap the bytes in a BytesIO object (acts as an in-memory file)
+                    image_file_like_object = BytesIO(image_bytes)
+
+                    # Create a discord.File object
+                    # fp: The file-like object containing the data
+                    # filename: How the file should be named in Discord. Important!
+                    # You might want to use a more specific extension like .jpg or .webp
+                    # if your API provides that info, otherwise .png is often safe.
+                    discord_file = discord.File(
+                        fp=image_file_like_object, filename=f"generated_image_{i+1}.png")
+
+                    images_to_send.append(discord_file)
+
+            # Send the generated images as a reply to the prompt message
+            await ctx.reply(files=images_to_send)
         except Exception as e:
             # Send an error message to the Discord channel if there was an issue with the API request
             await ctx.send(f"Sorry, there was an error generating the image. Error message: {str(e)}")
@@ -90,5 +98,7 @@ class chatgpt(commands.Cog):
         return
 
 # Initialize the Discord bot and add the GPT cog
+
+
 async def setup(client):
-    await client.add_cog(chatgpt(client))
+    await client.add_cog(gemini(client))
