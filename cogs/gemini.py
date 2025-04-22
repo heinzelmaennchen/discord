@@ -58,16 +58,14 @@ class gemini(commands.Cog):
                 if generated_image.image and generated_image.image.image_bytes:
                     # Get the raw bytes and decode them
                     raw_or_encoded_data = generated_image.image.image_bytes
+                    print(generated_image.image.image_bytes[:100])
+                    print(type(generated_image.image.image_bytes))
                     image_bytes = base64.b64decode(raw_or_encoded_data)
 
                     # Wrap the bytes in a BytesIO object (acts as an in-memory file)
                     image_file_like_object = BytesIO(image_bytes)
 
                     # Create a discord.File object
-                    # fp: The file-like object containing the data
-                    # filename: How the file should be named in Discord. Important!
-                    # You might want to use a more specific extension like .jpg or .webp
-                    # if your API provides that info, otherwise .png is often safe.
                     discord_file = discord.File(
                         fp=image_file_like_object, filename=f"generated_image_{i+1}.png")
 
