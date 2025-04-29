@@ -374,9 +374,9 @@ class deathroll(commands.Cog):
 
         # Construct embed with links
         drStatsEmbed.add_field(name=f'**Total # of games: {global_games}**',
-                            value=f'**Most rolls: [{max_rolls}]({max_roll_jump_url})**\n'
-                            + f'**Fewest rolls: [{min_rolls}]({min_roll_jump_url})**\n\n'
-                            + final_df.to_string(index=False, header=False))
+                               value=f'**Most rolls: [{max_rolls}]({max_roll_jump_url})**\n'
+                               + f'**Fewest rolls: [{min_rolls}]({min_roll_jump_url})**\n\n'
+                               + final_df.to_string(index=False, header=False))
 
         await ctx.send(embed=drStatsEmbed)
 
@@ -454,8 +454,10 @@ class deathroll(commands.Cog):
 
         # 5. Calculate lowest % roll
         # Calculate Minimum Sequence Ratio
-        all_player_ratios = []
         biggest_loss_numbers = []
+        matching_rolls_list = []
+        min_ratio_so_far = float('inf')
+
         for index, game_row in player_games.iterrows():
             sequence_str = game_row.get('sequence')
             p1_id = game_row['player1']
@@ -489,9 +491,15 @@ class deathroll(commands.Cog):
                 current_owner_id = p1_id if current_owner_is_p1 else p2_id
 
                 # If the target player owns the current number, calculate and store ratio
-                if current_owner_id == player_id:
+                if current_owner_id == player_id and prev_num != 0:
                     ratio = curr_num / prev_num
-                    all_player_ratios.append(ratio)
+                    if ratio < min_ratio_so_far:
+                        min_ratio_so_far = ratio
+                        min_prev_num_for_ratio = prev_num  # Store the numbers
+                        min_curr_num_for_ratio = curr_num  # Store the numbers
+
+                if prev_num == curr_num and current_owner_id == player_id:
+                    matching_rolls_list.append(curr_num)
 
             if is_player_loser:
                 second_last_str = sequence_str.split('|')[-2]
@@ -501,9 +509,16 @@ class deathroll(commands.Cog):
         # Find the biggest loss
         biggest_loss = max(biggest_loss_numbers)
 
-        # Find the minimum ratio
-        min_ratio = min(all_player_ratios) * 100
+        # Format the minimum ratio and the pair of rolls it's associated with
+        min_ratio = min_ratio_so_far * 100
         min_ratio = '{:.2f}%'.format(min_ratio)
+        min_prev_num_for_ratio = '{:.0f}'.format(min_prev_num_for_ratio)
+        min_curr_num_for_ratio = '{:.0f}'.format(min_curr_num_for_ratio)
+
+        # 6. Calculate highest 100% roll
+        if matching_rolls_list:
+            max_match = max(matching_rolls_list)
+            max_match = '{:.0f}'.format(max_match)
 
         # Adjust player name depending on ending (Klaus')
         player_name = getNick(ctx.author)
@@ -529,13 +544,11 @@ class deathroll(commands.Cog):
                                      + f'Top victim: **{wins_vs_opponent_name}**, {wins_vs_opponent_count} won\n'
                                      + f'Top nemesis: **{losses_vs_opponent_name}**, {losses_vs_opponent_count} lost\n\n'
                                      + f'**Special stats**\n'
-                                     + f'Biggest loss: from **{biggest_loss}** down to **1**, propz! \n'
-                                     + f'Lowest % roll: **{min_ratio}**')
+                                     + f'Biggest loss: from **{biggest_loss}** down to **1**, propz!\n'
+                                     + f'Highest 100% roll: **{max_match}**\n'
+                                     + f'Lowest % roll: **{min_ratio}** ({min_prev_num_for_ratio} to {min_curr_num_for_ratio})')
 
         await ctx.send(embed=drPlayerStatsEmbed)
-
-        # highest big loss
-        # lowest % roll
 
 
 async def setup(client):
