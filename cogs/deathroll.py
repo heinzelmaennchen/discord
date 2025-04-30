@@ -319,6 +319,7 @@ class deathroll(commands.Cog):
             row_with_min_rolls = valid_rolls_df.loc[idx_min_rolls]
             max_rolls = row_with_max_rolls['rolls']
             min_rolls = row_with_min_rolls['rolls']
+            average_rolls = valid_rolls_df['rolls'].mean()
 
             guild_id = int(ast.literal_eval(os.environ['GUILD_IDS'])[
                            'default'])  # Ensure GUILD_IDS env var is set
@@ -449,11 +450,12 @@ class deathroll(commands.Cog):
 
         # --- Format Global Record Results ---
         # Helper to format numbers and get nicks safely
-        def format_num(num):
-            if num is None:
+        def format_num(num, decimals=0):
+            if num is None or math.isnan(num) or math.isinf(num):
                 return "N/A"
-            # Format float if needed
-            return int(num) if num == int(num) else f"{num:.2f}"
+            if abs(num - round(num)) < 1e-9:
+                return str(int(round(num)))
+            return f"{num:.{decimals}f}"
 
         def get_nick_safe(player_id):
             if player_id is None:
@@ -488,7 +490,8 @@ class deathroll(commands.Cog):
         # Top part: General Stats
         embed_value_part1 = (
             f'**Most rolls:** [{format_num(max_rolls)}]({max_roll_jump_url})\n'
-            f'**Fewest rolls:** [{format_num(min_rolls)}]({min_roll_jump_url})\n\n'
+            f'**Fewest rolls:** [{format_num(min_rolls)}]({min_roll_jump_url})\n'
+            f'**Average rolls:** {format_num(average_rolls, 1)}\n\n'
         )
 
         # Middle part: Global Records
