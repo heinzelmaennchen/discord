@@ -330,7 +330,7 @@ class deathroll(commands.Cog):
             min_roll_message = row_with_min_rolls['message']
             min_roll_jump_url = f'https://discord.com/channels/{guild_id}/{min_roll_channel}/{min_roll_message}'
 
-        # --- Player Ranking Calculation (as before) ---
+        # --- Player Ranking Calculation ---
         all_players = pd.concat([df['player1'], df['player2']]).dropna().astype(
             int)  # Ensure IDs are consistent type and drop NaNs
         games_played = all_players.value_counts()
@@ -374,7 +374,7 @@ class deathroll(commands.Cog):
         final_ranking_df = output_df_formatted[[
             'player_name', 'win_percentage', 'player_record']]
 
-        # --- Calculate NEW Global Sequence Bests ---
+        # --- Calculate Global Sequence Bests ---
         global_max_prev_to_loss_num = None
         global_max_prev_to_loss_player_id = None
         global_min_ratio = float('inf')
@@ -448,6 +448,65 @@ class deathroll(commands.Cog):
                         global_max_matching_roll = curr_num
                         global_max_matching_roll_player_id = current_owner_id
 
+        # --- Calculate Longest Streaks ---
+        longest_win_streak = 0
+        longest_win_streak_player_id = None
+        longest_loss_streak = 0
+        longest_loss_streak_player_id = None
+
+        if not df.empty and 'winner' in df.columns and 'loser' in df.columns:
+            # Use Int64 to handle potential NaN from conversion/original data
+            df['winner'] = pd.to_numeric(
+                df['winner'], errors='coerce').astype('Int64')
+            df['loser'] = pd.to_numeric(
+                df['loser'], errors='coerce').astype('Int64')
+            # Sort by datetime to process streaks chronologically
+            df_sorted = df.sort_values(by='datetime').reset_index(drop=True)
+
+            current_win_streaks = {}  # Tracks current streak for each player
+            max_win_streaks = {}     # Tracks max streak found *so far* for each player
+            current_loss_streaks = {}
+            max_loss_streaks = {}
+
+            for index, game_row in df_sorted.iterrows():
+                winner_id = game_row['winner']
+                loser_id = game_row['loser']
+
+                # Skip if winner or loser ID is missing for this row
+                if pd.isna(winner_id) or pd.isna(loser_id):
+                    continue
+
+                # --- Update Winner's Streaks ---
+                # End loser's win streak, potentially start/continue loser's loss streak
+                current_win_streaks[loser_id] = 0  # End win streak
+                current_loss_streaks[loser_id] = current_loss_streaks.get(
+                    loser_id, 0) + 1  # Increment loss streak
+                # Update loser's max loss streak if current is higher
+                max_loss_streaks[loser_id] = max(max_loss_streaks.get(
+                    loser_id, 0), current_loss_streaks[loser_id])
+
+                # --- Update Loser's Streaks ---
+                # End winner's loss streak, potentially start/continue winner's win streak
+                current_loss_streaks[winner_id] = 0  # End loss streak
+                current_win_streaks[winner_id] = current_win_streaks.get(
+                    winner_id, 0) + 1  # Increment win streak
+                # Update winner's max win streak if current is higher
+                max_win_streaks[winner_id] = max(max_win_streaks.get(
+                    winner_id, 0), current_win_streaks[winner_id])
+
+            # Find the overall maximum streaks after iterating through all games
+            if max_win_streaks:  # Check if any wins occurred
+                # Find player ID with the highest value in max_win_streaks
+                longest_win_streak_player_id = max(
+                    max_win_streaks, key=max_win_streaks.get)
+                # Get the corresponding streak value
+                longest_win_streak = max_win_streaks[longest_win_streak_player_id]
+
+            if max_loss_streaks:  # Check if any losses occurred
+                longest_loss_streak_player_id = max(
+                    max_loss_streaks, key=max_loss_streaks.get)
+                longest_loss_streak = max_loss_streaks[longest_loss_streak_player_id]
+
         # --- Format Global Record Results ---
         # Helper to format numbers and get nicks safely
         def format_num(num, decimals=0):
@@ -486,6 +545,12 @@ class deathroll(commands.Cog):
         max_match_num_str = format_num(global_max_matching_roll)
         max_match_str = f"**{max_match_num_str}** by {max_match_player_name}" if global_max_matching_roll is not None else "N/A"
 
+        # Format new streak results
+        win_streak_player_name = get_nick_safe(longest_win_streak_player_id)
+        loss_streak_player_name = get_nick_safe(longest_loss_streak_player_id)
+        longest_win_streak_str = f"**{longest_win_streak}** by {win_streak_player_name}" if longest_win_streak > 0 else "N/A"
+        longest_loss_streak_str = f"**{longest_loss_streak}** by {loss_streak_player_name}" if longest_loss_streak > 0 else "N/A"
+
         # --- Construct Embed ---
         # Top part: General Stats
         embed_value_part1 = (
@@ -499,7 +564,9 @@ class deathroll(commands.Cog):
             f'**Special Stats**\n'
             f'Biggest Loss: {biggest_loss_str}\n'
             f'Highest 100% Roll: {max_match_str}\n'
-            f'Lowest % Roll: {min_ratio_str}\n\n'
+            f'Lowest % Roll: {min_ratio_str}\n'
+            f'Longest Win Streak: {longest_win_streak_str}\n'
+            f'Longest Loss Streak: {longest_loss_streak_str}\n\n'
         )
 
         # Bottom part: Ranking
