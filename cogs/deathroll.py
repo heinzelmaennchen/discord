@@ -507,6 +507,35 @@ class deathroll(commands.Cog):
                     max_loss_streaks, key=max_loss_streaks.get)
                 longest_loss_streak = max_loss_streaks[longest_loss_streak_player_id]
 
+        # --- Calculate Game with Most '2's ---
+        max_twos_count = 0
+        max_twos_jump_url = "#"  # Default
+
+        if 'sequence' in df.columns and not df.empty:
+            # Count occurrences of the string '2' in each sequence
+            # Fill NaN sequences with empty string, convert to string just in case
+            df['twos_count'] = df['sequence'].fillna('').astype(
+                str).str.split('|').apply(lambda x: x.count('2'))
+
+            if df['twos_count'].max() > 0:  # Check if any '2's were found
+                # Get index of first max occurrence
+                idx_max_twos = df['twos_count'].idxmax()
+                max_twos_count = df.loc[idx_max_twos, 'twos_count']
+                row_with_max_twos = df.loc[idx_max_twos]
+
+                # Construct jump URL
+                try:  # Use same guild_id as obtained above
+                    max_twos_channel = row_with_max_twos['channel']
+                    max_twos_message = row_with_max_twos['message']
+                    # Ensure channel/message IDs are valid before creating URL
+                    if pd.notna(max_twos_channel) and pd.notna(max_twos_message):
+                        # Cast to int
+                        max_twos_jump_url = f'https://discord.com/channels/{guild_id}/{int(max_twos_channel)}/{int(max_twos_message)}'
+                except Exception as e:
+                    print(
+                        f"Warning: Error creating jump URL for max twos: {e}")
+                    max_twos_jump_url = "#"  # Reset on error
+
         # --- Format Global Record Results ---
         # Helper to format numbers and get nicks safely
         def format_num(num, decimals=0):
@@ -556,7 +585,8 @@ class deathroll(commands.Cog):
         embed_value_part1 = (
             f'**Most rolls:** [{format_num(max_rolls)}]({max_roll_jump_url})\n'
             f'**Fewest rolls:** [{format_num(min_rolls)}]({min_roll_jump_url})\n'
-            f'**Average rolls:** {format_num(average_rolls, 1)}\n\n'
+            f'**Average rolls:** {format_num(average_rolls, 1)}\n'
+            f'**Most "2"s rolled:** [{format_num(max_twos_count)}]({max_twos_jump_url})\n\n'
         )
 
         # Middle part: Global Records
