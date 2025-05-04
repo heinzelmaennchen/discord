@@ -1,4 +1,5 @@
 import os
+import io
 import discord
 from discord.ext import commands
 
@@ -8,6 +9,10 @@ from utils.deathrollgifs import gifdict
 
 import random
 import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.ticker as ticker
+from matplotlib.colors import LinearSegmentedColormap
 import ast
 from datetime import datetime
 
@@ -536,7 +541,177 @@ class deathroll(commands.Cog):
 
         # highest big loss
         # lowest % roll
+    
+    # Individual Deathroll stats
+    @deathrollstats.command(name='charts')
+    @commands.guild_only()
+    async def deathrollstats_charts(self, ctx):
+        # Check DB connection
+        self.cnx = check_connection(self.cnx)
+        self.cursor = self.cnx.cursor(buffered=True)
+        # Grab all records
+        query = (
+            f'SELECT datetime, channel, message, player1, player2, sequence, rolls, winner, loser FROM deathroll_history')
+        df = pd.read_sql(query, con=self.cnx)
+        self.cnx.commit()
+        self.cnx.close()
 
+        # COLOR configs for plots:
+        figbg_c = '#121214'
+        bar_c = '#0969a1'
+        label_c = '#82838b'
+        pie_c = ['#215b33', '#6a1e1f']
+        # Create Figure with subplots
+        fig, [(ax1, ax2), (ax3, ax4)] = plt.subplots(2, 2, figsize=(12, 12), facecolor=figbg_c)
+        #fig, (ax1, ax3) = plt.subplots(1, 2, figsize=(12, 6), facecolor=figbg_c)
+        
+        # Data for Barplot
+        df_grouped = df\
+            .groupby(["rolls"])\
+            .agg(count = ("rolls", "count"))\
+            .reset_index()
+        
+        max = df_grouped['rolls'].max()
+        df_barplot = df_grouped
+        for i in range(1,max+2):
+            if not (df_grouped['rolls'] == i).any():
+                df_append = pd.DataFrame([[i, 0]], columns=['rolls','count'])
+                df_barplot = pd.concat([df_barplot, df_append])
+        df_barplot = df_barplot.sort_values('rolls').reset_index(drop=True)
+
+        # Barplot
+        ax1.bar(df_barplot['rolls'], df_barplot['count'], color=bar_c, edgecolor='none')
+        ax1.set_xlabel('rolls', color=label_c)
+        ax1.set_ylabel('count', color=label_c)
+        ax1.set_title('How many rolls?', color=label_c)
+        ax1.tick_params(axis='x', colors=label_c)
+        ax1.tick_params(axis='y', colors=label_c)
+        ax1.set_xticks(range(1, max + 1))
+        ax1.yaxis.set_major_locator(ticker.MultipleLocator(1))
+        ax1.set_facecolor(figbg_c)
+        ax1.grid(color=label_c, linestyle='-', linewidth=0.5, alpha=0.5)
+        ax1.spines[:].set_color(label_c)
+        ax1.set_xlim(xmin=0, xmax=max+1)
+
+        # Data for Pie Chart
+        df_start = df
+        df_start['starting_player'] = df_start.apply(self.determine_starting_player, axis=1)
+        game_count = len(df_start)
+        start_wins = len(df_start[df_start['winner']==df_start['starting_player']])
+        second_wins = game_count - start_wins
+
+        pie_labels = ['starting\nplayer','second\nplayer']
+        pie_data = [start_wins, second_wins]
+
+        # Pie Chart
+        ax2.pie(pie_data, labels=pie_labels, autopct='%1.1f%%', startangle=90, colors=pie_c, explode=(0.01, 0.01))
+        ax2.set_title('Winning pct. starting vs. second player', color=label_c)
+        ax2.set_facecolor(figbg_c)
+        ax2.axis('equal')
+        for text in ax2.texts:
+            text.set_color(label_c)
+            if '%' in text.get_text():
+                text.set_fontsize(16)
+
+        # Data for Duels HeatMap
+        df_duels = df
+        players = sorted(list(set(df['player1']) | set(df['player2'])))
+        results = []
+        for player1 in players:
+            for player2 in players:
+                if player1 != player2:
+                    # Filtere den DataFrame, um nur die Spiele zwischen den aktuellen Spielern zu berücksichtigen
+                    df_filtered = df_duels[((df_duels['player1'] == player1) & (df_duels['player2'] == player2)) |
+                                    ((df_duels['player1'] == player2) & (df_duels['player2'] == player1))]
+
+                    # Berechne die Anzahl der Siege für Spieler1
+                    wins = len(df_filtered[df_filtered['winner'] == player1])
+                    # Berechne die Anzahl der Niederlagen für Spieler1
+                    losses = len(df_filtered[df_filtered['loser'] == player1])
+
+                    # Berechne die Siegquote
+                    if (wins + losses) > 0:
+                        win_percentage = wins / (wins + losses)
+                        results.append({'Spieler1': player1, 'Spieler2': player2, 'Siege': wins, 'Niederlagen': losses, 'Siegquote': win_percentage})
+                    else:
+                        results.append({'Spieler1': player1, 'Spieler2': player2, 'Siege': 0, 'Niederlagen': 0, 'Siegquote': np.nan})
+        # Erstelle ein DataFrame aus der Ergebnisliste
+        win_loss_df = pd.DataFrame(results)
+        # Erstelle eine Pivot-Tabelle, um die Siegquoten für jedes Spielerpaar zu erhalten
+        win_loss_pivot = win_loss_df.pivot(index='Spieler1', columns='Spieler2', values='Siegquote')
+
+        # Heatmap
+        # Definiere die benutzerdefinierte Colormap
+        vs_colors = [(0, '#9f3c3c'), (0.5, '#9f9f3c'), (1, '#3c9f3c')]
+        cmap_name = 'vs_colormap'
+        cm = LinearSegmentedColormap.from_list(cmap_name, vs_colors, N=100)
+
+        ax3.imshow(win_loss_pivot, cmap=cm, interpolation='nearest', vmin=0, vmax=1)
+        # Füge die Spielernamen als Beschriftungen hinzu
+        player_labels = []
+        for player in players:
+            player_usr = ctx.guild.get_member(player)
+            player_labels.append(getNick(player_usr))
+
+        ax3.set_xticks(np.arange(len(players)), player_labels, color=label_c)
+        ax3.set_yticks(np.arange(len(players)), player_labels, color=label_c)
+
+        for i, player1 in enumerate(players):
+            for j, player2 in enumerate(players):
+                if i == j:  #Diagonalelemente schwarz färben
+                    ax3.text(j, i, 'X', ha='center', va='center', color=label_c)
+                    ax3.add_patch(plt.Rectangle((j - 0.5, i - 0.5), 1, 1, facecolor=figbg_c, edgecolor='none'))
+                elif np.isnan(win_loss_pivot.iloc[i, j]):
+                    ax3.text(j, i, '-', ha='center', va='center', color=label_c)
+                    ax3.add_patch(plt.Rectangle((j - 0.5, i - 0.5), 1, 1, facecolor='#1a1a1e', edgecolor='none'))
+                else:
+                    # Finde die Siege und Niederlagen für das Spielerpaar
+                    wins = win_loss_df.loc[(win_loss_df['Spieler1'] == player1) & (win_loss_df['Spieler2'] == player2), 'Siege'].values[0]
+                    losses = win_loss_df.loc[(win_loss_df['Spieler1'] == player1) & (win_loss_df['Spieler2'] == player2), 'Niederlagen'].values[0]
+                    ax3.text(j, i, f"{win_loss_pivot.iloc[i, j]:.0%}\n({wins} - {losses})", ha='center', va='center', color='black')
+
+        # Turn spines off and create white grid.
+        ax3.spines[:].set_visible(False)
+        ax3.set_facecolor(figbg_c)
+        ax3.set_xticks(np.arange(win_loss_pivot.shape[1]+1)-.5, minor=True)
+        ax3.set_yticks(np.arange(win_loss_pivot.shape[0]+1)-.5, minor=True)
+        ax3.xaxis.set_tick_params(which='major', color=label_c)
+        ax3.yaxis.set_tick_params(which='major', color=label_c)
+        ax3.grid(which="minor", color=figbg_c, linestyle='-', linewidth=3)
+        ax3.tick_params(which="minor", bottom=False, left=False)
+        ax3.set_title('Duels', color=label_c)
+
+        # Subplot 4
+
+        ax4.set_facecolor(figbg_c)
+        ax4.spines[:].set_visible(False)
+        ax4.set_xticks([])
+        ax4.set_yticks([])
+
+
+        plt.tight_layout(pad=1.08, h_pad=5, w_pad=5)
+        # Save the plot to a BytesIO object
+        buffer = io.BytesIO()
+        fig.savefig(buffer, format='png', dpi=400)
+        buffer.seek(0)
+
+        discord_charts = discord.File(buffer, filename='dr_charts.png')
+        plt.close(fig)
+        await ctx.send(file=discord_charts)
+
+
+    # Takes a row of deathroll_history DataFrame and returns the ID of the starting player
+    def determine_starting_player(self, row):
+        if row['rolls'] % 2 != 0:
+            return row['loser']
+        else:
+            return row['winner']
+        
+    @commands.command()
+    @commands.guild_only()
+    async def plot(self, ctx):
+        pass
+        
 
 async def setup(client):
     await client.add_cog(deathroll(client))
