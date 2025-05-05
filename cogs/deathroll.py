@@ -14,6 +14,7 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 from matplotlib.colors import LinearSegmentedColormap
 import ast
+import math
 from datetime import datetime
 
 START_VALUE = 133337
@@ -303,8 +304,312 @@ class deathroll(commands.Cog):
         query = (
             f'SELECT datetime, channel, message, player1, player2, sequence, rolls, winner, loser FROM deathroll_history')
         df = pd.read_sql(query, con=self.cnx)
-        self.cnx.commit()
         self.cnx.close()
+
+        # Number of games
+        global_games = len(df)
+
+        # --- Basic Global Roll Stats ---
+        # Ensure 'rolls' is numeric first
+        df['rolls'] = pd.to_numeric(df['rolls'], errors='coerce')
+        # Work with rows that have valid rolls
+        valid_rolls_df = df.dropna(subset=['rolls'])
+
+        max_rolls, min_rolls = None, None
+        max_roll_jump_url, min_roll_jump_url = "#", "#"  # Default URLs
+        if not valid_rolls_df.empty:
+            idx_max_rolls = valid_rolls_df['rolls'].idxmax()
+            idx_min_rolls = valid_rolls_df['rolls'].idxmin()
+            row_with_max_rolls = valid_rolls_df.loc[idx_max_rolls]
+            row_with_min_rolls = valid_rolls_df.loc[idx_min_rolls]
+            max_rolls = row_with_max_rolls['rolls']
+            min_rolls = row_with_min_rolls['rolls']
+            average_rolls = valid_rolls_df['rolls'].mean()
+
+            guild_id = int(ast.literal_eval(os.environ['GUILD_IDS'])[
+                           'default'])  # Ensure GUILD_IDS env var is set
+            max_roll_channel = row_with_max_rolls['channel']
+            max_roll_message = row_with_max_rolls['message']
+            max_roll_jump_url = f'https://discord.com/channels/{guild_id}/{max_roll_channel}/{max_roll_message}'
+            min_roll_channel = row_with_min_rolls['channel']
+            min_roll_message = row_with_min_rolls['message']
+            min_roll_jump_url = f'https://discord.com/channels/{guild_id}/{min_roll_channel}/{min_roll_message}'
+
+        # --- Player Ranking Calculation ---
+        all_players = pd.concat([df['player1'], df['player2']]).dropna().astype(
+            int)  # Ensure IDs are consistent type and drop NaNs
+        games_played = all_players.value_counts()
+        games_won = df['winner'].dropna().astype(int).value_counts()
+        games_lost = df['loser'].dropna().astype(int).value_counts()
+        # Start with games played index
+        player_stats = pd.DataFrame({'total_games': games_played})
+        player_stats = player_stats.join(
+            games_won.rename('total_wins'), how='left')  # Join wins
+        player_stats = player_stats.join(games_lost.rename(
+            'total_losses'), how='left')  # Join losses
+
+        player_stats['total_wins'] = player_stats['total_wins'].fillna(
+            0).astype(int)
+        player_stats['total_losses'] = player_stats['total_losses'].fillna(
+            0).astype(int)
+        # Ensure total_games is not zero before calculating percentage
+        player_stats['win_percentage'] = 0.0  # Initialize
+        player_stats.loc[player_stats['total_games'] > 0, 'win_percentage'] = \
+            (player_stats['total_wins'] / player_stats['total_games']) * 100
+
+        ranked_players = player_stats.sort_values(by=['win_percentage', 'total_games'], ascending=[
+                                                  False, False])  # Sort by % then games
+        ranked_players_reset = ranked_players.reset_index().rename(
+            columns={'index': 'player_id'})  # fix potential multi-index name issue
+        output_df = ranked_players_reset[[
+            'player_id', 'win_percentage', 'total_games', 'total_wins', 'total_losses']]
+
+        # Formatting for Player Ranking display
+        output_df_formatted = output_df.copy()
+        output_df_formatted['player_name'] = output_df_formatted['player_id'].apply(
+            # Handle user leaving server
+            lambda pid: getNick(ctx.guild.get_member(
+                pid)) if ctx.guild else f"ID: {pid}"
+        )
+        output_df_formatted['win_percentage'] = output_df_formatted['win_percentage'].map(
+            '{:.0f}%'.format)
+        output_df_formatted['player_record'] = output_df_formatted.apply(
+            lambda row: f"({row['total_wins']}-{row['total_losses']})", axis=1
+        )
+        final_ranking_df = output_df_formatted[[
+            'player_name', 'win_percentage', 'player_record']]
+
+        # --- Calculate Global Sequence Bests ---
+        global_max_prev_to_loss_num = None
+        global_max_prev_to_loss_player_id = None
+        global_min_ratio = float('inf')
+        global_min_ratio_player_id = None
+        global_min_ratio_prev_num = None
+        global_min_ratio_curr_num = None
+        global_max_matching_roll = None
+        global_max_matching_roll_player_id = None
+
+        for index, game_row in df.iterrows():  # Iterate through ALL games
+            sequence_str = game_row.get('sequence')
+            p1_id = game_row['player1']
+            p2_id = game_row['player2']
+            loser_id = game_row['loser']
+
+            # Basic checks and parsing
+            if not isinstance(sequence_str, str) or not sequence_str:
+                continue
+            try:
+                seq_numbers = [float(n) for n in sequence_str.split('|')]
+            except (ValueError, TypeError):
+                continue
+            num_elements = len(seq_numbers)
+            if num_elements < 2:
+                continue
+
+            # --- 1. Biggest Loss (Highest pre-'1' roll for any loser) ---
+            try:
+                second_last_num = seq_numbers[-2]
+                # Ensure the last number was indeed 1, as per rule
+                if seq_numbers[-1] == 1.0 and not math.isnan(second_last_num) and not math.isinf(second_last_num):
+                    if global_max_prev_to_loss_num is None or second_last_num > global_max_prev_to_loss_num:
+                        global_max_prev_to_loss_num = second_last_num
+                        global_max_prev_to_loss_player_id = loser_id
+            except IndexError:
+                pass  # Sequence was too short
+
+            # --- Determine assignment rule for pairs ---
+            is_odd_length = (num_elements % 2 != 0)
+            p1_gets_odd_indices = (loser_id == p2_id and is_odd_length) or \
+                                  (loser_id == p1_id and not is_odd_length)
+
+            # --- 2 & 3: Loop through pairs for Min Ratio and Max Matching ---
+            for i in range(1, num_elements):
+                prev_num = seq_numbers[i-1]
+                curr_num = seq_numbers[i]
+
+                if math.isnan(prev_num) or math.isinf(prev_num) or \
+                   math.isnan(curr_num) or math.isinf(curr_num):
+                    continue
+
+                # Determine owner
+                index_is_odd = (i % 2 != 0)
+                current_owner_is_p1 = (p1_gets_odd_indices == index_is_odd)
+                current_owner_id = p1_id if current_owner_is_p1 else p2_id
+
+                # 2. Lowest % Roll
+                if prev_num != 0:
+                    ratio = curr_num / prev_num
+                    if not math.isnan(ratio) and not math.isinf(ratio):
+                        if ratio < global_min_ratio:
+                            global_min_ratio = ratio
+                            global_min_ratio_player_id = current_owner_id
+                            global_min_ratio_prev_num = prev_num
+                            global_min_ratio_curr_num = curr_num
+
+                # 3. Highest 100% Roll (Matching Roll)
+                if prev_num == curr_num:
+                    # Check if current max is None OR if curr_num is greater
+                    if global_max_matching_roll is None or curr_num > global_max_matching_roll:
+                        global_max_matching_roll = curr_num
+                        global_max_matching_roll_player_id = current_owner_id
+
+        # --- Calculate Longest Streaks ---
+        longest_win_streak = 0
+        longest_win_streak_player_id = None
+        longest_loss_streak = 0
+        longest_loss_streak_player_id = None
+
+        if not df.empty and 'winner' in df.columns and 'loser' in df.columns:
+            # Use Int64 to handle potential NaN from conversion/original data
+            df['winner'] = pd.to_numeric(
+                df['winner'], errors='coerce').astype('Int64')
+            df['loser'] = pd.to_numeric(
+                df['loser'], errors='coerce').astype('Int64')
+            # Sort by datetime to process streaks chronologically
+            df_sorted = df.sort_values(by='datetime').reset_index(drop=True)
+
+            current_win_streaks = {}  # Tracks current streak for each player
+            max_win_streaks = {}     # Tracks max streak found *so far* for each player
+            current_loss_streaks = {}
+            max_loss_streaks = {}
+
+            for index, game_row in df_sorted.iterrows():
+                winner_id = game_row['winner']
+                loser_id = game_row['loser']
+
+                # Skip if winner or loser ID is missing for this row
+                if pd.isna(winner_id) or pd.isna(loser_id):
+                    continue
+
+                # --- Update Winner's Streaks ---
+                # End loser's win streak, potentially start/continue loser's loss streak
+                current_win_streaks[loser_id] = 0  # End win streak
+                current_loss_streaks[loser_id] = current_loss_streaks.get(
+                    loser_id, 0) + 1  # Increment loss streak
+                # Update loser's max loss streak if current is higher
+                max_loss_streaks[loser_id] = max(max_loss_streaks.get(
+                    loser_id, 0), current_loss_streaks[loser_id])
+
+                # --- Update Loser's Streaks ---
+                # End winner's loss streak, potentially start/continue winner's win streak
+                current_loss_streaks[winner_id] = 0  # End loss streak
+                current_win_streaks[winner_id] = current_win_streaks.get(
+                    winner_id, 0) + 1  # Increment win streak
+                # Update winner's max win streak if current is higher
+                max_win_streaks[winner_id] = max(max_win_streaks.get(
+                    winner_id, 0), current_win_streaks[winner_id])
+
+            # Find the overall maximum streaks after iterating through all games
+            if max_win_streaks:  # Check if any wins occurred
+                # Find player ID with the highest value in max_win_streaks
+                longest_win_streak_player_id = max(
+                    max_win_streaks, key=max_win_streaks.get)
+                # Get the corresponding streak value
+                longest_win_streak = max_win_streaks[longest_win_streak_player_id]
+
+            if max_loss_streaks:  # Check if any losses occurred
+                longest_loss_streak_player_id = max(
+                    max_loss_streaks, key=max_loss_streaks.get)
+                longest_loss_streak = max_loss_streaks[longest_loss_streak_player_id]
+
+        # --- Calculate Game with Most '2's ---
+        max_twos_count = 0
+        max_twos_jump_url = "#"  # Default
+
+        if 'sequence' in df.columns and not df.empty:
+            # Count occurrences of the string '2' in each sequence
+            # Fill NaN sequences with empty string, convert to string just in case
+            df['twos_count'] = df['sequence'].fillna('').astype(
+                str).str.split('|').apply(lambda x: x.count('2'))
+
+            if df['twos_count'].max() > 0:  # Check if any '2's were found
+                # Get index of first max occurrence
+                idx_max_twos = df['twos_count'].idxmax()
+                max_twos_count = df.loc[idx_max_twos, 'twos_count']
+                row_with_max_twos = df.loc[idx_max_twos]
+
+                # Construct jump URL
+                try:  # Use same guild_id as obtained above
+                    max_twos_channel = row_with_max_twos['channel']
+                    max_twos_message = row_with_max_twos['message']
+                    # Ensure channel/message IDs are valid before creating URL
+                    if pd.notna(max_twos_channel) and pd.notna(max_twos_message):
+                        # Cast to int
+                        max_twos_jump_url = f'https://discord.com/channels/{guild_id}/{int(max_twos_channel)}/{int(max_twos_message)}'
+                except Exception as e:
+                    print(
+                        f"Warning: Error creating jump URL for max twos: {e}")
+                    max_twos_jump_url = "#"  # Reset on error
+
+        # --- Format Global Record Results ---
+        # Helper to format numbers and get nicks safely
+        def format_num(num, decimals=0):
+            if num is None or math.isnan(num) or math.isinf(num):
+                return "N/A"
+            if abs(num - round(num)) < 1e-9:
+                return str(int(round(num)))
+            return f"{num:.{decimals}f}"
+
+        def get_nick_safe(player_id):
+            if player_id is None:
+                return "N/A"
+            # Ensure ID is int for lookup
+            member = ctx.guild.get_member(int(player_id))
+            return getNick(member) if member else f"ID: {player_id}"
+
+        # Biggest Loss
+        biggest_loss_player_name = get_nick_safe(
+            global_max_prev_to_loss_player_id)
+        biggest_loss_num_str = format_num(global_max_prev_to_loss_num)
+        biggest_loss_str = f"**{biggest_loss_num_str}** down to **1** by {biggest_loss_player_name}" if global_max_prev_to_loss_num is not None else "N/A"
+
+        # Lowest % Roll
+        min_ratio_player_name = get_nick_safe(global_min_ratio_player_id)
+        if global_min_ratio != float('inf'):
+            min_prev_n = format_num(global_min_ratio_prev_num)
+            min_curr_n = format_num(global_min_ratio_curr_num)
+            min_ratio_pct_str = f"{global_min_ratio * 100:.2f}%"
+            min_ratio_str = f"**{min_ratio_pct_str}** ({min_prev_n} to {min_curr_n}) by {min_ratio_player_name}"
+        else:
+            min_ratio_str = "N/A"
+
+        # Highest 100% Roll
+        max_match_player_name = get_nick_safe(
+            global_max_matching_roll_player_id)
+        max_match_num_str = format_num(global_max_matching_roll)
+        max_match_str = f"**{max_match_num_str}** by {max_match_player_name}" if global_max_matching_roll is not None else "N/A"
+
+        # Format new streak results
+        win_streak_player_name = get_nick_safe(longest_win_streak_player_id)
+        loss_streak_player_name = get_nick_safe(longest_loss_streak_player_id)
+        longest_win_streak_str = f"**{longest_win_streak}** by {win_streak_player_name}" if longest_win_streak > 0 else "N/A"
+        longest_loss_streak_str = f"**{longest_loss_streak}** by {loss_streak_player_name}" if longest_loss_streak > 0 else "N/A"
+
+        # --- Construct Embed ---
+        # Top part: General Stats
+        embed_value_part1 = (
+            f'**Most rolls:** [{format_num(max_rolls)}]({max_roll_jump_url})\n'
+            f'**Fewest rolls:** [{format_num(min_rolls)}]({min_roll_jump_url})\n'
+            f'**Average rolls:** {format_num(average_rolls, 1)}\n'
+            f'**Most "2"s rolled:** [{format_num(max_twos_count)}]({max_twos_jump_url})\n\n'
+        )
+
+        # Middle part: Global Records
+        embed_value_part2 = (
+            f'**Special Stats**\n'
+            f'Biggest Loss: {biggest_loss_str}\n'
+            f'Highest 100% Roll: {max_match_str}\n'
+            f'Lowest % Roll: {min_ratio_str}\n'
+            f'Longest Win Streak: {longest_win_streak_str}\n'
+            f'Longest Loss Streak: {longest_loss_streak_str}\n\n'
+        )
+
+        # Bottom part: Ranking
+        ranking_string = final_ranking_df.to_string(index=False, header=False)
+        embed_value_part3 = (
+            f'**Ranking**\n'
+            f'{ranking_string}'
+        )
 
         drStatsEmbed = discord.Embed(
             title=f'Global Deathroll Stats',
@@ -312,76 +617,9 @@ class deathroll(commands.Cog):
         drStatsEmbed.set_thumbnail(
             url='https://cdn.discordapp.com/attachments/723670062023704578/1362911780313108611/unnamed.png?ex=68041e02&is=6802cc82&hm=cb5879590b96bbbd69476fc88ff355e07dc9cdcdbfc27adafde77abe1bf31df3&')
 
-        global_games = len(df)
-
-        # Find the index (label) of the row with the maximum and the row with the minimum value in the 'rolls' column
-        idx_max_rolls = df['rolls'].idxmax()
-        idx_min_rolls = df['rolls'].idxmin()
-
-        # Retrieve the entire rows using the indices found
-        row_with_max_rolls = df.loc[idx_max_rolls]
-        row_with_min_rolls = df.loc[idx_min_rolls]
-
-        # Extract the 'rolls' values from these rows
-        max_rolls = row_with_max_rolls['rolls']
-        min_rolls = row_with_min_rolls['rolls']
-
-        # Construct jump_urls
-        guild_id = int(ast.literal_eval(os.environ['GUILD_IDS'])['default'])
-
-        max_roll_channel = row_with_max_rolls['channel']
-        max_roll_message = row_with_max_rolls['message']
-        max_roll_jump_url = 'https://discord.com/channels/' + \
-            str(guild_id) + '/' + str(max_roll_channel) + \
-            '/' + str(max_roll_message)
-
-        min_roll_channel = row_with_min_rolls['channel']
-        min_roll_message = row_with_min_rolls['message']
-        min_roll_jump_url = 'https://discord.com/channels/' + \
-            str(guild_id) + '/' + str(min_roll_channel) + \
-            '/' + str(min_roll_message)
-
-        # Calculate win percentage ranking
-        all_players = pd.concat([df['player1'], df['player2']])
-        games_played = all_players.value_counts()
-        games_won = df['winner'].value_counts()
-        games_lost = df['loser'].value_counts()
-        player_stats = pd.DataFrame(
-            {'total_games': games_played, 'total_wins': games_won, 'total_losses': games_lost})
-        player_stats['total_wins'] = player_stats['total_wins'].fillna(
-            0).astype(int)
-        player_stats['total_losses'] = player_stats['total_losses'].fillna(
-            0).astype(int)
-        player_stats['win_percentage'] = (
-            player_stats['total_wins'] / player_stats['total_games']) * 100
-        ranked_players = player_stats.sort_values(
-            by='win_percentage', ascending=False)
-        ranked_players_reset = ranked_players.reset_index(names='player_id')
-        output_df = ranked_players_reset[[
-            'player_id', 'win_percentage', 'total_games', 'total_wins', 'total_losses']]
-
-        # Create a copy to modify for final display
-        output_df_formatted = output_df.copy()
-
-        # Format output fields
-        output_df_formatted['player_name'] = output_df_formatted['player_id'].apply(
-            ctx.guild.get_member).apply(getNick)
-        output_df_formatted['win_percentage'] = output_df_formatted['win_percentage'].map(
-            '{:.0f}%'.format)
-        output_df_formatted['player_record'] = output_df_formatted.apply(
-            lambda row: f"({row['total_wins']}-{row['total_losses']})",
-            axis=1
-        )
-
-        # Construct final dataframe for output
-        final_df = output_df_formatted[[
-            'player_name', 'win_percentage', 'player_record']]
-
-        # Construct embed with links
         drStatsEmbed.add_field(name=f'**Total # of games: {global_games}**',
-                            value=f'**Most rolls: [{max_rolls}]({max_roll_jump_url})**\n'
-                            + f'**Fewest rolls: [{min_rolls}]({min_roll_jump_url})**\n\n'
-                            + final_df.to_string(index=False, header=False))
+                               value=embed_value_part1 + embed_value_part2 + embed_value_part3,
+                               inline=False)  # Use one field, check length
 
         await ctx.send(embed=drStatsEmbed)
 
@@ -459,8 +697,10 @@ class deathroll(commands.Cog):
 
         # 5. Calculate lowest % roll
         # Calculate Minimum Sequence Ratio
-        all_player_ratios = []
         biggest_loss_numbers = []
+        matching_rolls_list = []
+        min_ratio_so_far = float('inf')
+
         for index, game_row in player_games.iterrows():
             sequence_str = game_row.get('sequence')
             p1_id = game_row['player1']
@@ -494,9 +734,15 @@ class deathroll(commands.Cog):
                 current_owner_id = p1_id if current_owner_is_p1 else p2_id
 
                 # If the target player owns the current number, calculate and store ratio
-                if current_owner_id == player_id:
+                if current_owner_id == player_id and prev_num != 0:
                     ratio = curr_num / prev_num
-                    all_player_ratios.append(ratio)
+                    if ratio < min_ratio_so_far:
+                        min_ratio_so_far = ratio
+                        min_prev_num_for_ratio = prev_num  # Store the numbers
+                        min_curr_num_for_ratio = curr_num  # Store the numbers
+
+                if prev_num == curr_num and current_owner_id == player_id:
+                    matching_rolls_list.append(curr_num)
 
             if is_player_loser:
                 second_last_str = sequence_str.split('|')[-2]
@@ -506,9 +752,16 @@ class deathroll(commands.Cog):
         # Find the biggest loss
         biggest_loss = max(biggest_loss_numbers)
 
-        # Find the minimum ratio
-        min_ratio = min(all_player_ratios) * 100
+        # Format the minimum ratio and the pair of rolls it's associated with
+        min_ratio = min_ratio_so_far * 100
         min_ratio = '{:.2f}%'.format(min_ratio)
+        min_prev_num_for_ratio = '{:.0f}'.format(min_prev_num_for_ratio)
+        min_curr_num_for_ratio = '{:.0f}'.format(min_curr_num_for_ratio)
+
+        # 6. Calculate highest 100% roll
+        if matching_rolls_list:
+            max_match = max(matching_rolls_list)
+            max_match = '{:.0f}'.format(max_match)
 
         # Adjust player name depending on ending (Klaus')
         player_name = getNick(ctx.author)
@@ -534,8 +787,9 @@ class deathroll(commands.Cog):
                                      + f'Top victim: **{wins_vs_opponent_name}**, {wins_vs_opponent_count} won\n'
                                      + f'Top nemesis: **{losses_vs_opponent_name}**, {losses_vs_opponent_count} lost\n\n'
                                      + f'**Special stats**\n'
-                                     + f'Biggest loss: from **{biggest_loss}** down to **1**, propz! \n'
-                                     + f'Lowest % roll: **{min_ratio}**')
+                                     + f'Biggest loss: from **{biggest_loss}** down to **1**, propz!\n'
+                                     + f'Highest 100% roll: **{max_match}**\n'
+                                     + f'Lowest % roll: **{min_ratio}** ({min_prev_num_for_ratio} to {min_curr_num_for_ratio})')
 
         await ctx.send(embed=drPlayerStatsEmbed)
     
@@ -747,7 +1001,6 @@ class deathroll(commands.Cog):
         )
         drChartsEmbed.set_image(url="attachment://dr_charts.png")
         await ctx.send(file=discord_charts, embed=drChartsEmbed)
-
 
     # Takes a row of deathroll_history DataFrame and returns the ID of the starting player
     def determine_starting_player(self, row):
