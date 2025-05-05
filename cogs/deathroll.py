@@ -538,11 +538,8 @@ class deathroll(commands.Cog):
                                      + f'Lowest % roll: **{min_ratio}**')
 
         await ctx.send(embed=drPlayerStatsEmbed)
-
-        # highest big loss
-        # lowest % roll
     
-    # Individual Deathroll stats
+    # Deathroll Charts
     @deathrollstats.command(name='charts')
     @commands.guild_only()
     async def deathrollstats_charts(self, ctx):
@@ -743,7 +740,13 @@ class deathroll(commands.Cog):
 
         discord_charts = discord.File(buffer, filename='dr_charts.png')
         plt.close(fig)
-        await ctx.send(file=discord_charts)
+
+        drChartsEmbed = discord.Embed(
+            title='Deathroll Charts',
+            colour=discord.Colour.from_rgb(220, 20, 60)
+        )
+        drChartsEmbed.set_image(url="attachment://dr_charts.png")
+        await ctx.send(file=discord_charts, embed=drChartsEmbed)
 
 
     # Takes a row of deathroll_history DataFrame and returns the ID of the starting player
