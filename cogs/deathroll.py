@@ -560,7 +560,8 @@ class deathroll(commands.Cog):
         figbg_c = '#121214'
         bar_c = '#0969a1'
         label_c = '#82838b'
-        pie_c = ['#215b33', '#6a1e1f']
+        pie_c = ['#3c9f3c', '#9f3c3c']
+        vs_colors = [(0, '#9f3c3c'), (0.25, '#9f3c3c'), (0.5, '#9f9f3c'), (0.75, '#3c9f3c'), (1, '#3c9f3c')]
         # Create Figure with subplots
         fig, [(ax1, ax2), (ax3, ax4)] = plt.subplots(2, 2, figsize=(12, 12), facecolor=figbg_c)
         #fig, (ax1, ax3) = plt.subplots(1, 2, figsize=(12, 6), facecolor=figbg_c)
@@ -571,9 +572,9 @@ class deathroll(commands.Cog):
             .agg(count = ("rolls", "count"))\
             .reset_index()
         
-        max = df_grouped['rolls'].max()
+        max_rolls = df_grouped['rolls'].max()
         df_barplot = df_grouped
-        for i in range(1,max+2):
+        for i in range(1,max_rolls+2):
             if not (df_grouped['rolls'] == i).any():
                 df_append = pd.DataFrame([[i, 0]], columns=['rolls','count'])
                 df_barplot = pd.concat([df_barplot, df_append])
@@ -586,12 +587,12 @@ class deathroll(commands.Cog):
         ax1.set_title('How many rolls?', color=label_c)
         ax1.tick_params(axis='x', colors=label_c)
         ax1.tick_params(axis='y', colors=label_c)
-        ax1.set_xticks(range(1, max + 1))
+        ax1.set_xticks(range(1, max_rolls + 1))
         ax1.yaxis.set_major_locator(ticker.MultipleLocator(1))
         ax1.set_facecolor(figbg_c)
         ax1.grid(color=label_c, linestyle='-', linewidth=0.5, alpha=0.5)
         ax1.spines[:].set_color(label_c)
-        ax1.set_xlim(xmin=0, xmax=max+1)
+        ax1.set_xlim(xmin=0, xmax=max_rolls+1)
 
         # Data for Pie Chart
         df_start = df
@@ -611,6 +612,7 @@ class deathroll(commands.Cog):
         for text in ax2.texts:
             text.set_color(label_c)
             if '%' in text.get_text():
+                text.set_color('black')
                 text.set_fontsize(16)
 
         # Data for Duels HeatMap
@@ -642,7 +644,6 @@ class deathroll(commands.Cog):
 
         # Heatmap
         # Definiere die benutzerdefinierte Colormap
-        vs_colors = [(0, '#9f3c3c'), (0.5, '#9f9f3c'), (1, '#3c9f3c')]
         cmap_name = 'vs_colormap'
         cm = LinearSegmentedColormap.from_list(cmap_name, vs_colors, N=100)
 
@@ -678,16 +679,61 @@ class deathroll(commands.Cog):
         ax3.xaxis.set_tick_params(which='major', color=label_c)
         ax3.yaxis.set_tick_params(which='major', color=label_c)
         ax3.grid(which="minor", color=figbg_c, linestyle='-', linewidth=3)
-        ax3.tick_params(which="minor", bottom=False, left=False)
+        ax3.tick_params(which="minor", top=False, left=False)
         ax3.set_title('Duels', color=label_c)
+        ax3.xaxis.tick_top()
 
-        # Subplot 4
+        # Data for Lineplot
+        df_line = df
+        def calculate_reduction_ratios_from_string(sequence_string):
+            rolls = [int(roll) for roll in sequence_string.split('|')]
+            ratios = []
+            previous_roll = rolls[0]
+            for i in range(1, len(rolls)):
+                current_roll = rolls[i]
+                if previous_roll > 0:
+                    ratio = current_roll / previous_roll
+                    ratios.append(ratio)
+                    previous_roll = current_roll
+                else:
+                    ratios.append(np.nan)
+            return ratios
 
+        df_line['reduction_ratios'] = df_line['sequence'].apply(calculate_reduction_ratios_from_string)
+        # Erstellen einer Liste, um die durchschnittlichen Reduktionsfaktoren für jeden Wurf zu speichern
+        average_reductions_per_roll_number = {}
+
+        # Iteriere durch jede Spielsequenz
+        for ratios in df_line['reduction_ratios']:
+            for i, ratio in enumerate(ratios):
+                roll_number = i + 1
+                if roll_number not in average_reductions_per_roll_number:
+                    average_reductions_per_roll_number[roll_number] = []
+                if not np.isnan(ratio):
+                    average_reductions_per_roll_number[roll_number].append(ratio)
+
+        # Berechne den Durchschnitt für jeden Wurf
+        average_reductions = {roll: np.mean(ratios) for roll, ratios in average_reductions_per_roll_number.items()}
+
+        # Sortiere das Dictionary nach der Anzahl der Würfe
+        sorted_averages = dict(sorted(average_reductions.items()))
+        
+        # Lineplot
+        ax4.plot(sorted_averages.keys(), sorted_averages.values(), marker='o', linestyle='-')
         ax4.set_facecolor(figbg_c)
-        ax4.spines[:].set_visible(False)
-        ax4.set_xticks([])
-        ax4.set_yticks([])
-
+        ax4.set_xlabel('roll #', color=label_c)
+        ax4.set_ylabel('Avg. Reduction Factor', color=label_c)
+        ax4.set_title('Avg. Reduction of Number Range per Roll', color=label_c)
+        ax4.xaxis.set_tick_params(which='major', color=label_c)
+        ax4.yaxis.set_tick_params(which='major', color=label_c)
+        ax4.grid(True, alpha=0.5, color=label_c)
+        ax4.spines[:].set_color(label_c)
+        ax4.tick_params(axis='x', colors=label_c)
+        ax4.tick_params(axis='y', colors=label_c)
+        ax4.set_xticks(np.arange(1, max(sorted_averages.keys()) + 1))
+        ax4.set_yticks(np.linspace(0, 1, 11, endpoint=True))
+        ax4.set_xlim(xmin=0.5, xmax=max(sorted_averages.keys())+0.5)
+        ax4.set_ylim(ymin=0, ymax=1)
 
         plt.tight_layout(pad=1.08, h_pad=5, w_pad=5)
         # Save the plot to a BytesIO object
@@ -707,11 +753,5 @@ class deathroll(commands.Cog):
         else:
             return row['winner']
         
-    @commands.command()
-    @commands.guild_only()
-    async def plot(self, ctx):
-        pass
-        
-
 async def setup(client):
     await client.add_cog(deathroll(client))
