@@ -12,6 +12,8 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
+import matplotlib.path as mpath
+import matplotlib.patches as mpatches
 from matplotlib.colors import LinearSegmentedColormap
 import ast
 import math
@@ -590,7 +592,7 @@ class deathroll(commands.Cog):
         embed_value_part1 = (
             f'**Most rolls:** [{format_num(max_rolls)}]({max_roll_jump_url})\n'
             f'**Fewest rolls:** [{format_num(min_rolls)}]({min_roll_jump_url})\n'
-            f'**Average rolls:** {format_num(average_rolls, 1)}\n'
+            f'**Average rolls:** {format_num(average_rolls, 2)}\n'
             f'**Most "2"s rolled:** [{format_num(max_twos_count)}]({max_twos_jump_url})\n\n'
         )
 
@@ -814,7 +816,7 @@ class deathroll(commands.Cog):
         pie_c = ['#3c9f3c', '#9f3c3c']
         vs_colors = [(0, '#9f3c3c'), (0.25, '#9f3c3c'), (0.5, '#9f9f3c'), (0.75, '#3c9f3c'), (1, '#3c9f3c')]
         # Create Figure with subplots
-        fig, [(ax1, ax2), (ax3, ax4)] = plt.subplots(2, 2, figsize=(12, 12), facecolor=figbg_c)
+        fig, [(ax1, ax2), (ax3, ax4)] = plt.subplots(2, 2, figsize=(16, 12), facecolor=figbg_c)
         #fig, (ax1, ax3) = plt.subplots(1, 2, figsize=(12, 6), facecolor=figbg_c)
         
         # Data for Barplot
@@ -935,56 +937,143 @@ class deathroll(commands.Cog):
         ax3.xaxis.tick_top()
 
         # Data for Lineplot
+        def get_rolls_list(sequence_string):
+            return [int(roll) for roll in sequence_string.split('|')]
         df_line = df
-        def calculate_reduction_ratios_from_string(sequence_string):
-            rolls = [int(roll) for roll in sequence_string.split('|')]
-            ratios = []
-            previous_roll = rolls[0]
-            for i in range(1, len(rolls)):
-                current_roll = rolls[i]
-                if previous_roll > 0:
-                    ratio = current_roll / previous_roll
-                    ratios.append(ratio)
-                    previous_roll = current_roll
+
+        # ERGÄNZUNG DATEN FÜR TESTS
+        #testdata = {'sequence': ['133337|101101|45455|12000|137|8|1','133337|98765|76543|54321|32109|28642|25318|22000|19500|9572|8212|8052|6669|4010|2005|977|636|611|499|137|28|7|4|1'], 'rolls': [6, 23]}
+        #df_test = pd.DataFrame(testdata)
+        #df_line = pd.concat([df_line, df_test], ignore_index=True)
+
+
+        df_line['rolls_list'] = df_line['sequence'].apply(get_rolls_list)
+
+        short_rolls = {}
+        for rolls in df_line[df_line['rolls']==df_line['rolls'].min()]['rolls_list']:
+            for i, roll_value in enumerate(rolls):
+                roll_number = i
+                if roll_number not in short_rolls:
+                    short_rolls[roll_number] = []
+                short_rolls[roll_number].append(roll_value)
+
+        short_max_rolls = {roll: np.max(values) for roll, values in short_rolls.items()}
+        short_min_rolls = {roll: np.min(values) for roll, values in short_rolls.items()}
+        short_max_rolls = list(short_max_rolls.values())
+        short_min_rolls = list(short_min_rolls.values())[0:-1]
+        short_min_rolls.reverse()
+
+        short_path_rolls = short_max_rolls
+        short_path_rolls.extend(short_min_rolls)
+
+        long_rolls = {}
+        for rolls in df_line[df_line['rolls']==df_line['rolls'].max()]['rolls_list']:
+            for i, roll_value in enumerate(rolls):
+                roll_number = i
+                if roll_number not in long_rolls:
+                    long_rolls[roll_number] = []
+                long_rolls[roll_number].append(roll_value)
+
+        long_max_rolls = {roll: np.max(values) for roll, values in long_rolls.items()}
+        long_min_rolls = {roll: np.min(values) for roll, values in long_rolls.items()}
+        long_max_rolls = list(long_max_rolls.values())
+        long_min_rolls = list(long_min_rolls.values())[0:-1]
+        long_min_rolls.reverse()
+
+        long_path_rolls = long_max_rolls
+        long_path_rolls.extend(long_min_rolls)
+
+        # Finde die Indizes des kürzesten Spiels und bei mehreren kürzesten Spiele die Min/Max Begrenzungen
+        if len(df_line[df_line['rolls']==df_line['rolls'].min()]) == 1:
+            min1 = True 
+            shortest_game_index = df_line['rolls'].idxmin()
+            shortest_game_rolls = df_line['rolls_list'][shortest_game_index]
+        elif len(df_line[df_line['rolls']==df_line['rolls'].min()]) > 1:
+            min1 = False
+            minPathData = []
+            for x, y in enumerate(short_path_rolls):
+                if x == 0:
+                    minPathPoint = (mpath.Path.MOVETO, [x, y])
+                elif x == len(short_path_rolls)-1:
+                    minPathPoint = (mpath.Path.CLOSEPOLY, [0,0])
                 else:
-                    ratios.append(np.nan)
-            return ratios
+                    if x > (len(short_path_rolls)-1)/2:
+                        x = (len(short_path_rolls)-1) - x
+                    minPathPoint = (mpath.Path.LINETO, [x, y])
+                minPathData.append(minPathPoint)
+            min_codes, min_verts = zip(*minPathData)
+            minPath = mpath.Path(min_verts, min_codes)
+            min_patch = mpatches.PathPatch(minPath, facecolor='#9f3c3c', edgecolor=None, alpha=0.3, label=f"corridor of shortest games (Length: {df_line['rolls'].min()})")
 
-        df_line['reduction_ratios'] = df_line['sequence'].apply(calculate_reduction_ratios_from_string)
-        # Erstellen einer Liste, um die durchschnittlichen Reduktionsfaktoren für jeden Wurf zu speichern
-        average_reductions_per_roll_number = {}
+        if len(df_line[df_line['rolls']==df_line['rolls'].max()]) == 1:
+            max1 = True
+            longest_game_index = df_line['rolls'].idxmax()
+            longest_game_rolls = df_line['rolls_list'][longest_game_index]
+        elif len(df_line[df_line['rolls']==df_line['rolls'].max()]) > 1:
+            max1 = False
+            maxPathData = []
 
-        # Iteriere durch jede Spielsequenz
-        for ratios in df_line['reduction_ratios']:
-            for i, ratio in enumerate(ratios):
-                roll_number = i + 1
-                if roll_number not in average_reductions_per_roll_number:
-                    average_reductions_per_roll_number[roll_number] = []
-                if not np.isnan(ratio):
-                    average_reductions_per_roll_number[roll_number].append(ratio)
+            for x, y in enumerate(long_path_rolls):
+                if x == 0:
+                    maxPathPoint = (mpath.Path.MOVETO, [x, y])
+                elif x == len(long_path_rolls)-1:
+                    maxPathPoint = (mpath.Path.CLOSEPOLY, [0,0])
+                else:
+                    if x > (len(long_path_rolls)-1)/2:
+                        x = (len(long_path_rolls)-1) - x
+                    maxPathPoint = (mpath.Path.LINETO, [x, y])
+                maxPathData.append(maxPathPoint)
+            max_codes, max_verts = zip(*maxPathData)
+            maxPath = mpath.Path(max_verts, max_codes)
+            max_patch = mpatches.PathPatch(maxPath, facecolor='#3c9f3c', edgecolor=None, alpha=0.3, label=f"corridor of longest games (Length: {df_line['rolls'].max()})")
 
-        # Berechne den Durchschnitt für jeden Wurf
-        average_reductions = {roll: np.mean(ratios) for roll, ratios in average_reductions_per_roll_number.items()}
+        average_roll_values = {}
+        all_rolls_per_roll_number = {}
 
-        # Sortiere das Dictionary nach der Anzahl der Würfe
-        sorted_averages = dict(sorted(average_reductions.items()))
-        
+        # Sammle alle Würfe für jede Wurfnummer
+        for rolls in df_line['rolls_list']:
+            for i, roll_value in enumerate(rolls):
+                roll_number = i
+                if roll_number not in all_rolls_per_roll_number:
+                    all_rolls_per_roll_number[roll_number] = []
+                all_rolls_per_roll_number[roll_number].append(roll_value)
+
+        # Berechne Durchschnitt, Maximum und Minimum für jede Wurfnummer
+        average_rolls = {roll: np.mean(values) for roll, values in all_rolls_per_roll_number.items()}
+        #print(average_rolls)
+        max_rolls = {roll: np.max(values) for roll, values in all_rolls_per_roll_number.items()}
+        min_rolls = {roll: np.min(values) for roll, values in all_rolls_per_roll_number.items()}
+
+        # Sortiere nach Wurfnummer
+        sorted_averages_rolls = dict(sorted(average_rolls.items()))
+        sorted_max_rolls = dict(sorted(max_rolls.items()))
+        sorted_min_rolls = dict(sorted(min_rolls.items()))
+
         # Lineplot
-        ax4.plot(sorted_averages.keys(), sorted_averages.values(), marker='o', linestyle='-')
+        ax4.plot(sorted_min_rolls.keys(), sorted_min_rolls.values(), linestyle='--', label='Minimum Roll Value', alpha=0.8, color='#9f3c3c')
+        if min1:
+            ax4.plot(range(0, len(shortest_game_rolls)), shortest_game_rolls, marker=11, linestyle='-', label=f'Shortest Game (Length: {len(shortest_game_rolls)-1})', linewidth=1, color='#9f3c3c')
+        else:
+            ax4.add_patch(min_patch)
+        ax4.plot(sorted_max_rolls.keys(), sorted_max_rolls.values(), linestyle='--', label='Maximum Roll Value', alpha=0.8, color='#3c9f3c')
+        if max1:
+            ax4.plot(range(0, len(longest_game_rolls)), longest_game_rolls, marker=10, linestyle='-', label=f'Longest Game (Length: {len(longest_game_rolls)-1})', linewidth=1, color='#3c9f3c')
+        else:
+            ax4.add_patch(max_patch)
+        ax4.plot(sorted_averages_rolls.keys(), sorted_averages_rolls.values(), marker='o', linestyle='-', label='Average Roll Value', alpha=1, color=bar_c, markersize=3)
+        
+        ax4.set_title('Average, Max, Min, Shortest & Longest Game Roll Values', color=label_c)
+        ax4.set_xlabel('roll number', color=label_c)
+        ax4.set_ylabel('roll value', color=label_c)
         ax4.set_facecolor(figbg_c)
-        ax4.set_xlabel('roll #', color=label_c)
-        ax4.set_ylabel('Avg. Reduction Factor', color=label_c)
-        ax4.set_title('Avg. Reduction of Number Range per Roll', color=label_c)
-        ax4.xaxis.set_tick_params(which='major', color=label_c)
-        ax4.yaxis.set_tick_params(which='major', color=label_c)
-        ax4.grid(True, alpha=0.5, color=label_c)
-        ax4.spines[:].set_color(label_c)
         ax4.tick_params(axis='x', colors=label_c)
         ax4.tick_params(axis='y', colors=label_c)
-        ax4.set_xticks(np.arange(1, max(sorted_averages.keys()) + 1))
-        ax4.set_yticks(np.linspace(0, 1, 11, endpoint=True))
-        ax4.set_xlim(xmin=0.5, xmax=max(sorted_averages.keys())+0.5)
-        ax4.set_ylim(ymin=0, ymax=1)
+        ax4.set_yscale('log')
+        ax4.grid(True, which="both", ls="-", color=label_c, linewidth=0.5, alpha=0.5)
+        ax4.spines[:].set_color(label_c)
+        ax4.set_xticks(np.arange(0, max(sorted_averages_rolls.keys()) + 1, 1))
+        ax4.set_ylim(1, 200000)
+        ax4.legend(labelcolor=label_c, facecolor=figbg_c, edgecolor=label_c, reverse=True)       
 
         plt.tight_layout(pad=1.08, h_pad=5, w_pad=5)
         # Save the plot to a BytesIO object
