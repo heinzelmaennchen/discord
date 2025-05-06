@@ -815,10 +815,11 @@ class deathroll(commands.Cog):
         label_c = '#82838b'
         pie_c = ['#3c9f3c', '#9f3c3c']
         vs_colors = [(0, '#9f3c3c'), (0.25, '#9f3c3c'), (0.5, '#9f9f3c'), (0.75, '#3c9f3c'), (1, '#3c9f3c')]
-        # Create Figure with subplots
-        fig, [(ax1, ax2), (ax3, ax4)] = plt.subplots(2, 2, figsize=(16, 12), facecolor=figbg_c)
-        #fig, (ax1, ax3) = plt.subplots(1, 2, figsize=(12, 6), facecolor=figbg_c)
-        
+                
+        # Create figure 1
+        fig1 = plt.figure(1, figsize=(8,6), facecolor=figbg_c)
+        ax1 = fig1.gca()
+
         # Data for Barplot
         df_grouped = df\
             .groupby(["rolls"])\
@@ -857,6 +858,10 @@ class deathroll(commands.Cog):
         pie_labels = ['starting\nplayer','second\nplayer']
         pie_data = [start_wins, second_wins]
 
+        # Create figure 2
+        fig2 = plt.figure(2, figsize=(8,6), facecolor=figbg_c)
+        ax2 = fig2.gca()
+
         # Pie Chart
         ax2.pie(pie_data, labels=pie_labels, autopct='%1.1f%%', startangle=90, colors=pie_c, explode=(0.01, 0.01))
         ax2.set_title('Winning pct. starting vs. second player', color=label_c)
@@ -894,6 +899,10 @@ class deathroll(commands.Cog):
         win_loss_df = pd.DataFrame(results)
         # Erstelle eine Pivot-Tabelle, um die Siegquoten für jedes Spielerpaar zu erhalten
         win_loss_pivot = win_loss_df.pivot(index='Spieler1', columns='Spieler2', values='Siegquote')
+
+        # Create figure 3
+        fig3 = plt.figure(3, figsize=(8,6), facecolor=figbg_c)
+        ax3 = fig3.gca()
 
         # Heatmap
         # Definiere die benutzerdefinierte Colormap
@@ -1020,7 +1029,6 @@ class deathroll(commands.Cog):
             maxPath = mpath.Path(max_verts, max_codes)
             max_patch = mpatches.PathPatch(maxPath, facecolor='#3c9f3c', edgecolor=None, alpha=0.3, label=f"corridor of longest games (Length: {df_line['rolls'].max()})")
 
-        average_roll_values = {}
         all_rolls_per_roll_number = {}
 
         # Sammle alle Würfe für jede Wurfnummer
@@ -1041,6 +1049,10 @@ class deathroll(commands.Cog):
         sorted_averages_rolls = dict(sorted(average_rolls.items()))
         sorted_max_rolls = dict(sorted(max_rolls.items()))
         sorted_min_rolls = dict(sorted(min_rolls.items()))
+
+        # Create figure 4
+        fig4 = plt.figure(4, figsize=(8,6), facecolor=figbg_c)
+        ax4 = fig4.gca()
 
         # Lineplot
         ax4.plot(sorted_min_rolls.keys(), sorted_min_rolls.values(), linestyle='--', label='Minimum Roll Value', alpha=0.8, color='#9f3c3c')
@@ -1068,22 +1080,26 @@ class deathroll(commands.Cog):
         ax4.set_ylim(1, 200000)
         ax4.legend(labelcolor=label_c, facecolor=figbg_c, edgecolor=label_c, reverse=True)       
 
-        plt.tight_layout(pad=1.08, h_pad=5, w_pad=5)
-        # Save the plot to a BytesIO object
-        buffer = io.BytesIO()
-        fig.savefig(buffer, format='png', dpi=400)
-        buffer.seek(0)
+        # Speichere die Plots als temporäre Dateien im Speicher (BytesIO)
+        image_files = []
+        for i, fig in enumerate([fig3, fig1, fig4, fig2]):
+            buffer = io.BytesIO()
+            fig.savefig(buffer, format='png', dpi=400)
+            buffer.seek(0)
+            image_files.append(discord.File(buffer, filename=f'dr_chart_{i+1}.png'))
+            plt.close(fig)
 
-        discord_charts = discord.File(buffer, filename='dr_charts.png')
-        plt.close(fig)
+        # Erstelle die Embeds für jede Grafik
+        embeds = []
+        for i, file in enumerate(image_files):
+            embed = discord.Embed(description='### Deathroll Charts',
+                                  colour=discord.Colour.from_rgb(220, 20, 60),
+                                  url='https://discord.com')
+            embed.set_image(url=f'attachment://{file.filename}')
+            embeds.append(embed)
 
-        drChartsEmbed = discord.Embed(
-            title='Deathroll Charts',
-            colour=discord.Colour.from_rgb(220, 20, 60)
-        )
-        drChartsEmbed.set_image(url="attachment://dr_charts.png")
-        await ctx.send(file=discord_charts, embed=drChartsEmbed)
-
+        await ctx.send(embeds=embeds, files=image_files)
+                       
     # Takes a row of deathroll_history DataFrame and returns the ID of the starting player
     def determine_starting_player(self, row):
         if row['rolls'] % 2 != 0:
