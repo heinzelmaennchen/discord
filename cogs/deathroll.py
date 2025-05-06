@@ -940,13 +940,6 @@ class deathroll(commands.Cog):
         def get_rolls_list(sequence_string):
             return [int(roll) for roll in sequence_string.split('|')]
         df_line = df
-
-        # ERGÄNZUNG DATEN FÜR TESTS
-        #testdata = {'sequence': ['133337|101101|45455|12000|137|8|1','133337|98765|76543|54321|32109|28642|25318|22000|19500|9572|8212|8052|6669|4010|2005|977|636|611|499|137|28|7|4|1'], 'rolls': [6, 23]}
-        #df_test = pd.DataFrame(testdata)
-        #df_line = pd.concat([df_line, df_test], ignore_index=True)
-
-
         df_line['rolls_list'] = df_line['sequence'].apply(get_rolls_list)
 
         short_rolls = {}
