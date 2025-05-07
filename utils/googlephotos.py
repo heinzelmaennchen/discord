@@ -11,7 +11,7 @@ def init_service():
     API_NAME = 'photoslibrary'
     API_VERSION = 'v1'
     CLIENT_SECRET_FILE = 'storage/auth/client_secret_photo_wlc_discord.json'
-    SCOPES = ['https://www.googleapis.com/auth/photoslibrary']
+    SCOPES = ['https://www.googleapis.com/auth/photoslibrary.readonly.appcreateddata', 'https://www.googleapis.com/auth/photoslibrary.appendonly']
     service = Create_Service(CLIENT_SECRET_FILE, API_NAME, API_VERSION, SCOPES)
     return service
 
