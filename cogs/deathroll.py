@@ -116,7 +116,9 @@ class DeathrollButton(discord.ui.Button['DeathRoll']):
                 embed = view.get_deathroll_end_embed()
             view.stop()
 
-        await interaction.response.edit_message(content=None, embed=embed, view=view)
+        await interaction.response.defer()
+        await interaction.message.delete()
+        await interaction.channel.send(content=None, embed=embed, view=view)
 
 
 class DeathRoll(discord.ui.View):
