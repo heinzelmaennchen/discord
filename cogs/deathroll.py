@@ -11,7 +11,7 @@ import random
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-import matplotlib.ticker as ticker
+import matplotlib.ticker as mticker
 import matplotlib.path as mpath
 import matplotlib.patches as mpatches
 from matplotlib.colors import LinearSegmentedColormap
@@ -821,6 +821,7 @@ class deathroll(commands.Cog):
         # Create figure 1
         fig1 = plt.figure(1, figsize=(8,6), facecolor=figbg_c)
         ax1 = fig1.gca()
+        fig1.subplots_adjust(left=0.1,right=0.88)
 
         # Data for Barplot
         df_grouped = df\
@@ -836,6 +837,18 @@ class deathroll(commands.Cog):
                 df_barplot = pd.concat([df_barplot, df_append])
         df_barplot = df_barplot.sort_values('rolls').reset_index(drop=True)
 
+        # Data of 100k simulated games for occurance distribution
+        sim_data = {2: 2, 3:3, 4:31, 5:120, 6:288, 7:734, 8:1371, 9:2618, 10:3912, 
+                    11:5585, 12:7318, 13:8868, 14:9689, 15:9918, 16:9646, 17:8968, 
+                    18:7836, 19:6311, 20:4967, 21:3787, 22:2751, 23:1826, 24:1286, 
+                    25:861, 26:548, 27:334, 28:194, 29:96, 30:59, 31:33, 32:19, 
+                    33:12, 34:6, 35:2, 37:1}
+        simulation = pd.Series(data=sim_data)
+
+        # 2. Berechne den prozentualen Anteil jeder Häufigkeit
+        sim_total_rolls = simulation.sum()
+        sim_roll_percentages = (simulation / sim_total_rolls) * 100
+
         # Barplot
         ax1.bar(df_barplot['rolls'], df_barplot['count'], color=bar_c, edgecolor='none')
         ax1.set_xlabel('rolls', color=label_c)
@@ -844,11 +857,22 @@ class deathroll(commands.Cog):
         ax1.tick_params(axis='x', colors=label_c)
         ax1.tick_params(axis='y', colors=label_c)
         ax1.set_xticks(range(1, max_rolls + 1))
-        ax1.yaxis.set_major_locator(ticker.MultipleLocator(1))
+        ax1.yaxis.set_major_locator(mticker.MultipleLocator(1))
         ax1.set_facecolor(figbg_c)
         ax1.grid(color=label_c, linestyle='-', linewidth=0.5, alpha=0.5)
         ax1.spines[:].set_color(label_c)
         ax1.set_xlim(xmin=0, xmax=max_rolls+1)
+        ax1.set_ylim(ymin=0, ymax=df_barplot['count'].max()+1)
+
+        axbell = ax1.twinx()
+        axbell.set_ylabel('probability of 100k simulated games', color=label_c)
+        axbell.plot(sim_roll_percentages.index, sim_roll_percentages.values, marker='', linestyle='-', color='#9f3c3c')
+        axbell.tick_params(axis='y', colors=label_c)
+        axbell.set_yticks(range(0, int(sim_roll_percentages.max()+2)))
+        axbell.set_ylim(ymin=0, ymax=int(sim_roll_percentages.max()+1))
+        axbell.spines[:].set_color(label_c)
+        axbell.yaxis.set_major_formatter(mticker.PercentFormatter(decimals=0))
+        
 
         # Data for Pie Chart
         df_start = df
