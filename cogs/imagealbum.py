@@ -1,4 +1,5 @@
 import os
+import ast
 import pickle
 import discord
 from discord.ext import commands
@@ -55,8 +56,10 @@ class imagealbum(commands.Cog):
                             #print(f'Media Item: {mediaItem}')
 
                             await message.add_reaction('⬆️')
-            except:
+            except Exception as e:
                 await message.add_reaction('❌')
+                if message.channel.id == int(ast.literal_eval(os.environ['CHANNEL_IDS'])['bottest']):
+                    await message.channel.send(f"```{e}```")
 
 
 async def setup(client):
