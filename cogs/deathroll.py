@@ -706,9 +706,9 @@ class deathroll(commands.Cog):
             lambda row: row['player2'] if row['player1'] == player_id else row['player1'], axis=1
         )
 
-        top_opponent_name, top_opponent_count_str = "N/A", "0"
-        top_victim_display = "N/A"
-        top_nemesis_display = "N/A"
+        top_opponent_name, top_opponent_count_str = "n/a", "0"
+        top_victim_display = "n/a"
+        top_nemesis_display = "n/a"
 
         if not player_games.empty and 'opponent' in player_games.columns:
             opponent_counts = player_games['opponent'].value_counts()
