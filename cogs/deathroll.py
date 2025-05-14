@@ -664,7 +664,7 @@ class deathroll(commands.Cog):
         # 3. Calculate roll stats
         total_rolls = player_games['rolls'].sum()
         average_rolls = player_games['rolls'].mean()
-        average_rolls = '{:.1f}'.format(average_rolls)
+        average_rolls = '{:.2f}'.format(average_rolls)
         max_rolls = player_games['rolls'].max()
         min_rolls = player_games['rolls'].min()
 
@@ -703,6 +703,7 @@ class deathroll(commands.Cog):
         # Calculate Minimum Sequence Ratio
         biggest_loss_numbers = []
         matching_rolls_list = []
+        player_roll_ratios_all_games = []
         min_ratio_so_far = float('inf')
 
         for index, game_row in player_games.iterrows():
@@ -740,6 +741,7 @@ class deathroll(commands.Cog):
                 # If the target player owns the current number, calculate and store ratio
                 if current_owner_id == player_id and prev_num != 0:
                     ratio = curr_num / prev_num
+                    player_roll_ratios_all_games.append(ratio)
                     if ratio < min_ratio_so_far:
                         min_ratio_so_far = ratio
                         min_prev_num_for_ratio = prev_num  # Store the numbers
@@ -767,6 +769,13 @@ class deathroll(commands.Cog):
             max_match = max(matching_rolls_list)
             max_match = '{:.0f}'.format(max_match)
 
+        # 7. Calculate average % roll
+        avg_player_roll_pct_str = "N/A"
+        if player_roll_ratios_all_games:
+            avg_ratio_val = sum(player_roll_ratios_all_games) / \
+                len(player_roll_ratios_all_games)
+            avg_player_roll_pct_str = '{:.2f}%'.format(avg_ratio_val * 100)
+
         # Adjust player name depending on ending (Klaus')
         player_name = getNick(ctx.author)
         if player_name.endswith('s'):
@@ -791,6 +800,7 @@ class deathroll(commands.Cog):
                                      + f'Top victim: **{wins_vs_opponent_name}**, {wins_vs_opponent_count} won\n'
                                      + f'Top nemesis: **{losses_vs_opponent_name}**, {losses_vs_opponent_count} lost\n\n'
                                      + f'**Special stats**\n'
+                                     + f'Average roll %: **{avg_player_roll_pct_str}**\n'
                                      + f'Biggest loss: from **{biggest_loss}** down to **1**, propz!\n'
                                      + f'Highest 100% roll: **{max_match}**\n'
                                      + f'Lowest % roll: **{min_ratio}** ({min_prev_num_for_ratio} to {min_curr_num_for_ratio})')
