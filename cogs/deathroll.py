@@ -20,7 +20,7 @@ import math
 from datetime import datetime
 
 START_VALUE = 133337
-TEST = True
+TEST = False
 TEST_PLAYER = ""
 
 # Helper function to format numbers (int if whole, else float/string)
