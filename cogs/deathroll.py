@@ -20,7 +20,7 @@ import math
 from datetime import datetime
 
 START_VALUE = 133337
-TEST = False
+TEST = True
 TEST_PLAYER = ""
 
 # Helper function to format numbers (int if whole, else float/string)
@@ -66,6 +66,15 @@ class DeathrollButton(discord.ui.Button['DeathRoll']):
             if view.roll_value > 1:
                 view.current_player = view.player2
                 self.style = discord.ButtonStyle.danger
+            
+            # BOT GAME - Bot rolls immediately after Player1
+            if view.botgame and view.roll_value > 1:
+                view.roll_value = random.randint(1, view.roll_value)
+                view.history.append(view.roll_value)
+                if view.roll_value > 1:
+                    view.current_player = view.player1
+                    self.style = discord.ButtonStyle.success
+
             self.label = view.roll_value
             embed = view.get_deathroll_game_embed()
 
@@ -93,14 +102,25 @@ class DeathrollButton(discord.ui.Button['DeathRoll']):
                 if view.player2 == None:
                     view.player2 = interaction.user
             else:
-                if view.player2 != None and interaction.user != view.player2:
+                if view.player2 != None and interaction.user != view.player2 and not view.botgame:
                     await interaction.response.send_message(content=f"{getNick(view.player2)} wurde herausgefordert. Nicht du, du Heisl!", ephemeral=True, delete_after=10)
                     return
-                view.player2 = TEST_PLAYER
+                if not view.botgame:
+                    view.player2 = TEST_PLAYER
 
             # Randomize starting player
             currentplayer = random.choice([view.player1, view.player2])
-            if currentplayer == view.player1:
+            if currentplayer == view.player2 and view.botgame:
+                # BOT Game & Bot Starting ... rolls already first time
+                view.roll_value = random.randint(1, view.roll_value)
+                view.history.append(view.roll_value)
+                view.current_player = view.player1
+                if view.roll_value == 1:
+                    # If Bot loses with first roll change current_player back to Bot for correct loser handling
+                    view.current_player = view.player2
+                self.style = discord.ButtonStyle.success
+
+            elif currentplayer == view.player1:
                 view.current_player = view.player1
                 self.style = discord.ButtonStyle.success
             else:
@@ -159,10 +179,11 @@ class DeathRoll(discord.ui.View):
         self.current_player = 'START'
         self.player1 = player
         self.player2 = challenged_user
+        self.botgame = challenged_user == cog.client.user
         self.winner = None
         self.loser = None
         self.roll_value = START_VALUE
-        self.history = [START_VALUE]
+        self.history = [START_VALUE] 
         self.add_item(DeathrollButton())
 
     # START EMBED
@@ -171,9 +192,15 @@ class DeathRoll(discord.ui.View):
             title="Deathroll",
             colour=discord.Colour.dark_embed()
         )
-        embed.set_image(url=self.get_deathroll_gif(start=True))
-        embed.add_field(
-            name=f'**{getNick(self.player1)} vs. {getNick(self.player2)}**', value=f"{self.current_player.mention} start rolling!")
+        if self.botgame and len(self.history) == 2:
+            # BOT Game and Bot started already
+            embed.set_image(url=self.get_deathroll_gif())
+            embed.add_field(
+                name=f'**{getNick(self.player1)} vs. {getNick(self.player2)}**', value=f"{getNick(self.player2)} started.\nRoll #{len(self.history)-1} - {getNick(self.player2)} rolled **{self.roll_value}**. ({int(self.roll_value/self.history[-2]*1000)/10}% of {self.history[-2]})\n\nNext roll: {self.player1.mention}")
+        else:
+            embed.set_image(url=self.get_deathroll_gif(start=True))
+            embed.add_field(
+                name=f'**{getNick(self.player1)} vs. {getNick(self.player2)}**', value=f"{self.current_player.mention} start rolling!")
 
         return embed
 
@@ -191,9 +218,12 @@ class DeathRoll(discord.ui.View):
             colour=discord.Colour.dark_embed()
         )
         embed.set_image(url=self.get_deathroll_gif())
-        embed.add_field(
-            name=f'**{getNick(self.player1)} vs. {getNick(self.player2)}**', value=f"Roll #{len(self.history)-1} - {getNick(player_roll)} rolled **{self.roll_value}**. ({int(self.roll_value/self.history[-2]*1000)/10}% of {self.history[-2]})\n\nNext roll: {player_next.mention}")
-
+        if not self.botgame:
+            embed.add_field(
+                name=f'**{getNick(self.player1)} vs. {getNick(self.player2)}**', value=f"Roll #{len(self.history)-1} - {getNick(player_roll)} rolled **{self.roll_value}**. ({int(self.roll_value/self.history[-2]*1000)/10}% of {self.history[-2]})\n\nNext roll: {player_next.mention}")
+        else:
+            embed.add_field(
+                name=f'**{getNick(self.player1)} vs. {getNick(self.player2)}**', value=f"Roll #{len(self.history)-2} - {getNick(self.player1)} rolled **{self.history[-2]}**. ({int(self.history[-2]/self.history[-3]*1000)/10}% of {self.history[-3]})\nRoll #{len(self.history)-1} - {getNick(player_roll)} rolled **{self.roll_value}**. ({int(self.roll_value/self.history[-2]*1000)/10}% of {self.history[-2]})\n\nNext roll: {player_next.mention}")
         return embed
 
     # END EMBED
@@ -305,10 +335,13 @@ class deathroll(commands.Cog):
         else:
             if ctx.author == ctx.message.mentions[0]:
                 await ctx.reply(f'-# Du kannst dich nicht selbst herausfordern.', ephemeral=True)
-            elif not ctx.message.mentions[0].bot:
-                await ctx.send(f'## Deathroll\n{ctx.author.mention} challenged {ctx.message.mentions[0].mention}!', view=DeathRoll(self, ctx.author, ctx.message.mentions[0]))
+            elif not ctx.message.mentions[0].bot or ctx.message.mentions[0] == self.client.user:
+                text = f'## Deathroll\n{ctx.author.mention} challenged {ctx.message.mentions[0].mention}!'
+                if ctx.message.mentions[0] == self.client.user:
+                    text += f'\n{getNick(ctx.author)} click the Button to start the game vs. {getNick(ctx.message.mentions[0])}'
+                await ctx.send(text, view=DeathRoll(self, ctx.author, ctx.message.mentions[0]))
             else:
-                await ctx.reply(f'-# Du kannst keinen Bot herausfordern.', ephemeral=True)
+                await ctx.reply(f'-# Du kannst diesen Bot nicht herausfordern.', ephemeral=True)
 
     def store_deathroll_to_db(self, channelid, messageid, player1id, player2id, sequence, winner, loser):
         now = datetime.now(tz=getTimezone())
