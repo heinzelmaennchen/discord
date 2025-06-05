@@ -10,7 +10,7 @@ from utils.db import check_connection, init_db
 from utils.misc import getDatetimeNow, getTimezone
 
 my_timezone = getTimezone()
-gn_pollthread_time = time(21, 33, 37, tzinfo=my_timezone)
+gn_pollthread_time = time(19, 30, 0, tzinfo=my_timezone)
 
 class gamenight(commands.Cog):
     def __init__(self, client):
