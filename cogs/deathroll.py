@@ -163,7 +163,7 @@ class DeathrollButton(discord.ui.Button['DeathRoll']):
 
         # Check if Deathroll message is in last X messages of the channel
         channel = interaction.message.channel
-        history = [message async for message in channel.history(limit=4)]
+        history = [message async for message in channel.history(limit=3)]
         if interaction.message in history:
             await interaction.response.edit_message(content=None, embed=embed, view=view)
         else:
@@ -299,6 +299,14 @@ class DeathRoll(discord.ui.View):
         # Check for 1337 or 13337
         if new_roll in (1337, 13337):
             return random.choice(gifdict['leet'])
+        
+        # Check for 300
+        if new_roll == 300:
+            return random.choice(gifdict['300'])
+        
+        # Check for 69
+        if new_roll == 69:
+            return random.choice(gifdict['69'])
 
         # Check for big drop down to 1
         if prev_roll > 10 and new_roll == 1:
