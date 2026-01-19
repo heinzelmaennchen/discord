@@ -10,7 +10,7 @@ import os
 # Set up Gemini client
 client = genai.Client(api_key=os.environ['GEMINI_KEY'])
 # You can change this to a different model if desired
-model = "gemini-2.5-pro-preview-03-25"
+model = "gemini-3-pro-preview"
 
 
 class gemini(commands.Cog):
@@ -44,10 +44,10 @@ class gemini(commands.Cog):
         try:
             # Generate image using 2.0 Flash
             response = client.models.generate_images(
-                model="imagen-3.0-generate-002",
+                model="gemini-3-pro-image-preview",
                 prompt=prompt,
                 config=types.GenerateImagesConfig(
-                    number_of_images=4,
+                    number_of_images=1,
                 )
             )
 
