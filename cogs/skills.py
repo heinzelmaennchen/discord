@@ -24,7 +24,7 @@ class skills(commands.Cog):
     def __init__(self, client):
         self.client = client
         self.youtube_key = os.environ['YOUTUBE_KEY']
-        self.tenor_key = os.environ['TENOR_KEY']
+        self.klipy_key = os.environ['KLIPY_KEY']
 
     # Calculator
     @commands.command()
@@ -186,20 +186,18 @@ class skills(commands.Cog):
             await ctx.send(f'{await self.searchGif(searchterm)}')
 
     async def searchGif(self, searchterm):
-        url = "https://api.tenor.com/v1/search"
-        payload = {
-            'key': self.tenor_key,
-            'q': searchterm,
-            'limit': 1,
-        }
+        url = "https://api.klipy.com/v2/search?q=%s&key=%s&client_key=%s&limit=%s"
+        key = self.klipy_key
+        ckey = 'wlc.bot'
+        limit = 1
 
         async with aiohttp.ClientSession() as session:
-            async with session.get(url, params=payload) as r:
+            async with session.get(url % (searchterm, key, ckey, limit)) as r:
                 if r.status == 200:
                     json = await r.json()
 
         try:
-            gif_url = json['results'][0]['media'][0]['gif']['url']
+            gif_url = json['results'][0]['url']
         except:
             gif_url = 'I find\' nix!'
         return gif_url
@@ -207,8 +205,7 @@ class skills(commands.Cog):
     # Message recap with miliseconds timestamp
     '''returns x last messages filtered by specified content and miliseconds timestamp
     or a message by id with its timestamp
-  '''
-
+    '''
     @commands.command()
     @commands.guild_only()
     async def recap(self, ctx, *args):
