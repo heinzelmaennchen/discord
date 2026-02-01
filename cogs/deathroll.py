@@ -66,7 +66,7 @@ class DeathrollButton(discord.ui.Button['DeathRoll']):
             if view.roll_value > 1:
                 view.current_player = view.player2
                 self.style = discord.ButtonStyle.danger
-            
+
             # BOT GAME - Bot rolls immediately after Player1
             if view.botgame and view.roll_value > 1:
                 view.roll_value = random.randint(1, view.roll_value)
@@ -183,7 +183,7 @@ class DeathRoll(discord.ui.View):
         self.winner = None
         self.loser = None
         self.roll_value = START_VALUE
-        self.history = [START_VALUE] 
+        self.history = [START_VALUE]
         self.add_item(DeathrollButton())
 
     # START EMBED
@@ -299,11 +299,11 @@ class DeathRoll(discord.ui.View):
         # Check for 1337 or 13337
         if new_roll in (1337, 13337):
             return random.choice(gifdict['leet'])
-        
+
         # Check for 300
         if new_roll == 300:
             return random.choice(gifdict['300'])
-        
+
         # Check for 69
         if new_roll == 69:
             return random.choice(gifdict['69'])
@@ -420,6 +420,8 @@ class deathroll(commands.Cog):
         global_min_ratio_curr_num = None
         global_max_matching_roll = None
         global_max_matching_roll_player_id = None
+        global_two_after_two_counts = {}
+        global_one_after_two_counts = {}
 
         for index, game_row in df.iterrows():  # Iterate through ALL games
             sequence_str = game_row.get('sequence')
@@ -463,7 +465,7 @@ class deathroll(commands.Cog):
                    math.isnan(curr_num) or math.isinf(curr_num):
                     continue
 
-                # Determine owner
+                # 1. Determine owner
                 index_is_odd = (i % 2 != 0)
                 current_owner_is_p1 = (p1_gets_odd_indices == index_is_odd)
                 current_owner_id = p1_id if current_owner_is_p1 else p2_id
@@ -484,6 +486,15 @@ class deathroll(commands.Cog):
                     if global_max_matching_roll is None or curr_num > global_max_matching_roll:
                         global_max_matching_roll = curr_num
                         global_max_matching_roll_player_id = current_owner_id
+
+                # 4. 2 after 2 & 1 after 2 logic
+                if prev_num == 2:
+                    if curr_num == 2:
+                        global_two_after_two_counts[current_owner_id] = global_two_after_two_counts.get(
+                            current_owner_id, 0) + 1
+                    elif curr_num == 1:
+                        global_one_after_two_counts[current_owner_id] = global_one_after_two_counts.get(
+                            current_owner_id, 0) + 1
 
         # --- Calculate Per-Player Streaks (and global longest for special stats) ---
         # For global longest streaks, to ensure the *first* occurrence
@@ -672,6 +683,24 @@ class deathroll(commands.Cog):
         max_match_num_str = format_num(global_max_matching_roll)
         max_match_str = f"**{max_match_num_str}** by {max_match_player_name}" if global_max_matching_roll is not None else "N/A"
 
+        # 2 after 2
+        if global_two_after_two_counts:
+            top_survivor_id = max(
+                global_two_after_two_counts, key=global_two_after_two_counts.get)
+            top_survivor_count = global_two_after_two_counts[top_survivor_id]
+            survivor_str = f"**{top_survivor_count}** times by {get_nick_safe(ctx, top_survivor_id)}"
+        else:
+            survivor_str = "N/A"
+
+        # 1 after 2
+        if global_one_after_two_counts:
+            top_victim_id = max(global_one_after_two_counts,
+                                key=global_one_after_two_counts.get)
+            top_victim_count = global_one_after_two_counts[top_victim_id]
+            victim_str = f"**{top_victim_count}** times by {get_nick_safe(ctx, top_victim_id)}"
+        else:
+            victim_str = "N/A"
+
         # Format new streak results
         win_streak_player_name_overall = get_nick_safe(
             ctx, global_longest_win_streak_player_id)
@@ -696,7 +725,9 @@ class deathroll(commands.Cog):
             f'Highest 100% Roll: {max_match_str}\n'
             f'Lowest % Roll: {min_ratio_str}\n'
             f'Longest Win Streak: {longest_win_streak_str}\n'
-            f'Longest Loss Streak: {longest_loss_streak_str}\n\n'
+            f'Longest Loss Streak: {longest_loss_streak_str}\n'
+            f'Most "2 after 2": {survivor_str}\n'
+            f'Most "1 after 2": {victim_str}\n\n'
         )
 
         # Bottom part: Ranking
@@ -814,6 +845,8 @@ class deathroll(commands.Cog):
         matching_rolls_list = []
         player_roll_ratios_all_games = []
         min_ratio_so_far = float('inf')
+        player_two_after_two_count = 0
+        player_one_after_two_count = 0
 
         for index, game_row in player_games.iterrows():
             sequence_str = game_row.get('sequence')
@@ -855,6 +888,12 @@ class deathroll(commands.Cog):
                         min_ratio_so_far = ratio
                         min_prev_num_for_ratio = prev_num  # Store the numbers
                         min_curr_num_for_ratio = curr_num  # Store the numbers
+                    # 2 after 2 and 1 after 2 logic
+                    if prev_num == 2:
+                        if curr_num == 2:
+                            player_two_after_two_count += 1
+                        elif curr_num == 1:
+                            player_one_after_two_count += 1
 
                 if prev_num == curr_num and current_owner_id == player_id:
                     matching_rolls_list.append(curr_num)
@@ -902,7 +941,7 @@ class deathroll(commands.Cog):
         drPlayerStatsEmbed.add_field(name=f'Total games: {total_games}',
                                      value=f'Record: ({total_wins}-{total_losses}), {win_percentage} won\n\n'
                                      + f'**Total rolls: {total_rolls}**\n'
-                                     + f'Average: {average_rolls}\n'
+                                     + f'Average per game: {average_rolls}\n'
                                      + f'Most rolls: {max_rolls} , fewest: {min_rolls}\n\n'
                                      + f'**Opponents**\n'
                                      f'Top rival: **{top_opponent_name}**, {top_opponent_count_str} played\n'
@@ -912,10 +951,12 @@ class deathroll(commands.Cog):
                                      + f'Average roll %: **{avg_player_roll_pct_str}**\n'
                                      + f'Biggest loss: from **{biggest_loss}** down to **1**, propz!\n'
                                      + f'Highest 100% roll: **{max_match}**\n'
-                                     + f'Lowest % roll: **{min_ratio}** ({min_prev_num_for_ratio} to {min_curr_num_for_ratio})')
+                                     + f'Lowest % roll: **{min_ratio}** ({min_prev_num_for_ratio} to {min_curr_num_for_ratio})\n'
+                                     + f'Survived "2 after 2": **{player_two_after_two_count}** times\n'
+                                     + f'Lost "1 after 2": **{player_one_after_two_count}** times')
 
         await ctx.send(embed=drPlayerStatsEmbed)
-    
+
     # Deathroll Charts
     @deathrollstats.command(name='charts')
     @commands.guild_only()
@@ -935,33 +976,34 @@ class deathroll(commands.Cog):
         bar_c = '#0969a1'
         label_c = '#82838b'
         pie_c = ['#3c9f3c', '#9f3c3c']
-        vs_colors = [(0, '#9f3c3c'), (0.25, '#9f3c3c'), (0.5, '#9f9f3c'), (0.75, '#3c9f3c'), (1, '#3c9f3c')]
-                
+        vs_colors = [(0, '#9f3c3c'), (0.25, '#9f3c3c'),
+                     (0.5, '#9f9f3c'), (0.75, '#3c9f3c'), (1, '#3c9f3c')]
+
         # Create figure 1
-        fig1 = plt.figure(1, figsize=(8,6), facecolor=figbg_c)
+        fig1 = plt.figure(1, figsize=(8, 6), facecolor=figbg_c)
         ax1 = fig1.gca()
-        fig1.subplots_adjust(left=0.1,right=0.88)
+        fig1.subplots_adjust(left=0.1, right=0.88)
 
         # Data for Barplot
         df_grouped = df\
             .groupby(["rolls"])\
-            .agg(count = ("rolls", "count"))\
+            .agg(count=("rolls", "count"))\
             .reset_index()
-        
+
         max_rolls = df_grouped['rolls'].max()
         df_barplot = df_grouped
-        for i in range(1,max_rolls+2):
+        for i in range(1, max_rolls+2):
             if not (df_grouped['rolls'] == i).any():
-                df_append = pd.DataFrame([[i, 0]], columns=['rolls','count'])
+                df_append = pd.DataFrame([[i, 0]], columns=['rolls', 'count'])
                 df_barplot = pd.concat([df_barplot, df_append])
         df_barplot = df_barplot.sort_values('rolls').reset_index(drop=True)
 
         # Data of 100k simulated games for occurance distribution
-        sim_data = {2: 2, 3:3, 4:31, 5:120, 6:288, 7:734, 8:1371, 9:2618, 10:3912, 
-                    11:5585, 12:7318, 13:8868, 14:9689, 15:9918, 16:9646, 17:8968, 
-                    18:7836, 19:6311, 20:4967, 21:3787, 22:2751, 23:1826, 24:1286, 
-                    25:861, 26:548, 27:334, 28:194, 29:96, 30:59, 31:33, 32:19, 
-                    33:12, 34:6, 35:2, 37:1}
+        sim_data = {2: 2, 3: 3, 4: 31, 5: 120, 6: 288, 7: 734, 8: 1371, 9: 2618, 10: 3912,
+                    11: 5585, 12: 7318, 13: 8868, 14: 9689, 15: 9918, 16: 9646, 17: 8968,
+                    18: 7836, 19: 6311, 20: 4967, 21: 3787, 22: 2751, 23: 1826, 24: 1286,
+                    25: 861, 26: 548, 27: 334, 28: 194, 29: 96, 30: 59, 31: 33, 32: 19,
+                    33: 12, 34: 6, 35: 2, 37: 1}
         simulation = pd.Series(data=sim_data)
 
         # 2. Berechne den prozentualen Anteil jeder Häufigkeit
@@ -969,7 +1011,8 @@ class deathroll(commands.Cog):
         sim_roll_percentages = (simulation / sim_total_rolls) * 100
 
         # Barplot
-        ax1.bar(df_barplot['rolls'], df_barplot['count'], color=bar_c, edgecolor='none')
+        ax1.bar(df_barplot['rolls'], df_barplot['count'],
+                color=bar_c, edgecolor='none')
         ax1.set_xlabel('rolls', color=label_c)
         ax1.set_ylabel('count', color=label_c)
         ax1.set_title('How many rolls?', color=label_c)
@@ -985,30 +1028,33 @@ class deathroll(commands.Cog):
 
         axbell = ax1.twinx()
         axbell.set_ylabel('probability of 100k simulated games', color=label_c)
-        axbell.plot(sim_roll_percentages.index, sim_roll_percentages.values, marker='', linestyle='-', color='#9f3c3c')
+        axbell.plot(sim_roll_percentages.index, sim_roll_percentages.values,
+                    marker='', linestyle='-', color='#9f3c3c')
         axbell.tick_params(axis='y', colors=label_c)
         axbell.set_yticks(range(0, int(sim_roll_percentages.max()+2)))
         axbell.set_ylim(ymin=0, ymax=int(sim_roll_percentages.max()+1))
         axbell.spines[:].set_color(label_c)
         axbell.yaxis.set_major_formatter(mticker.PercentFormatter(decimals=0))
-        
 
         # Data for Pie Chart
         df_start = df
-        df_start['starting_player'] = df_start.apply(self.determine_starting_player, axis=1)
+        df_start['starting_player'] = df_start.apply(
+            self.determine_starting_player, axis=1)
         game_count = len(df_start)
-        start_wins = len(df_start[df_start['winner']==df_start['starting_player']])
+        start_wins = len(df_start[df_start['winner']
+                         == df_start['starting_player']])
         second_wins = game_count - start_wins
 
-        pie_labels = ['starting\nplayer','second\nplayer']
+        pie_labels = ['starting\nplayer', 'second\nplayer']
         pie_data = [start_wins, second_wins]
 
         # Create figure 2
-        fig2 = plt.figure(2, figsize=(8,6), facecolor=figbg_c)
+        fig2 = plt.figure(2, figsize=(8, 6), facecolor=figbg_c)
         ax2 = fig2.gca()
 
         # Pie Chart
-        ax2.pie(pie_data, labels=pie_labels, autopct='%1.1f%%', startangle=90, colors=pie_c, explode=(0.01, 0.01))
+        ax2.pie(pie_data, labels=pie_labels, autopct='%1.1f%%',
+                startangle=90, colors=pie_c, explode=(0.01, 0.01))
         ax2.set_title('Winning pct. starting vs. second player', color=label_c)
         ax2.set_facecolor(figbg_c)
         ax2.axis('equal')
@@ -1027,7 +1073,7 @@ class deathroll(commands.Cog):
                 if player1 != player2:
                     # Filtere den DataFrame, um nur die Spiele zwischen den aktuellen Spielern zu berücksichtigen
                     df_filtered = df_duels[((df_duels['player1'] == player1) & (df_duels['player2'] == player2)) |
-                                    ((df_duels['player1'] == player2) & (df_duels['player2'] == player1))]
+                                           ((df_duels['player1'] == player2) & (df_duels['player2'] == player1))]
 
                     # Berechne die Anzahl der Siege für Spieler1
                     wins = len(df_filtered[df_filtered['winner'] == player1])
@@ -1037,16 +1083,19 @@ class deathroll(commands.Cog):
                     # Berechne die Siegquote
                     if (wins + losses) > 0:
                         win_percentage = wins / (wins + losses)
-                        results.append({'Spieler1': player1, 'Spieler2': player2, 'Siege': wins, 'Niederlagen': losses, 'Siegquote': win_percentage})
+                        results.append({'Spieler1': player1, 'Spieler2': player2,
+                                       'Siege': wins, 'Niederlagen': losses, 'Siegquote': win_percentage})
                     else:
-                        results.append({'Spieler1': player1, 'Spieler2': player2, 'Siege': 0, 'Niederlagen': 0, 'Siegquote': np.nan})
+                        results.append({'Spieler1': player1, 'Spieler2': player2,
+                                       'Siege': 0, 'Niederlagen': 0, 'Siegquote': np.nan})
         # Erstelle ein DataFrame aus der Ergebnisliste
         win_loss_df = pd.DataFrame(results)
         # Erstelle eine Pivot-Tabelle, um die Siegquoten für jedes Spielerpaar zu erhalten
-        win_loss_pivot = win_loss_df.pivot(index='Spieler1', columns='Spieler2', values='Siegquote')
+        win_loss_pivot = win_loss_df.pivot(
+            index='Spieler1', columns='Spieler2', values='Siegquote')
 
         # Create figure 3
-        fig3 = plt.figure(3, figsize=(8,6), facecolor=figbg_c)
+        fig3 = plt.figure(3, figsize=(8, 6), facecolor=figbg_c)
         ax3 = fig3.gca()
 
         # Heatmap
@@ -1054,7 +1103,8 @@ class deathroll(commands.Cog):
         cmap_name = 'vs_colormap'
         cm = LinearSegmentedColormap.from_list(cmap_name, vs_colors, N=100)
 
-        ax3.imshow(win_loss_pivot, cmap=cm, interpolation='nearest', vmin=0, vmax=1)
+        ax3.imshow(win_loss_pivot, cmap=cm,
+                   interpolation='nearest', vmin=0, vmax=1)
         # Füge die Spielernamen als Beschriftungen hinzu
         player_labels = []
         for player in players:
@@ -1066,17 +1116,24 @@ class deathroll(commands.Cog):
 
         for i, player1 in enumerate(players):
             for j, player2 in enumerate(players):
-                if i == j:  #Diagonalelemente schwarz färben
-                    ax3.text(j, i, 'X', ha='center', va='center', color=label_c)
-                    ax3.add_patch(plt.Rectangle((j - 0.5, i - 0.5), 1, 1, facecolor=figbg_c, edgecolor='none'))
+                if i == j:  # Diagonalelemente schwarz färben
+                    ax3.text(j, i, 'X', ha='center',
+                             va='center', color=label_c)
+                    ax3.add_patch(plt.Rectangle((j - 0.5, i - 0.5),
+                                  1, 1, facecolor=figbg_c, edgecolor='none'))
                 elif np.isnan(win_loss_pivot.iloc[i, j]):
-                    ax3.text(j, i, '-', ha='center', va='center', color=label_c)
-                    ax3.add_patch(plt.Rectangle((j - 0.5, i - 0.5), 1, 1, facecolor='#1a1a1e', edgecolor='none'))
+                    ax3.text(j, i, '-', ha='center',
+                             va='center', color=label_c)
+                    ax3.add_patch(plt.Rectangle((j - 0.5, i - 0.5),
+                                  1, 1, facecolor='#1a1a1e', edgecolor='none'))
                 else:
                     # Finde die Siege und Niederlagen für das Spielerpaar
-                    wins = win_loss_df.loc[(win_loss_df['Spieler1'] == player1) & (win_loss_df['Spieler2'] == player2), 'Siege'].values[0]
-                    losses = win_loss_df.loc[(win_loss_df['Spieler1'] == player1) & (win_loss_df['Spieler2'] == player2), 'Niederlagen'].values[0]
-                    ax3.text(j, i, f"{win_loss_pivot.iloc[i, j]:.0%}\n({wins} - {losses})", ha='center', va='center', color='black')
+                    wins = win_loss_df.loc[(win_loss_df['Spieler1'] == player1) & (
+                        win_loss_df['Spieler2'] == player2), 'Siege'].values[0]
+                    losses = win_loss_df.loc[(win_loss_df['Spieler1'] == player1) & (
+                        win_loss_df['Spieler2'] == player2), 'Niederlagen'].values[0]
+                    ax3.text(
+                        j, i, f"{win_loss_pivot.iloc[i, j]:.0%}\n({wins} - {losses})", ha='center', va='center', color='black')
 
         # Turn spines off and create white grid.
         ax3.spines[:].set_visible(False)
@@ -1097,15 +1154,17 @@ class deathroll(commands.Cog):
         df_line['rolls_list'] = df_line['sequence'].apply(get_rolls_list)
 
         short_rolls = {}
-        for rolls in df_line[df_line['rolls']==df_line['rolls'].min()]['rolls_list']:
+        for rolls in df_line[df_line['rolls'] == df_line['rolls'].min()]['rolls_list']:
             for i, roll_value in enumerate(rolls):
                 roll_number = i
                 if roll_number not in short_rolls:
                     short_rolls[roll_number] = []
                 short_rolls[roll_number].append(roll_value)
 
-        short_max_rolls = {roll: np.max(values) for roll, values in short_rolls.items()}
-        short_min_rolls = {roll: np.min(values) for roll, values in short_rolls.items()}
+        short_max_rolls = {roll: np.max(values)
+                           for roll, values in short_rolls.items()}
+        short_min_rolls = {roll: np.min(values)
+                           for roll, values in short_rolls.items()}
         short_max_rolls = list(short_max_rolls.values())
         short_min_rolls = list(short_min_rolls.values())[0:-1]
         short_min_rolls.reverse()
@@ -1114,15 +1173,17 @@ class deathroll(commands.Cog):
         short_path_rolls.extend(short_min_rolls)
 
         long_rolls = {}
-        for rolls in df_line[df_line['rolls']==df_line['rolls'].max()]['rolls_list']:
+        for rolls in df_line[df_line['rolls'] == df_line['rolls'].max()]['rolls_list']:
             for i, roll_value in enumerate(rolls):
                 roll_number = i
                 if roll_number not in long_rolls:
                     long_rolls[roll_number] = []
                 long_rolls[roll_number].append(roll_value)
 
-        long_max_rolls = {roll: np.max(values) for roll, values in long_rolls.items()}
-        long_min_rolls = {roll: np.min(values) for roll, values in long_rolls.items()}
+        long_max_rolls = {roll: np.max(values)
+                          for roll, values in long_rolls.items()}
+        long_min_rolls = {roll: np.min(values)
+                          for roll, values in long_rolls.items()}
         long_max_rolls = list(long_max_rolls.values())
         long_min_rolls = list(long_min_rolls.values())[0:-1]
         long_min_rolls.reverse()
@@ -1131,18 +1192,18 @@ class deathroll(commands.Cog):
         long_path_rolls.extend(long_min_rolls)
 
         # Finde die Indizes des kürzesten Spiels und bei mehreren kürzesten Spiele die Min/Max Begrenzungen
-        if len(df_line[df_line['rolls']==df_line['rolls'].min()]) == 1:
-            min1 = True 
+        if len(df_line[df_line['rolls'] == df_line['rolls'].min()]) == 1:
+            min1 = True
             shortest_game_index = df_line['rolls'].idxmin()
             shortest_game_rolls = df_line['rolls_list'][shortest_game_index]
-        elif len(df_line[df_line['rolls']==df_line['rolls'].min()]) > 1:
+        elif len(df_line[df_line['rolls'] == df_line['rolls'].min()]) > 1:
             min1 = False
             minPathData = []
             for x, y in enumerate(short_path_rolls):
                 if x == 0:
                     minPathPoint = (mpath.Path.MOVETO, [x, y])
                 elif x == len(short_path_rolls)-1:
-                    minPathPoint = (mpath.Path.CLOSEPOLY, [0,0])
+                    minPathPoint = (mpath.Path.CLOSEPOLY, [0, 0])
                 else:
                     if x > (len(short_path_rolls)-1)/2:
                         x = (len(short_path_rolls)-1) - x
@@ -1150,13 +1211,14 @@ class deathroll(commands.Cog):
                 minPathData.append(minPathPoint)
             min_codes, min_verts = zip(*minPathData)
             minPath = mpath.Path(min_verts, min_codes)
-            min_patch = mpatches.PathPatch(minPath, facecolor='#9f3c3c', edgecolor=None, alpha=0.3, label=f"corridor of shortest games (Length: {df_line['rolls'].min()})")
+            min_patch = mpatches.PathPatch(minPath, facecolor='#9f3c3c', edgecolor=None, alpha=0.3,
+                                           label=f"corridor of shortest games (Length: {df_line['rolls'].min()})")
 
-        if len(df_line[df_line['rolls']==df_line['rolls'].max()]) == 1:
+        if len(df_line[df_line['rolls'] == df_line['rolls'].max()]) == 1:
             max1 = True
             longest_game_index = df_line['rolls'].idxmax()
             longest_game_rolls = df_line['rolls_list'][longest_game_index]
-        elif len(df_line[df_line['rolls']==df_line['rolls'].max()]) > 1:
+        elif len(df_line[df_line['rolls'] == df_line['rolls'].max()]) > 1:
             max1 = False
             maxPathData = []
 
@@ -1164,7 +1226,7 @@ class deathroll(commands.Cog):
                 if x == 0:
                     maxPathPoint = (mpath.Path.MOVETO, [x, y])
                 elif x == len(long_path_rolls)-1:
-                    maxPathPoint = (mpath.Path.CLOSEPOLY, [0,0])
+                    maxPathPoint = (mpath.Path.CLOSEPOLY, [0, 0])
                 else:
                     if x > (len(long_path_rolls)-1)/2:
                         x = (len(long_path_rolls)-1) - x
@@ -1172,7 +1234,8 @@ class deathroll(commands.Cog):
                 maxPathData.append(maxPathPoint)
             max_codes, max_verts = zip(*maxPathData)
             maxPath = mpath.Path(max_verts, max_codes)
-            max_patch = mpatches.PathPatch(maxPath, facecolor='#3c9f3c', edgecolor=None, alpha=0.3, label=f"corridor of longest games (Length: {df_line['rolls'].max()})")
+            max_patch = mpatches.PathPatch(maxPath, facecolor='#3c9f3c', edgecolor=None,
+                                           alpha=0.3, label=f"corridor of longest games (Length: {df_line['rolls'].max()})")
 
         all_rolls_per_roll_number = {}
 
@@ -1185,10 +1248,13 @@ class deathroll(commands.Cog):
                 all_rolls_per_roll_number[roll_number].append(roll_value)
 
         # Berechne Durchschnitt, Maximum und Minimum für jede Wurfnummer
-        average_rolls = {roll: np.mean(values) for roll, values in all_rolls_per_roll_number.items()}
-        #print(average_rolls)
-        max_rolls = {roll: np.max(values) for roll, values in all_rolls_per_roll_number.items()}
-        min_rolls = {roll: np.min(values) for roll, values in all_rolls_per_roll_number.items()}
+        average_rolls = {roll: np.mean(
+            values) for roll, values in all_rolls_per_roll_number.items()}
+        # print(average_rolls)
+        max_rolls = {roll: np.max(values) for roll,
+                     values in all_rolls_per_roll_number.items()}
+        min_rolls = {roll: np.min(values) for roll,
+                     values in all_rolls_per_roll_number.items()}
 
         # Sortiere nach Wurfnummer
         sorted_averages_rolls = dict(sorted(average_rolls.items()))
@@ -1196,34 +1262,42 @@ class deathroll(commands.Cog):
         sorted_min_rolls = dict(sorted(min_rolls.items()))
 
         # Create figure 4
-        fig4 = plt.figure(4, figsize=(8,6), facecolor=figbg_c)
+        fig4 = plt.figure(4, figsize=(8, 6), facecolor=figbg_c)
         ax4 = fig4.gca()
 
         # Lineplot
-        ax4.plot(sorted_min_rolls.keys(), sorted_min_rolls.values(), linestyle='--', label='Minimum Roll Value', alpha=0.8, color='#9f3c3c')
+        ax4.plot(sorted_min_rolls.keys(), sorted_min_rolls.values(
+        ), linestyle='--', label='Minimum Roll Value', alpha=0.8, color='#9f3c3c')
         if min1:
-            ax4.plot(range(0, len(shortest_game_rolls)), shortest_game_rolls, marker=11, linestyle='-', label=f'Shortest Game (Length: {len(shortest_game_rolls)-1})', linewidth=1, color='#9f3c3c')
+            ax4.plot(range(0, len(shortest_game_rolls)), shortest_game_rolls, marker=11, linestyle='-',
+                     label=f'Shortest Game (Length: {len(shortest_game_rolls)-1})', linewidth=1, color='#9f3c3c')
         else:
             ax4.add_patch(min_patch)
-        ax4.plot(sorted_max_rolls.keys(), sorted_max_rolls.values(), linestyle='--', label='Maximum Roll Value', alpha=0.8, color='#3c9f3c')
+        ax4.plot(sorted_max_rolls.keys(), sorted_max_rolls.values(
+        ), linestyle='--', label='Maximum Roll Value', alpha=0.8, color='#3c9f3c')
         if max1:
-            ax4.plot(range(0, len(longest_game_rolls)), longest_game_rolls, marker=10, linestyle='-', label=f'Longest Game (Length: {len(longest_game_rolls)-1})', linewidth=1, color='#3c9f3c')
+            ax4.plot(range(0, len(longest_game_rolls)), longest_game_rolls, marker=10, linestyle='-',
+                     label=f'Longest Game (Length: {len(longest_game_rolls)-1})', linewidth=1, color='#3c9f3c')
         else:
             ax4.add_patch(max_patch)
-        ax4.plot(sorted_averages_rolls.keys(), sorted_averages_rolls.values(), marker='o', linestyle='-', label='Average Roll Value', alpha=1, color=bar_c, markersize=3)
-        
-        ax4.set_title('Average, Max, Min, Shortest & Longest Game Roll Values', color=label_c)
+        ax4.plot(sorted_averages_rolls.keys(), sorted_averages_rolls.values(), marker='o',
+                 linestyle='-', label='Average Roll Value', alpha=1, color=bar_c, markersize=3)
+
+        ax4.set_title(
+            'Average, Max, Min, Shortest & Longest Game Roll Values', color=label_c)
         ax4.set_xlabel('roll number', color=label_c)
         ax4.set_ylabel('roll value', color=label_c)
         ax4.set_facecolor(figbg_c)
         ax4.tick_params(axis='x', colors=label_c)
         ax4.tick_params(axis='y', colors=label_c)
         ax4.set_yscale('log')
-        ax4.grid(True, which="both", ls="-", color=label_c, linewidth=0.5, alpha=0.5)
+        ax4.grid(True, which="both", ls="-",
+                 color=label_c, linewidth=0.5, alpha=0.5)
         ax4.spines[:].set_color(label_c)
         ax4.set_xticks(np.arange(0, max(sorted_averages_rolls.keys()) + 1, 1))
         ax4.set_ylim(1, 200000)
-        ax4.legend(labelcolor=label_c, facecolor=figbg_c, edgecolor=label_c, reverse=True)       
+        ax4.legend(labelcolor=label_c, facecolor=figbg_c,
+                   edgecolor=label_c, reverse=True)
 
         # Speichere die Plots als temporäre Dateien im Speicher (BytesIO)
         image_files = []
@@ -1231,7 +1305,8 @@ class deathroll(commands.Cog):
             buffer = io.BytesIO()
             fig.savefig(buffer, format='png', dpi=400)
             buffer.seek(0)
-            image_files.append(discord.File(buffer, filename=f'dr_chart_{i+1}.png'))
+            image_files.append(discord.File(
+                buffer, filename=f'dr_chart_{i+1}.png'))
             plt.close(fig)
 
         # Erstelle die Embeds für jede Grafik
@@ -1244,13 +1319,14 @@ class deathroll(commands.Cog):
             embeds.append(embed)
 
         await ctx.send(embeds=embeds, files=image_files)
-                       
+
     # Takes a row of deathroll_history DataFrame and returns the ID of the starting player
     def determine_starting_player(self, row):
         if row['rolls'] % 2 != 0:
             return row['loser']
         else:
             return row['winner']
-        
+
+
 async def setup(client):
     await client.add_cog(deathroll(client))
