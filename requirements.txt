@@ -1,14 +1,17 @@
-discord.py
-python-dotenv
-pandas
-matplotlib
-google-genai
+
 beautifulsoup4
-pytz
-tzdata
-mysql-connector-python
-Pillow
-howlongtobeatpy
+discord.py
 google-api-python-client    # 2.116.0
 google-auth-httplib2        # 0.2.0
 google-auth-oauthlib        # 1.2.0
+google-genai
+howlongtobeatpy
+matplotlib
+mysql-connector-python
+pandas
+Pillow
+pytest
+pytest-asyncio
+python-dotenv
+pytz
+tzdata
