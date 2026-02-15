@@ -11,8 +11,6 @@ from config.cogs import __cogs__
 from config.botactivity import __activities__, __activityTimer__
 from utils.misc import getDatetimeNow
 
-#test
-
 load_dotenv()
 
 intents = discord.Intents.default()

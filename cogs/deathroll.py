@@ -437,7 +437,6 @@ class deathroll(commands.Cog):
         )
 
         embed_value_part2 = (
-            f'**Special Stats**\n'
             f'Biggest Loss: {biggest_loss_str}\n'
             f'Highest 100% Roll: {max_match_str}\n'
             f'Lowest % Roll: {min_ratio_str}\n'
@@ -448,7 +447,6 @@ class deathroll(commands.Cog):
         )
 
         embed_value_part3 = (
-            f'**Ranking (name, win%, record, streak (max streaks)**\n'
             f'```\n{ranking_string}\n```'
         )
 
@@ -456,7 +454,13 @@ class deathroll(commands.Cog):
             title=f'Global Deathroll Stats',
             colour=discord.Colour.from_rgb(220, 20, 60))
         drStatsEmbed.add_field(name=f'**Total # of games: {stats["global_games"]}**',
-                               value=embed_value_part1 + embed_value_part2 + embed_value_part3,
+                               value=embed_value_part1,
+                               inline=False)
+        drStatsEmbed.add_field(name=f'**Special Stats**',
+                               value=embed_value_part2,
+                               inline=False)
+        drStatsEmbed.add_field(name=f'**Ranking** (name, win%, record, streak (max streaks)',
+                               value=embed_value_part3,
                                inline=False)
 
         await ctx.send(embed=drStatsEmbed)
@@ -518,8 +522,7 @@ class deathroll(commands.Cog):
                                      + f'Biggest loss: from **{stats["biggest_loss"]}** down to **1**, propz!\n'
                                      + f'Highest 100% roll: **{stats["max_match"]}**\n'
                                      + f'Lowest % roll: **{stats["min_ratio"]}** ({stats["min_prev_num_for_ratio"]} to {stats["min_curr_num_for_ratio"]})\n'
-                                     + f'Survived "2 after 2": **{stats["player_two_after_two_count"]}** times\n'
-                                     + f'Lost "1 after 2": **{stats["player_one_after_two_count"]}** times')
+                                     + f'Survived "2 after 2": **{stats["player_two_after_two_count"]}**/**{stats["player_two_after_two_count"] + stats["player_one_after_two_count"]}** times ({round(float(stats["player_two_after_two_count"]/(stats["player_two_after_two_count"] + stats["player_one_after_two_count"])*100),1)}%)\n')
 
         await ctx.send(embed=drPlayerStatsEmbed)
 
