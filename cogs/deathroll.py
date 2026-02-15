@@ -1,10 +1,11 @@
+
 import os
 import io
 import discord
 from discord.ext import commands
 
 from utils.misc import getNick, getTimezone
-from utils.db import check_connection, init_db
+from utils.db import get_db_connection
 from utils.deathrollgifs import gifdict
 import utils.deathroll_processing as dr_utils
 
@@ -310,7 +311,7 @@ class DeathRoll(discord.ui.View):
 class deathroll(commands.Cog):
     def __init__(self, client):
         self.client = client
-        self.cnx = init_db()
+        # connection pool is managed by get_db_connection, no need to init here
 
         if TEST:
             global TEST_PLAYER
@@ -342,26 +343,34 @@ class deathroll(commands.Cog):
         data = (now, channelid, messageid, player1id, player2id,
                 sequence_str, rolls, winner, loser)
 
-        # Check DB connection
-        self.cnx = check_connection(self.cnx)
-        self.cursor = self.cnx.cursor(buffered=True)
-        # Execute query
-        self.cursor.execute(query, data)
-        self.cnx.commit()
-
-        # return .lastrowid to show the id in the Embed footer
-        return self.cursor.lastrowid
+        # Get pooled connection
+        cnx = get_db_connection()
+        cursor = None
+        try:
+            cursor = cnx.cursor(buffered=True)
+            # Execute query
+            cursor.execute(query, data)
+            cnx.commit()
+            return cursor.lastrowid
+        finally:
+            if cursor:
+                cursor.close()
+            if cnx:
+                cnx.close()
 
     # Global Deathroll stats
     @commands.group(aliases=['drstats'], invoke_without_command=True)
     @commands.guild_only()
     async def deathrollstats(self, ctx):
-        # Check DB connection
-        self.cnx = check_connection(self.cnx)
-        # Grab all records
-        query = ('SELECT datetime, channel, message, player1, player2, sequence, rolls, winner, loser FROM deathroll_history')
-        # We run this in main thread as it is IO but sharing connection to thread is risky.
-        df = pd.read_sql(query, con=self.cnx)
+        # Get pooled connection
+        cnx = get_db_connection()
+        try:
+            # Grab all records
+            query = ('SELECT datetime, channel, message, player1, player2, sequence, rolls, winner, loser FROM deathroll_history')
+            df = pd.read_sql(query, con=cnx)
+        finally:
+            if cnx:
+                cnx.close()
         
         # Calculate in thread
         guild_id = int(ast.literal_eval(os.environ['GUILD_IDS'])['default'])
@@ -456,13 +465,16 @@ class deathroll(commands.Cog):
     @deathrollstats.command(name='player')
     @commands.guild_only()
     async def deathrollstats_player(self, ctx):
-        # Check DB connection
-        self.cnx = check_connection(self.cnx)
-        # Grab all records
-        query = (
-            f'SELECT datetime, channel, message, player1, player2, sequence, rolls, winner, loser FROM deathroll_history')
-        # Use main thread for SQL read
-        df = pd.read_sql(query, con=self.cnx)
+        # Get pooled connection
+        cnx = get_db_connection()
+        try:
+            # Grab all records
+            query = (
+                f'SELECT datetime, channel, message, player1, player2, sequence, rolls, winner, loser FROM deathroll_history')
+            df = pd.read_sql(query, con=cnx)
+        finally:
+            if cnx:
+                cnx.close()
         
         # Calculate in thread
         stats = await self.client.loop.run_in_executor(None, dr_utils.calculate_player_stats, df, ctx.author.id)
@@ -515,12 +527,15 @@ class deathroll(commands.Cog):
     @deathrollstats.command(name='charts')
     @commands.guild_only()
     async def deathrollstats_charts(self, ctx):
-        # Check DB connection
-        self.cnx = check_connection(self.cnx)
-        # Grab all records
-        query = ('SELECT datetime, channel, message, player1, player2, sequence, rolls, winner, loser FROM deathroll_history')
-        # Use main thread for SQL read
-        df = pd.read_sql(query, con=self.cnx)
+        # Get pooled connection
+        cnx = get_db_connection()
+        try:
+            # Grab all records
+            query = ('SELECT datetime, channel, message, player1, player2, sequence, rolls, winner, loser FROM deathroll_history')
+            df = pd.read_sql(query, con=cnx)
+        finally:
+            if cnx:
+                cnx.close()
 
         # Map Player Names
         all_players = pd.unique(pd.concat([df['player1'], df['player2']]).dropna())

@@ -2,16 +2,13 @@ import discord
 from discord.ext import commands
 from datetime import datetime, timezone
 import random
-from utils.db import check_connection
-from utils.db import init_db
+from utils.db import get_db_connection
 
 
 class quote(commands.Cog):
     def __init__(self, client):
         self.client = client
-
-        self.cnx = init_db()
-        self.cursor = self.cnx.cursor(buffered=True)
+        # Persistent connection removed
 
     @commands.command()
     @commands.guild_only()
@@ -38,28 +35,33 @@ class quote(commands.Cog):
             query += f' UNION SELECT {number+i} AS nr'
         query += ') AS result)'
 
-        # Check DB connection
-        self.cnx = check_connection(self.cnx)
-        self.cursor = self.cnx.cursor(buffered=True)
-        # Execute query
-        self.cursor.execute(query)
-        self.cnx.commit()
+        cnx = get_db_connection()
+        try:
+            cursor = cnx.cursor(buffered=True)
+            # Execute query
+            cursor.execute(query)
+            cnx.commit()
 
-        if self.cursor.rowcount > 0:
-            rows = self.cursor.fetchall()
-            r = f'**#{rows[0][0]}**\n\n'
-            timestamp = rows[0][1]
+            if cursor.rowcount > 0:
+                rows = cursor.fetchall()
+                r = f'**#{rows[0][0]}**\n\n'
+                timestamp = rows[0][1]
 
-            for row in rows:
-                r += f'**{row[2]}**\n *- {row[3]}*\n'
+                for row in rows:
+                    r += f'**{row[2]}**\n *- {row[3]}*\n'
 
-            embedQuote = discord.Embed(colour=discord.Colour.from_rgb(
-                22, 136, 173),
-                                       description=r)
-            embedQuote.set_footer(text=timestamp)
-            await ctx.send(embed=embedQuote)
-        else:
-            await ctx.send("Kaputt.")
+                embedQuote = discord.Embed(colour=discord.Colour.from_rgb(
+                    22, 136, 173),
+                                           description=r)
+                embedQuote.set_footer(text=timestamp)
+                await ctx.send(embed=embedQuote)
+            else:
+                await ctx.send("Kaputt.")
+        finally:
+            if cursor:
+                cursor.close()
+            if cnx:
+                cnx.close()
 
 
 async def setup(client):

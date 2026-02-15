@@ -30,16 +30,16 @@ def mock_ctx():
 
 @pytest.fixture
 def cog(mock_client):
-    with patch('cogs.asdf.init_db') as mock_init_db, \
+    with patch('cogs.asdf.get_db_connection') as mock_get_db, \
          patch('cogs.asdf.levels') as mock_levels:
-        mock_init_db.return_value = MagicMock()
+        mock_get_db.return_value = MagicMock()
         
         # fx for levels.updateXp being awaited/create_task'd
         levels_instance = MagicMock()
         levels_instance.updateXp = AsyncMock() 
         mock_levels.return_value = levels_instance
         
-        return asdf(mock_client)
+        yield asdf(mock_client)
 
 @pytest.mark.asyncio
 async def test_asdf_command(cog, mock_ctx):
@@ -164,14 +164,23 @@ async def test_on_message_subsequent_asdf_valid(mock_getTime, cog):
 @pytest.mark.asyncio
 async def test_printStats(cog, mock_ctx):
     # Mock cursor return
-    cog.cursor.rowcount = 1
-    cog.cursor.fetchall.return_value = [(123, 5)] # user_id, count
+    # printStats calls get_db_connection() -> cnx
+    # cnx.cursor() -> cursor
+    # we need to mock get_db_connection logic
     
-    await cog.printStats(mock_ctx, "asdf")
-    
-    mock_ctx.send.assert_called_once()
-    args, kwargs = mock_ctx.send.call_args
-    embed = kwargs.get('embed')
-    assert embed is not None
-    assert "ASDF ranking" in embed.title
-
+    with patch('cogs.asdf.get_db_connection') as mock_get_db:
+         mock_cnx = MagicMock()
+         mock_cursor = MagicMock()
+         mock_get_db.return_value = mock_cnx
+         mock_cnx.cursor.return_value = mock_cursor
+         
+         mock_cursor.rowcount = 1
+         mock_cursor.fetchall.return_value = [(123, 5)] # user_id, count
+         
+         await cog.printStats(mock_ctx, "asdf")
+         
+         mock_ctx.send.assert_called_once()
+         args, kwargs = mock_ctx.send.call_args
+         embed = kwargs.get('embed')
+         assert embed is not None
+         assert "ASDF ranking" in embed.title
