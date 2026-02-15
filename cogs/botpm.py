@@ -1,5 +1,5 @@
 from discord.ext import commands
-from utils.db import check_connection, init_db
+from utils.db import get_db_connection
 from utils.misc import sendLongMsg
 from enum import Enum
 
@@ -38,11 +38,18 @@ class Easteregg():
 class botpm(commands.Cog):
     def __init__(self, client):
         self.client = client
-        self.cnx = init_db()
-        self.cursor = self.cnx.cursor(buffered=True)
+        # Removed persistent connection
 
         # Initialize the eastereggs after reload/load
-        self.initEggs(self.cursor, self.cnx)
+        cnx = get_db_connection()
+        try:
+            cursor = cnx.cursor(buffered=True)
+            self.initEggs(cursor, cnx)
+        finally:
+            if cursor:
+                cursor.close()
+            if cnx:
+                cnx.close()
 
     @commands.Cog.listener()
     async def on_message(self, message):
@@ -122,50 +129,60 @@ class botpm(commands.Cog):
 
         # If no open egg is found, make a new one for this author
         # First grab the highest current id from the DB and add 1
-        self.cnx = check_connection(self.cnx)
-        self.cursor = self.cnx.cursor(buffered=True)
+        cnx = get_db_connection()
+        try:
+            cursor = cnx.cursor(buffered=True)
+            query = (f'SELECT MAX(id) FROM eastereggs')
 
-        query = (f'SELECT MAX(id) FROM eastereggs')
+            cursor.execute(query)
+            cnx.commit()
 
-        self.cursor.execute(query)
-        self.cnx.commit()
+            row = cursor.fetchone()
 
-        row = self.cursor.fetchone()
+            if row[0] is None:
+                egg_id = 0
+            else:
+                egg_id = int(row[0]) + 1
 
-        if row[0] is None:
-            egg_id = 0
-        else:
-            egg_id = int(row[0]) + 1
-
-        new_egg = Easteregg(ctx.author.id, egg_id)
-        egglist_temp.append(new_egg)
-        await ctx.send("Kk, los geht's! Erstes Triggerwort?")
+            new_egg = Easteregg(ctx.author.id, egg_id)
+            egglist_temp.append(new_egg)
+            await ctx.send("Kk, los geht's! Erstes Triggerwort?")
+        finally:
+            if cursor:
+                cursor.close()
+            if cnx:
+                cnx.close()
 
     @commands.command(aliases=['le', 'showeggs'])
     @commands.dm_only()
     async def listeggs(self, ctx):
-        # Check DB connection
-        self.cnx = check_connection(self.cnx)
-        self.cursor = self.cnx.cursor(buffered=True)
+        cnx = get_db_connection()
+        try:
+            cursor = cnx.cursor(buffered=True)
 
-        query = (
-            f'SELECT id, date, triggers, responses FROM eastereggs WHERE author = {ctx.author.id}'
-        )
-        self.cursor.execute(query)
-        self.cnx.commit()
+            query = (
+                f'SELECT id, date, triggers, responses FROM eastereggs WHERE author = {ctx.author.id}'
+            )
+            cursor.execute(query)
+            cnx.commit()
 
-        if self.cursor.rowcount == 0:
-            await ctx.send(
-                "Das Nichts nichtet. !addegg verwenden, um eins zu erstellen.")
-        else:
-            rows = self.cursor.fetchall()
-            r = '```\n'
-            for row in rows:
-                r += ('#' + str(row[0]) + ' - ' + str(row[1]) +
-                      ' - Trigger(s): ' + row[2] + ' - Antwort: ' +
-                      row[3].replace("`", "") + '\n')
-            r += '```'
-            await sendLongMsg(ctx, r)
+            if cursor.rowcount == 0:
+                await ctx.send(
+                    "Das Nichts nichtet. !addegg verwenden, um eins zu erstellen.")
+            else:
+                rows = cursor.fetchall()
+                r = '```\n'
+                for row in rows:
+                    r += ('#' + str(row[0]) + ' - ' + str(row[1]) +
+                        ' - Trigger(s): ' + row[2] + ' - Antwort: ' +
+                        row[3].replace("`", "") + '\n')
+                r += '```'
+                await sendLongMsg(ctx, r)
+        finally:
+            if cursor:
+                cursor.close()
+            if cnx:
+                cnx.close()
 
     @commands.command(aliases=['deleteegg', 'removeegg', 'se'])
     @commands.dm_only()
@@ -182,55 +199,65 @@ class botpm(commands.Cog):
             try:
                 int(delete_id)
 
-                # Check DB connection
-                self.cnx = check_connection(self.cnx)
-                self.cursor = self.cnx.cursor(buffered=True)
+                cnx = get_db_connection()
+                try:
+                    cursor = cnx.cursor(buffered=True)
 
-                query = (
-                    f'SELECT id, author FROM eastereggs WHERE id = {delete_id}'
-                )
-                self.cursor.execute(query)
-                self.cnx.commit()
-
-                if self.cursor.rowcount == 0:
-                    await ctx.send(
-                        "ID nicht gefunden. !addegg verwenden, um ein neues zu erstellen."
+                    query = (
+                        f'SELECT id, author FROM eastereggs WHERE id = {delete_id}'
                     )
-                else:
-                    row = self.cursor.fetchone()
-                    if int(row[1]) != ctx.author.id:
+                    cursor.execute(query)
+                    cnx.commit()
+
+                    if cursor.rowcount == 0:
                         await ctx.send(
-                            "Eastereggs von anderen löschen is uncool! !listeggs um deine eigenen anzuzeigen."
+                            "ID nicht gefunden. !addegg verwenden, um ein neues zu erstellen."
                         )
                     else:
-                        query = (
-                            f'DELETE FROM eastereggs WHERE id = {delete_id}')
-                        self.cursor.execute(query)
-                        self.cnx.commit()
-                        del egglist_active[int(delete_id)]
-                        await ctx.send("Gelöscht :(")
+                        row = cursor.fetchone()
+                        if int(row[1]) != ctx.author.id:
+                            await ctx.send(
+                                "Eastereggs von anderen löschen is uncool! !listeggs um deine eigenen anzuzeigen."
+                            )
+                        else:
+                            query = (
+                                f'DELETE FROM eastereggs WHERE id = {delete_id}')
+                            cursor.execute(query)
+                            cnx.commit()
+                            del egglist_active[int(delete_id)]
+                            await ctx.send("Gelöscht :(")
+                finally:
+                    if cursor:
+                        cursor.close()
+                    if cnx:
+                        cnx.close()
 
             except Exception:
                 await ctx.send("Kaputte ID, bitte nur Zahlen eingeben.")
 
     @commands.command(aliases=['hme', 'howmany', 'wieviele'])
     async def howmanyeggs(self, ctx):
-        # Check DB connection
-        self.cnx = check_connection(self.cnx)
-        self.cursor = self.cnx.cursor(buffered=True)
+        cnx = get_db_connection()
+        try:
+            cursor = cnx.cursor(buffered=True)
 
-        query = (f'SELECT count(*) FROM eastereggs')
-        self.cursor.execute(query)
-        self.cnx.commit()
+            query = (f'SELECT count(*) FROM eastereggs')
+            cursor.execute(query)
+            cnx.commit()
 
-        if self.cursor.rowcount == 0:
-            await ctx.send(
-                "Das Nichts nichtet. !addegg verwenden, um ein neues zu erstellen."
-            )
-        else:
-            row = self.cursor.fetchone()
-            count = row[0]
-            await ctx.send(f'Es gibt {count} custom eastereggs!1elf')
+            if cursor.rowcount == 0:
+                await ctx.send(
+                    "Das Nichts nichtet. !addegg verwenden, um ein neues zu erstellen."
+                )
+            else:
+                row = cursor.fetchone()
+                count = row[0]
+                await ctx.send(f'Es gibt {count} custom eastereggs!1elf')
+        finally:
+            if cursor:
+                cursor.close()
+            if cnx:
+                cnx.close()
 
     # Check for forbidden words or if the word is too short
     async def checkContent(self, message):
@@ -243,20 +270,25 @@ class botpm(commands.Cog):
         return True
 
     def dbOperation(self, operation, egg):
-        # Check DB connection
-        self.cnx = check_connection(self.cnx)
-        self.cursor = self.cnx.cursor(buffered=True)
+        cnx = get_db_connection()
+        try:
+            cursor = cnx.cursor(buffered=True)
 
-        if operation.name == 'CREATE':
+            if operation.name == 'CREATE':
 
-            triggers = "|".join(egg.triggers)
-            responses = "|".join(egg.responses)
+                triggers = "|".join(egg.triggers)
+                responses = "|".join(egg.responses)
 
-            query = (
-                f'INSERT INTO `eastereggs` (`id`, `date`, `author`, `triggers`, `responses`) VALUES ("{egg.id}", CURRENT_DATE(), "{egg.user}", "{triggers}", "{responses}")'
-            )
-            self.cursor.execute(query)
-            self.cnx.commit()
+                query = (
+                    f'INSERT INTO `eastereggs` (`id`, `date`, `author`, `triggers`, `responses`) VALUES ("{egg.id}", CURRENT_DATE(), "{egg.user}", "{triggers}", "{responses}")'
+                )
+                cursor.execute(query)
+                cnx.commit()
+        finally:
+            if cursor:
+                cursor.close()
+            if cnx:
+                cnx.close()
 
     # Initialize eggs on startup or reload
     def initEggs(self, cursor, cnx):

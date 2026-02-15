@@ -1,6 +1,6 @@
 import discord
 from discord.ext import commands
-from utils.db import check_connection, init_db
+from utils.db import get_db_connection
 from google import genai
 from google.genai import types
 from io import BytesIO
@@ -16,8 +16,7 @@ model = "gemini-3-pro-preview"
 class gemini(commands.Cog):
     def __init__(self, client):
         self.client = client
-        self.cnx = init_db()
-        self.cursor = self.cnx.cursor(buffered=True)
+        # Persistent connection removed
 
     @commands.command(name="gem")
     async def generate_text(self, ctx, *, prompt):
@@ -82,15 +81,21 @@ class gemini(commands.Cog):
                 await ctx.send(f'```Error: 666```')
 
     def update_img_invokes(self, id):
-        # Check DB connection
-        self.cnx = check_connection(self.cnx)
-        self.cursor = self.cnx.cursor(buffered=True)
-        # DB query: Insert new entry if user doesn't exist, or update existing row value+1
         query = (
             f'INSERT INTO img_invokes (userid, invokes) VALUES ({id}, 1) ON DUPLICATE KEY UPDATE invokes=invokes+1;'
         )
-        self.cursor.execute(query)
-        self.cnx.commit()
+        
+        cnx = get_db_connection()
+        try:
+            cursor = cnx.cursor(buffered=True)
+            # DB query: Insert new entry if user doesn't exist, or update existing row value+1
+            cursor.execute(query)
+            cnx.commit()
+        finally:
+            if cursor:
+                cursor.close()
+            if cnx:
+                cnx.close()
         return
 
 # Initialize the Discord bot and add the GPT cog

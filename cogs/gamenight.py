@@ -6,7 +6,6 @@ import random
 from discord.ext import commands, tasks
 from datetime import time, date, datetime, timedelta
 
-from utils.db import check_connection, init_db
 from utils.misc import getDatetimeNow, getTimezone
 
 my_timezone = getTimezone()
@@ -15,8 +14,6 @@ gn_pollthread_time = time(19, 30, 0, tzinfo=my_timezone)
 class gamenight(commands.Cog):
     def __init__(self, client):
         self.client = client
-        self.cnx = init_db()
-        self.cursor = self.cnx.cursor(buffered=True)
         self.guild_id = int(ast.literal_eval(os.environ['GUILD_IDS'])['default'])
         self.channel_id = int(ast.literal_eval(os.environ['CHANNEL_IDS'])['gaming'])
         self.users_channel_id = int(ast.literal_eval(os.environ['CHANNEL_IDS'])['gaming_users'])

@@ -2,39 +2,14 @@
 import pytest
 from unittest.mock import MagicMock
 from cogs.crypto import crypto
-
-def test_calculateRating():
-    """Test calculateRating method in crypto cog."""
-    # Mock init dependencies
-    # crypto init calls init_db, getTrackedBannedCoins
-    # and needs COINGECKO_KEY env var
-    
-    with pytest.MonkeyPatch().context() as m:
-        m.setenv("COINGECKO_KEY", "dummy")
-        
-        # Mock init_db and getTrackedBannedCoins
-        # We can mock the class methods or just mock the instance attributes after creation if we mock __init__?
-        # Better: Mock imports in cogs/crypto.py before importing crypto class? 
-        # But we already imported crypto. Too late?
-        # Actually, if we just instantiate, we need to handle what __init__ does.
-        # It calls `self.cnx = init_db()` and `getTrackedBannedCoins(self)`.
-        
-        # Let's try to mock the methods on the class before instantiation if possible, 
-        # or just mock the module level functions.
-        pass
-
-# Redoing import strategy for mocking side effects during import/class definition if needed
-# But here `init_db` is called inside `__init__`.
-# So we can patch `cogs.crypto.init_db` and `cogs.crypto.getTrackedBannedCoins`.
-
 from unittest.mock import patch
 
-@patch('cogs.crypto.init_db')
+@patch('cogs.crypto.get_db_connection')
 @patch('cogs.crypto.getTrackedBannedCoins')
-def test_calculateRating_logic(mock_getCoins, mock_init_db):
+def test_calculateRating_logic(mock_getCoins, mock_get_db):
     """Test logic of calculateRating."""
     mock_getCoins.return_value = ([], []) # ourCoins, bannedCoins
-    mock_init_db.return_value = MagicMock()
+    mock_get_db.return_value = MagicMock()
     
     mock_client = MagicMock()
     with pytest.MonkeyPatch().context() as m:
