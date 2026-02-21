@@ -6,8 +6,7 @@ import re
 from datetime import date, datetime, timedelta
 from pytz import timezone
 
-from utils.db import check_connection
-from utils.db import init_db
+from utils.db import get_db_connection
 from utils.crypto import getTrackedBannedCoins
 from utils.misc import isDev, isCryptoChannel
 
@@ -20,8 +19,8 @@ class crypto(commands.Cog):
         self.ripperl_string = ':meat_on_bone: :meat_on_bone: :meat_on_bone:'
         self.api_key = os.environ['COINGECKO_KEY']
         self.ratings = []
-        self.cnx = init_db()
-        self.ourCoins, self.bannedCoins = getTrackedBannedCoins(self)
+        # Persistent connection removed
+        self.ourCoins, self.bannedCoins = getTrackedBannedCoins()
 
     # Use on_message if command isn't possible
     @commands.Cog.listener()
@@ -186,18 +185,24 @@ class crypto(commands.Cog):
         query = (f'INSERT INTO `tracked_banned_coins` (coin, is_banned) VALUES (%s, %s)')
         # arg = coin, 0 or 1 (0: tracked, 1: banned)
         data = (arg, 0)
-        # Check DB connection
-        self.cnx = check_connection(self.cnx)
-        self.cursor = self.cnx.cursor(buffered=True)
-        # Execute query
+        
+        cnx = get_db_connection()
         try:
-            self.cursor.execute(query, data)
-            self.cnx.commit()
-        except Exception as e:
-            await ctx.send(f'```Error:\n{str(e)}```')
-        else:
-            self.ourCoins.append(arg)
-            await ctx.send(f'```Added \'{arg}\' to tracking.```')
+            cursor = cnx.cursor(buffered=True)
+            # Execute query
+            try:
+                cursor.execute(query, data)
+                cnx.commit()
+            except Exception as e:
+                await ctx.send(f'```Error:\n{str(e)}```')
+            else:
+                self.ourCoins.append(arg)
+                await ctx.send(f'```Added \'{arg}\' to tracking.```')
+        finally:
+            if cursor:
+                cursor.close()
+            if cnx:
+                cnx.close()
         return
     
     @commands.command()
@@ -211,18 +216,24 @@ class crypto(commands.Cog):
         query = (f'DELETE FROM `tracked_banned_coins` WHERE coin = %s AND is_banned = %s')
         # arg = coin, 0 or 1 (0: tracked, 1: banned)
         data = (arg, 0)
-        # Check DB connection
-        self.cnx = check_connection(self.cnx)
-        self.cursor = self.cnx.cursor(buffered=True)
-        # Execute query
+        
+        cnx = get_db_connection()
         try:
-            self.cursor.execute(query, data)
-            self.cnx.commit()
-        except Exception as e:
-            await ctx.send(f'```Error:\n{str(e)}```')
-        else:
-            self.ourCoins.remove(arg)
-            await ctx.send(f'```Removed \'{arg}\' from tracking.```')
+            cursor = cnx.cursor(buffered=True)
+            # Execute query
+            try:
+                cursor.execute(query, data)
+                cnx.commit()
+            except Exception as e:
+                await ctx.send(f'```Error:\n{str(e)}```')
+            else:
+                self.ourCoins.remove(arg)
+                await ctx.send(f'```Removed \'{arg}\' from tracking.```')
+        finally:
+            if cursor:
+                cursor.close()
+            if cnx:
+                cnx.close()
         return
     
     @commands.command()
@@ -236,18 +247,24 @@ class crypto(commands.Cog):
         query = (f'INSERT INTO `tracked_banned_coins` (coin, is_banned) VALUES (%s, %s)')
         # arg = coin, 0 or 1 (0: tracked, 1: banned)
         data = (arg, 1)
-        # Check DB connection
-        self.cnx = check_connection(self.cnx)
-        self.cursor = self.cnx.cursor(buffered=True)
-        # Execute query
+        
+        cnx = get_db_connection()
         try:
-            self.cursor.execute(query, data)
-            self.cnx.commit()
-        except Exception as e:
-            await ctx.send(f'```Error:\n{str(e)}```')
-        else:
-            self.bannedCoins.append(arg)
-            await ctx.send(f'```Banned \'{arg}\'.```')
+            cursor = cnx.cursor(buffered=True)
+            # Execute query
+            try:
+                cursor.execute(query, data)
+                cnx.commit()
+            except Exception as e:
+                await ctx.send(f'```Error:\n{str(e)}```')
+            else:
+                self.bannedCoins.append(arg)
+                await ctx.send(f'```Banned \'{arg}\'.```')
+        finally:
+            if cursor:
+                cursor.close()
+            if cnx:
+                cnx.close()
         return
     
     @commands.command()
@@ -261,18 +278,24 @@ class crypto(commands.Cog):
         query = (f'DELETE FROM `tracked_banned_coins` WHERE coin = %s AND is_banned = %s')
         # arg = coin, 0 or 1 (0: tracked, 1: banned)
         data = (arg, 1)
-        # Check DB connection
-        self.cnx = check_connection(self.cnx)
-        self.cursor = self.cnx.cursor(buffered=True)
-        # Execute query
+        
+        cnx = get_db_connection()
         try:
-            self.cursor.execute(query, data)
-            self.cnx.commit()
-        except Exception as e:
-            await ctx.send(f'```Error:\n{str(e)}```')
-        else:
-            self.bannedCoins.remove(arg)
-            await ctx.send(f'```Unbanned \'{arg}\'.```')
+            cursor = cnx.cursor(buffered=True)
+            # Execute query
+            try:
+                cursor.execute(query, data)
+                cnx.commit()
+            except Exception as e:
+                await ctx.send(f'```Error:\n{str(e)}```')
+            else:
+                self.bannedCoins.remove(arg)
+                await ctx.send(f'```Unbanned \'{arg}\'.```')
+        finally:
+            if cursor:
+                cursor.close()
+            if cnx:
+                cnx.close()
         return
     
     @commands.command()
@@ -281,22 +304,28 @@ class crypto(commands.Cog):
     @commands.check(isCryptoChannel)
     async def listtracked(self, ctx):
         query = (f'SELECT coin FROM `tracked_banned_coins` WHERE is_banned = 0')
-        # Check DB connection
-        self.cnx = check_connection(self.cnx)
-        self.cursor = self.cnx.cursor(buffered=True)
-        # Execute query
+        
+        cnx = get_db_connection()
         try:
-            self.cursor.execute(query)
-            self.cnx.commit()
-            rows = self.cursor.fetchall()
-        except Exception as e:
-            await ctx.send(f'```Error:\n{str(e)}```')
-        else:
-            r = "```\n"
-            for row in rows:
-                r += f'{row[0]}\n'
-            r += "```"
-            await self.checkChannelAndSend(ctx.message, r)
+            cursor = cnx.cursor(buffered=True)
+            # Execute query
+            try:
+                cursor.execute(query)
+                cnx.commit()
+                rows = cursor.fetchall()
+            except Exception as e:
+                await ctx.send(f'```Error:\n{str(e)}```')
+            else:
+                r = "```\n"
+                for row in rows:
+                    r += f'{row[0]}\n'
+                r += "```"
+                await self.checkChannelAndSend(ctx.message, r)
+        finally:
+            if cursor:
+                cursor.close()
+            if cnx:
+                cnx.close()
     
     @commands.command()
     @commands.guild_only()
@@ -304,22 +333,28 @@ class crypto(commands.Cog):
     @commands.check(isCryptoChannel)
     async def listbanned(self, ctx):
         query = (f'SELECT coin FROM `tracked_banned_coins` WHERE is_banned = 1')
-        # Check DB connection
-        self.cnx = check_connection(self.cnx)
-        self.cursor = self.cnx.cursor(buffered=True)
-        # Execute query
+        
+        cnx = get_db_connection()
         try:
-            self.cursor.execute(query)
-            self.cnx.commit()
-            rows = self.cursor.fetchall()
-        except Exception as e:
-            await ctx.send(f'```Error:\n{str(e)}```')
-        else:
-            r = "```\n"
-            for row in rows:
-                r += f'{row[0]}\n'
-            r += "```"
-            await self.checkChannelAndSend(ctx.message, r)
+            cursor = cnx.cursor(buffered=True)
+            # Execute query
+            try:
+                cursor.execute(query)
+                cnx.commit()
+                rows = cursor.fetchall()
+            except Exception as e:
+                await ctx.send(f'```Error:\n{str(e)}```')
+            else:
+                r = "```\n"
+                for row in rows:
+                    r += f'{row[0]}\n'
+                r += "```"
+                await self.checkChannelAndSend(ctx.message, r)
+        finally:
+            if cursor:
+                cursor.close()
+            if cnx:
+                cnx.close()
 
     async def getCurrentValues(self,
                                coinList,
@@ -773,39 +808,45 @@ class crypto(commands.Cog):
                 ORDER BY DATE DESC""")
 
         # Check DB connection
-        self.cnx = check_connection(self.cnx)
-        self.cursor = self.cnx.cursor(buffered=True)
+        cnx = get_db_connection()
+        try:
+            cursor = cnx.cursor(buffered=True)
 
-        # Execute query
-        self.cursor.execute(query)
-        self.cnx.commit()
+            # Execute query
+            cursor.execute(query)
+            cnx.commit()
 
-        # If resultset is non empty, add rows to array
-        if self.cursor.rowcount > 0:
-            rows += self.cursor.fetchall()
+            # If resultset is non empty, add rows to array
+            if cursor.rowcount > 0:
+                rows += cursor.fetchall()
 
-            # Calculate year on year returns
-            for index, row in enumerate(rows):
-                if index == len(rows) - 1:
-                    returns.append('\n')
-                else:
-                    returns.append(
-                        str('%.1f' %
-                            ((float(row[1]) / float(rows[index + 1][1]) - 1) *
-                             100)) + '%\n')
+                # Calculate year on year returns
+                for index, row in enumerate(rows):
+                    if index == len(rows) - 1:
+                        returns.append('\n')
+                    else:
+                        returns.append(
+                            str('%.1f' %
+                                ((float(row[1]) / float(rows[index + 1][1]) - 1) *
+                                100)) + '%\n')
 
-            # Define widths for prices and returns
-            valuewidth = len(max((str(row[1]) for row in rows), key=len))
-            returnswidth = len(max(returns, key=len))
+                # Define widths for prices and returns
+                valuewidth = len(max((str(row[1]) for row in rows), key=len))
+                returnswidth = len(max(returns, key=len))
 
-            # Prepare and send output
-            r = '```\n'
-            for index, row in enumerate(rows):
-                r += row[0] + ': ' + str(row[1]).rjust(
-                    valuewidth) + ' € | ' + returns[index].rjust(returnswidth)
-            r += '```'
-        else:
-            r = 'Keine Daten in der Datenbank 😟'
+                # Prepare and send output
+                r = '```\n'
+                for index, row in enumerate(rows):
+                    r += row[0] + ': ' + str(row[1]).rjust(
+                        valuewidth) + ' € | ' + returns[index].rjust(returnswidth)
+                r += '```'
+            else:
+                r = 'Keine Daten in der Datenbank 😟'
+        finally:
+            if cursor:
+                cursor.close()
+            if cnx:
+                cnx.close()
         return r
 
     async def getHistoricalPriceByDate(self, inputDate):
@@ -829,68 +870,74 @@ class crypto(commands.Cog):
         )
 
         # Check DB connection
-        self.cnx = check_connection(self.cnx)
-        self.cursor = self.cnx.cursor(buffered=True)
+        cnx = get_db_connection()
+        try:
+            cursor = cnx.cursor(buffered=True)
 
-        # Execute query
-        self.cursor.execute(query)
-        self.cnx.commit()
+            # Execute query
+            cursor.execute(query)
+            cnx.commit()
 
-        # If resultset is non empty, add rows to array
-        if self.cursor.rowcount > 0:
-            rows += self.cursor.fetchall()
+            # If resultset is non empty, add rows to array
+            if cursor.rowcount > 0:
+                rows += cursor.fetchall()
 
-            # Grab current values for a coin from Cryptocompare and get the current price
-            async with aiohttp.ClientSession() as session:
-                async with session.get(
-                        'https://api.coingecko.com/api/v3/coins/'
-                        + 'bitcoin'
-                        + '?localization=false'
-                        + '&tickers=false'
-                        + '&market_data=true'
-                        + '&community_data=false'
-                        + '&developer_data=false'
-                        + '&x_cg_demo_api_key=' + self.api_key) as r:
-                    if r.status == 200:
-                        apiRequestCoins = await r.json()
-                        await session.close()
-                    elif r.status == 429:
-                        r = 'Spammen einstellen, sonst fahrst morgen mit dem Zahnbürscht\'l in\'s Leere!'
-                        await session.close()
-                        return r
+                # Grab current values for a coin from Cryptocompare and get the current price
+                async with aiohttp.ClientSession() as session:
+                    async with session.get(
+                            'https://api.coingecko.com/api/v3/coins/'
+                            + 'bitcoin'
+                            + '?localization=false'
+                            + '&tickers=false'
+                            + '&market_data=true'
+                            + '&community_data=false'
+                            + '&developer_data=false'
+                            + '&x_cg_demo_api_key=' + self.api_key) as r:
+                        if r.status == 200:
+                            apiRequestCoins = await r.json()
+                            await session.close()
+                        elif r.status == 429:
+                            r = 'Spammen einstellen, sonst fahrst morgen mit dem Zahnbürscht\'l in\'s Leere!'
+                            await session.close()
+                            return r
+                        else:
+                            r = r.status
+                            await session.close()
+                            return r
+
+                current_price = '%.{}f'.format(2) % round(
+                    apiRequestCoins["market_data"]["current_price"]['eur'], 2)
+
+                rows.append(
+                    tuple([str(date.today().strftime("%Y-%m-%d")), current_price]))
+
+                # Calculate change
+                for index, row in enumerate(rows):
+                    if index == len(rows) - 1:
+                        changes.append(
+                            str('%.1f' %
+                                ((float(current_price) / float(rows[index-1][1]) - 1) *
+                                100)) + '%\n')
                     else:
-                        r = r.status
-                        await session.close()
-                        return r
+                        changes.append('\n')
 
-            current_price = '%.{}f'.format(2) % round(
-                apiRequestCoins["market_data"]["current_price"]['eur'], 2)
+                # Define widths for prices and changes
+                valuewidth = len(max((str(row[1]) for row in rows), key=len))
+                changeswidth = len(max(changes, key=len))
 
-            rows.append(
-                tuple([str(date.today().strftime("%Y-%m-%d")), current_price]))
-
-            # Calculate change
-            for index, row in enumerate(rows):
-                if index == len(rows) - 1:
-                    changes.append(
-                        str('%.1f' %
-                            ((float(current_price) / float(rows[index-1][1]) - 1) *
-                             100)) + '%\n')
-                else:
-                    changes.append('\n')
-
-            # Define widths for prices and changes
-            valuewidth = len(max((str(row[1]) for row in rows), key=len))
-            changeswidth = len(max(changes, key=len))
-
-            # Prepare and send output
-            r = '```\n'
-            for index, row in enumerate(rows):
-                r += row[0] + ': ' + str(row[1]).rjust(
-                    valuewidth) + ' € | ' + changes[index].rjust(changeswidth)
-            r += '```'
-        else:
-            r = 'Keine Daten in der Datenbank 😟'
+                # Prepare and send output
+                r = '```\n'
+                for index, row in enumerate(rows):
+                    r += row[0] + ': ' + str(row[1]).rjust(
+                        valuewidth) + ' € | ' + changes[index].rjust(changeswidth)
+                r += '```'
+            else:
+                r = 'Keine Daten in der Datenbank 😟'
+        finally:
+            if cursor:
+                cursor.close()
+            if cnx:
+                cnx.close()
         return r
 
     def getKrakenChartUrl(self, first, second, status):
