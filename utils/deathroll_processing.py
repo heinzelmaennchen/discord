@@ -13,6 +13,7 @@ import matplotlib.patches as mpatches
 from matplotlib.colors import LinearSegmentedColormap
 from matplotlib.figure import Figure
 
+
 def format_num(num, decimals=0):
     if num is None or (isinstance(num, float) and (math.isnan(num) or math.isinf(num))):
         return "N/A"
@@ -22,9 +23,10 @@ def format_num(num, decimals=0):
         return f"{num:.{decimals}f}"
     return str(num)
 
+
 def calculate_global_stats(df, guild_id):
     stats = {}
-    
+
     # Number of games
     stats['global_games'] = len(df)
 
@@ -54,7 +56,7 @@ def calculate_global_stats(df, guild_id):
         max_roll_channel = row_with_max_rolls['channel']
         max_roll_message = row_with_max_rolls['message']
         stats['max_roll_jump_url'] = f'https://discord.com/channels/{guild_id}/{max_roll_channel}/{max_roll_message}'
-        
+
         min_roll_channel = row_with_min_rolls['channel']
         min_roll_message = row_with_min_rolls['message']
         stats['min_roll_jump_url'] = f'https://discord.com/channels/{guild_id}/{min_roll_channel}/{min_roll_message}'
@@ -143,7 +145,7 @@ def calculate_global_stats(df, guild_id):
                 elif curr_num == 1:
                     global_one_after_two_counts[current_owner_id] = global_one_after_two_counts.get(
                         current_owner_id, 0) + 1
-    
+
     stats['global_max_prev_to_loss_num'] = global_max_prev_to_loss_num
     stats['global_max_prev_to_loss_player_id'] = global_max_prev_to_loss_player_id
     stats['global_min_ratio'] = global_min_ratio
@@ -261,12 +263,32 @@ def calculate_global_stats(df, guild_id):
                 print(
                     f"Warning: Error creating jump URL for max twos: {e}")
                 stats['max_twos_jump_url'] = "#"  # Reset on error
-    
+
+    # --- Starting Player Win % ---
+    df['rolls'] = pd.to_numeric(df['rolls'], errors='coerce')
+    valid_df = df.dropna(subset=['rolls', 'winner', 'loser'])
+    game_count = len(valid_df)
+    start_wins = 0
+    for _, row in valid_df.iterrows():
+        if row['rolls'] % 2 != 0:
+            starting_player = row['loser']
+        else:
+            starting_player = row['winner']
+        if row['winner'] == starting_player:
+            start_wins += 1
+    if game_count > 0:
+        stats['start_player_win_pct'] = round(start_wins / game_count * 100, 1)
+        stats['second_player_win_pct'] = round(
+            (game_count - start_wins) / game_count * 100, 1)
+    else:
+        stats['start_player_win_pct'] = 0
+        stats['second_player_win_pct'] = 0
+
     # --- Player Ranking Calculation ---
     all_player_ids_for_ranking = pd.concat(
         [df['player1'], df['player2']]).dropna().astype(int).unique()
     player_stats_list = []
-    
+
     for pid in all_player_ids_for_ranking:
         games_as_p1 = (df['player1'] == pid).sum()
         games_as_p2 = (df['player2'] == pid).sum()
@@ -301,19 +323,19 @@ def calculate_global_stats(df, guild_id):
             'win_percentage': win_pct,
             'streaks_display': streaks_combined_str
         })
-    
+
     stats['player_stats_list'] = player_stats_list
     return stats
 
 
 def calculate_player_stats(df, player_id):
     stats = {}
-    
+
     player_games = df[
         (df['player1'] == player_id) | (
             df['player2'] == player_id)
     ].copy()
-    
+
     stats['total_games'] = len(player_games)
     stats['total_wins'] = (df['winner'] == player_id).sum()
     stats['total_losses'] = stats['total_games'] - stats['total_wins']
@@ -341,7 +363,6 @@ def calculate_player_stats(df, player_id):
     stats['top_victim_difference'] = 0
     stats['top_nemesis_id'] = None
     stats['top_nemesis_difference'] = 0
-
 
     if not player_games.empty and 'opponent' in player_games.columns:
         opponent_counts = player_games['opponent'].value_counts()
@@ -449,24 +470,17 @@ def calculate_player_stats(df, player_id):
 
 
 def generate_charts(df, player_names_map):
-    # Determine start player logic locally or duplicate
-    def determine_starting_player(row):
-        if row['rolls'] % 2 != 0:
-            return row['loser']
-        else:
-            return row['winner']
 
     # COLOR configs for plots:
     figbg_c = '#121214'
     bar_c = '#0969a1'
     label_c = '#82838b'
-    pie_c = ['#3c9f3c', '#9f3c3c']
     vs_colors = [(0, '#9f3c3c'), (0.25, '#9f3c3c'),
                  (0.5, '#9f9f3c'), (0.75, '#3c9f3c'), (1, '#3c9f3c')]
 
     # Create figure 1
     fig1 = Figure(figsize=(8, 6), facecolor=figbg_c)
-    ax1 = fig1.subplots() 
+    ax1 = fig1.subplots()
     fig1.subplots_adjust(left=0.1, right=0.88)
 
     # Data for Barplot
@@ -515,27 +529,61 @@ def generate_charts(df, player_names_map):
     axbell.spines[:].set_color(label_c)
     axbell.yaxis.set_major_formatter(mticker.PercentFormatter(decimals=0))
 
-    # Pie Chart
-    df_start = df.copy()
-    df_start['starting_player'] = df_start.apply(determine_starting_player, axis=1)
-    game_count = len(df_start)
-    start_wins = len(df_start[df_start['winner'] == df_start['starting_player']])
-    second_wins = game_count - start_wins
-    pie_labels = ['starting\nplayer', 'second\nplayer']
-    pie_data = [start_wins, second_wins]
+    # Cumulative Win/Loss Line Plot per Player
+    df_sorted = df.sort_values(by='datetime').reset_index(drop=True)
+    all_players = sorted(list(set(df['player1']) | set(df['player2'])))
+
+    # Build cumulative score per player: +1 for win, -1 for loss
+    player_cumulative = {}
+    for pid in all_players:
+        player_games = df_sorted[
+            (df_sorted['player1'] == pid) | (df_sorted['player2'] == pid)
+        ]
+        cumulative = [0]
+        for _, game_row in player_games.iterrows():
+            if game_row['winner'] == pid:
+                cumulative.append(cumulative[-1] + 1)
+            else:
+                cumulative.append(cumulative[-1] - 1)
+        player_cumulative[pid] = cumulative
+
+    max_games = max(len(c) - 1 for c in player_cumulative.values()
+                    ) if player_cumulative else 0
+
+    # Distinct color palette for player lines
+    line_colors = [
+        '#e6194b', '#3cb44b', '#4363d8', '#f58231', '#911eb4',
+        '#42d4f4', '#f032e6', '#bfef45', '#fabed4', '#469990',
+        '#dcbeff', '#9A6324', '#fffac8', '#800000', '#aaffc3',
+        '#808000', '#ffd8b1', '#000075', '#a9a9a9', '#ffffff'
+    ]
 
     fig2 = Figure(figsize=(8, 6), facecolor=figbg_c)
     ax2 = fig2.subplots()
-    ax2.pie(pie_data, labels=pie_labels, autopct='%1.1f%%',
-            startangle=90, colors=pie_c, explode=(0.01, 0.01))
-    ax2.set_title('Winning pct. starting vs. second player', color=label_c)
+    fig2.subplots_adjust(left=0.1, right=0.75)
+
+    for i, pid in enumerate(all_players):
+        cumulative = player_cumulative[pid]
+        color = line_colors[i % len(line_colors)]
+        label = player_names_map.get(pid, f"ID:{pid}")
+        ax2.plot(range(len(cumulative)), cumulative, marker='', linestyle='-',
+                 color=color, label=label, linewidth=1.5, alpha=0.9)
+
+    ax2.set_title('Cumulative Wins/Losses per Player', color=label_c)
+    ax2.set_xlabel('games played', color=label_c)
+    ax2.set_ylabel('cumulative score (win +1 / loss -1)', color=label_c)
     ax2.set_facecolor(figbg_c)
-    ax2.axis('equal')
-    for text in ax2.texts:
-        text.set_color(label_c)
-        if '%' in text.get_text():
-            text.set_color('black')
-            text.set_fontsize(16)
+    ax2.tick_params(axis='x', colors=label_c)
+    ax2.tick_params(axis='y', colors=label_c)
+    ax2.set_xlim(0, max_games)
+    ax2.xaxis.set_major_locator(mticker.MaxNLocator(
+        integer=True, steps=[1, 2, 5, 10]))
+    ax2.yaxis.set_major_locator(mticker.MaxNLocator(integer=True))
+    ax2.axhline(y=0, color=label_c, linestyle='-', linewidth=0.5, alpha=0.3)
+    ax2.grid(color=label_c, linestyle='-', linewidth=0.5, alpha=0.3)
+    ax2.spines[:].set_color(label_c)
+    ax2.legend(labelcolor=label_c, facecolor=figbg_c, edgecolor=label_c,
+               fontsize='small', loc='center left', bbox_to_anchor=(1.02, 0.5))
 
     # Duels HeatMap
     df_duels = df
@@ -599,7 +647,8 @@ def generate_charts(df, player_names_map):
 
     # Data for Lineplot
     def get_rolls_list(sequence_string):
-            return [int(roll) for roll in sequence_string.split('|')]
+        return [int(roll) for roll in sequence_string.split('|')]
+    
     df_line = df.copy()
     df_line['rolls_list'] = df_line['sequence'].apply(get_rolls_list)
 
@@ -661,7 +710,7 @@ def generate_charts(df, player_names_map):
         min_codes, min_verts = zip(*minPathData)
         minPath = mpath.Path(min_verts, min_codes)
         min_patch = mpatches.PathPatch(minPath, facecolor='#9f3c3c', edgecolor=None, alpha=0.3,
-                                        label=f"corridor of shortest games (Length: {df_line['rolls'].min()})")
+                                       label=f"corridor of shortest games (Length: {df_line['rolls'].min()})")
 
     if len(df_line[df_line['rolls'] == df_line['rolls'].max()]) == 1:
         max1 = True
@@ -684,7 +733,7 @@ def generate_charts(df, player_names_map):
         max_codes, max_verts = zip(*maxPathData)
         maxPath = mpath.Path(max_verts, max_codes)
         max_patch = mpatches.PathPatch(maxPath, facecolor='#3c9f3c', edgecolor=None,
-                                        alpha=0.3, label=f"corridor of longest games (Length: {df_line['rolls'].max()})")
+                                       alpha=0.3, label=f"corridor of longest games (Length: {df_line['rolls'].max()})")
 
     all_rolls_per_roll_number = {}
 
@@ -740,5 +789,5 @@ def generate_charts(df, player_names_map):
         fig.savefig(buffer, format='png', dpi=400)
         buffer.seek(0)
         image_buffers.append(buffer)
-    
+
     return image_buffers, players
