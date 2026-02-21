@@ -371,7 +371,7 @@ class deathroll(commands.Cog):
         finally:
             if cnx:
                 cnx.close()
-        
+
         # Calculate in thread
         guild_id = int(ast.literal_eval(os.environ['GUILD_IDS'])['default'])
         stats = await self.client.loop.run_in_executor(None, dr_utils.calculate_global_stats, df, guild_id)
@@ -385,7 +385,7 @@ class deathroll(commands.Cog):
         if not player_stats_df.empty:
             ranked_players = player_stats_df.sort_values(
                 by=['win_percentage', 'total_games'], ascending=[False, False])
-            
+
             output_df = ranked_players.copy()
             output_df['player_name'] = output_df['player_id'].apply(lambda pid: get_nick_safe(ctx, pid))
             output_df['win_percentage'] = output_df['win_percentage'].map('{:.0f}%'.format)
@@ -430,6 +430,7 @@ class deathroll(commands.Cog):
 
         # Construct Embed
         embed_value_part1 = (
+            f'**Win%:** starting player **{stats["start_player_win_pct"]}%** | **{stats["second_player_win_pct"]}%** second player\n'
             f'**Most rolls:** [{dr_utils.format_num(stats["max_rolls"])}]({stats["max_roll_jump_url"]})\n'
             f'**Fewest rolls:** [{dr_utils.format_num(stats["min_rolls"])}]({stats["min_roll_jump_url"]})\n'
             f'**Average rolls:** {dr_utils.format_num(stats["average_rolls"], 2)}\n'
@@ -479,7 +480,7 @@ class deathroll(commands.Cog):
         finally:
             if cnx:
                 cnx.close()
-        
+
         # Calculate in thread
         stats = await self.client.loop.run_in_executor(None, dr_utils.calculate_player_stats, df, ctx.author.id)
 
@@ -489,7 +490,7 @@ class deathroll(commands.Cog):
         if stats['top_victim_id']:
             victim_name = get_nick_safe(ctx, stats['top_victim_id'])
             top_victim_display = f"**{victim_name}** (+{stats['top_victim_difference']})"
-            
+
         top_nemesis_display = "n/a"
         if stats['top_nemesis_id']:
              nemesis_name = get_nick_safe(ctx, stats['top_nemesis_id'])
@@ -544,11 +545,11 @@ class deathroll(commands.Cog):
         all_players = pd.unique(pd.concat([df['player1'], df['player2']]).dropna())
         name_map = {}
         for pid in all_players:
-             try:
-                 name_map[int(pid)] = get_nick_safe(ctx, int(pid))
-             except:
-                 pass
-        
+            try:
+                name_map[int(pid)] = get_nick_safe(ctx, int(pid))
+            except:
+                pass
+
         # Generate Charts in Thread
         image_buffers, players_list = await self.client.loop.run_in_executor(
             None, dr_utils.generate_charts, df, name_map)
