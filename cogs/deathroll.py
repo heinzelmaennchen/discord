@@ -20,7 +20,8 @@ from datetime import datetime
 
 START_VALUE = 133337
 BOT_ROLL_DELAY = 4  # Seconds the bot waits before rolling
-OPEN_CHALLENGE_BOT_TIMEOUT = 300 # Seconds before "vs. Bot" button appears on open challenges
+# Seconds before "vs. Bot" button appears on open challenges
+OPEN_CHALLENGE_BOT_TIMEOUT = 300
 TEST = False
 DONT_STORE_TO_DB = False
 TEST_PLAYER = ""
@@ -67,7 +68,8 @@ async def _safe_update_message(interaction, embed, view, *, use_response=True, m
             else:
                 # Follow-up edit (e.g. after bot roll delay)
                 # Use view.message if we recreated it, otherwise interaction.message
-                target_msg = view.message if getattr(view, 'message', None) is not None else interaction.message
+                target_msg = view.message if getattr(
+                    view, 'message', None) is not None else interaction.message
                 await target_msg.edit(content=None, embed=embed, view=view)
             return  # Success
         except discord.HTTPException as e:
@@ -87,7 +89,8 @@ async def _safe_update_message(interaction, embed, view, *, use_response=True, m
                     new_msg = await channel.send(content=None, embed=embed, view=view)
                     view.message = new_msg
                 except discord.HTTPException as e:
-                    print(f"[Deathroll] Embed update failed after {max_retries + 1} attempts: {e}")
+                    print(
+                        f"[Deathroll] Embed update failed after {max_retries + 1} attempts: {e}")
 
 
 class DeathrollButton(discord.ui.Button['DeathRoll']):
@@ -634,6 +637,14 @@ class deathroll(commands.Cog):
         longest_win_str = f"**{stats['global_longest_win_streak']}** by {win_streak_player}" if stats['global_longest_win_streak'] > 0 else "N/A"
         longest_loss_str = f"**{stats['global_longest_loss_streak']}** by {loss_streak_player}" if stats['global_longest_loss_streak'] > 0 else "N/A"
 
+        # Highest Avg. Cliff
+        if stats.get('highest_avg_cliff') is not None and stats.get('highest_avg_cliff_player_id') is not None:
+            cliff_player = get_nick_safe(
+                ctx, stats['highest_avg_cliff_player_id'])
+            cliff_str = f"**{stats['highest_avg_cliff']}** ({stats['highest_avg_cliff_loss_count']} losses) by {cliff_player}"
+        else:
+            cliff_str = "N/A"
+
         # Construct Embed
         embed_value_part1 = (
             f'**Win%:** starting player **{stats["start_player_win_pct"]}%** | **{stats["second_player_win_pct"]}%** second player\n'
@@ -650,7 +661,8 @@ class deathroll(commands.Cog):
             f'Longest Win Streak: {longest_win_str}\n'
             f'Longest Loss Streak: {longest_loss_str}\n'
             f'Highest % "2 after 2": {survivor_str}\n'
-            f'Highest % "1 after 2": {victim_str}\n\n'
+            f'Highest % "1 after 2": {victim_str}\n'
+            f'Highest Avg. Cliff: {cliff_str}\n\n'
         )
 
         embed_value_part3 = (

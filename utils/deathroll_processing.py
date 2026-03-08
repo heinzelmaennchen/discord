@@ -72,6 +72,7 @@ def calculate_global_stats(df, guild_id):
     global_max_matching_roll_player_id = None
     global_two_after_two_counts = {}
     global_one_after_two_counts = {}
+    cliff_values_per_player = {}
 
     for index, game_row in df.iterrows():  # Iterate through ALL games
         sequence_str = game_row.get('sequence')
@@ -98,6 +99,12 @@ def calculate_global_stats(df, guild_id):
                 if global_max_prev_to_loss_num is None or second_last_num > global_max_prev_to_loss_num:
                     global_max_prev_to_loss_num = second_last_num
                     global_max_prev_to_loss_player_id = loser_id
+
+                # --- Cliff tracking (exclude losses after a 2) ---
+                if second_last_num != 2:
+                    if loser_id not in cliff_values_per_player:
+                        cliff_values_per_player[loser_id] = []
+                    cliff_values_per_player[loser_id].append(second_last_num)
         except IndexError:
             pass  # Sequence was too short
 
@@ -156,6 +163,23 @@ def calculate_global_stats(df, guild_id):
     stats['global_max_matching_roll_player_id'] = global_max_matching_roll_player_id
     stats['global_two_after_two_counts'] = global_two_after_two_counts
     stats['global_one_after_two_counts'] = global_one_after_two_counts
+
+    # --- Highest Average Cliff ---
+    highest_avg_cliff = None
+    highest_avg_cliff_player_id = None
+    highest_avg_cliff_loss_count = 0
+
+    for pid, cliffs in cliff_values_per_player.items():
+        if len(cliffs) > 0:
+            avg = round(sum(cliffs) / len(cliffs))
+            if highest_avg_cliff is None or avg > highest_avg_cliff:
+                highest_avg_cliff = avg
+                highest_avg_cliff_player_id = pid
+                highest_avg_cliff_loss_count = len(cliffs)
+
+    stats['highest_avg_cliff'] = highest_avg_cliff
+    stats['highest_avg_cliff_player_id'] = highest_avg_cliff_player_id
+    stats['highest_avg_cliff_loss_count'] = highest_avg_cliff_loss_count
 
     # --- Calculate Per-Player Streaks (and global longest for special stats) ---
     # For global longest streaks, to ensure the *first* occurrence
@@ -452,16 +476,21 @@ def calculate_player_stats(df, player_id):
             except (ValueError, IndexError):
                 pass
 
-    stats['biggest_loss'] = max(biggest_loss_numbers) if biggest_loss_numbers else "N/A"
-    stats['min_ratio'] = '{:.2f}%'.format(min_ratio_so_far * 100) if min_ratio_so_far != float('inf') else "N/A"
+    stats['biggest_loss'] = max(
+        biggest_loss_numbers) if biggest_loss_numbers else "N/A"
+    stats['min_ratio'] = '{:.2f}%'.format(
+        min_ratio_so_far * 100) if min_ratio_so_far != float('inf') else "N/A"
     stats['min_prev_num_for_ratio'] = '{:.0f}'.format(min_prev_num_for_ratio)
     stats['min_curr_num_for_ratio'] = '{:.0f}'.format(min_curr_num_for_ratio)
-    stats['max_match'] = '{:.0f}'.format(max(matching_rolls_list)) if matching_rolls_list else "N/A"
+    stats['max_match'] = '{:.0f}'.format(
+        max(matching_rolls_list)) if matching_rolls_list else "N/A"
 
     stats['avg_player_roll_pct_str'] = "N/A"
     if player_roll_ratios_all_games:
-        avg_ratio_val = sum(player_roll_ratios_all_games) / len(player_roll_ratios_all_games)
-        stats['avg_player_roll_pct_str'] = '{:.2f}%'.format(avg_ratio_val * 100)
+        avg_ratio_val = sum(player_roll_ratios_all_games) / \
+            len(player_roll_ratios_all_games)
+        stats['avg_player_roll_pct_str'] = '{:.2f}%'.format(
+            avg_ratio_val * 100)
 
     stats['player_two_after_two_count'] = player_two_after_two_count
     stats['player_one_after_two_count'] = player_one_after_two_count
@@ -484,7 +513,8 @@ def generate_charts(df, player_names_map):
     fig1.subplots_adjust(left=0.1, right=0.88)
 
     # Data for Barplot
-    df_grouped = df.groupby(["rolls"]).agg(count=("rolls", "count")).reset_index()
+    df_grouped = df.groupby(["rolls"]).agg(
+        count=("rolls", "count")).reset_index()
 
     max_rolls = df_grouped['rolls'].max()
     df_barplot = df_grouped
@@ -505,7 +535,8 @@ def generate_charts(df, player_names_map):
     sim_roll_percentages = (simulation / sim_total_rolls) * 100
 
     # Barplot
-    ax1.bar(df_barplot['rolls'], df_barplot['count'], color=bar_c, edgecolor='none', label='actual games')
+    ax1.bar(df_barplot['rolls'], df_barplot['count'],
+            color=bar_c, edgecolor='none', label='actual games')
     ax1.set_xlabel('rolls', color=label_c)
     ax1.set_ylabel('count', color=label_c)
     ax1.set_title('How many rolls?', color=label_c)
@@ -605,13 +636,15 @@ def generate_charts(df, player_names_map):
                     results.append({'Spieler1': player1, 'Spieler2': player2,
                                    'Siege': 0, 'Niederlagen': 0, 'Siegquote': np.nan})
     win_loss_df = pd.DataFrame(results)
-    win_loss_pivot = win_loss_df.pivot(index='Spieler1', columns='Spieler2', values='Siegquote')
+    win_loss_pivot = win_loss_df.pivot(
+        index='Spieler1', columns='Spieler2', values='Siegquote')
 
     fig3 = Figure(figsize=(10, 7.5), facecolor=figbg_c)
     ax3 = fig3.subplots()
     cmap_name = 'vs_colormap'
     cm = LinearSegmentedColormap.from_list(cmap_name, vs_colors, N=100)
-    ax3.imshow(win_loss_pivot, cmap=cm, interpolation='nearest', vmin=0, vmax=1)
+    ax3.imshow(win_loss_pivot, cmap=cm,
+               interpolation='nearest', vmin=0, vmax=1)
 
     player_labels = [player_names_map.get(pid, f"ID:{pid}") for pid in players]
 
@@ -624,16 +657,19 @@ def generate_charts(df, player_names_map):
         for j, player2 in enumerate(players):
             if i == j:
                 ax3.text(j, i, 'X', ha='center', va='center', color=label_c)
-                ax3.add_patch(mpatches.Rectangle((j - 0.5, i - 0.5), 1, 1, facecolor=figbg_c, edgecolor='none'))
+                ax3.add_patch(mpatches.Rectangle(
+                    (j - 0.5, i - 0.5), 1, 1, facecolor=figbg_c, edgecolor='none'))
             elif np.isnan(win_loss_pivot.iloc[i, j]):
                 ax3.text(j, i, '-', ha='center', va='center', color=label_c)
-                ax3.add_patch(mpatches.Rectangle((j - 0.5, i - 0.5), 1, 1, facecolor='#1a1a1e', edgecolor='none'))
+                ax3.add_patch(mpatches.Rectangle(
+                    (j - 0.5, i - 0.5), 1, 1, facecolor='#1a1a1e', edgecolor='none'))
             else:
                 wins = win_loss_df.loc[(win_loss_df['Spieler1'] == player1) & (
                     win_loss_df['Spieler2'] == player2), 'Siege'].values[0]
                 losses = win_loss_df.loc[(win_loss_df['Spieler1'] == player1) & (
                     win_loss_df['Spieler2'] == player2), 'Niederlagen'].values[0]
-                ax3.text(j, i, f"{win_loss_pivot.iloc[i, j]:.0%}\n({wins} - {losses})", ha='center', va='center', color='black')
+                ax3.text(
+                    j, i, f"{win_loss_pivot.iloc[i, j]:.0%}\n({wins} - {losses})", ha='center', va='center', color='black')
 
     ax3.spines[:].set_visible(False)
     ax3.set_facecolor(figbg_c)
@@ -661,8 +697,10 @@ def generate_charts(df, player_names_map):
                 short_rolls[roll_number] = []
             short_rolls[roll_number].append(roll_value)
 
-    short_max_rolls = {roll: np.max(values) for roll, values in short_rolls.items()}
-    short_min_rolls = {roll: np.min(values) for roll, values in short_rolls.items()}
+    short_max_rolls = {roll: np.max(values)
+                       for roll, values in short_rolls.items()}
+    short_min_rolls = {roll: np.min(values)
+                       for roll, values in short_rolls.items()}
     short_max_rolls = list(short_max_rolls.values())
     short_min_rolls = list(short_min_rolls.values())[0:-1]
     short_min_rolls.reverse()
@@ -678,8 +716,10 @@ def generate_charts(df, player_names_map):
                 long_rolls[roll_number] = []
             long_rolls[roll_number].append(roll_value)
 
-    long_max_rolls = {roll: np.max(values) for roll, values in long_rolls.items()}
-    long_min_rolls = {roll: np.min(values) for roll, values in long_rolls.items()}
+    long_max_rolls = {roll: np.max(values)
+                      for roll, values in long_rolls.items()}
+    long_min_rolls = {roll: np.min(values)
+                      for roll, values in long_rolls.items()}
     long_max_rolls = list(long_max_rolls.values())
     long_min_rolls = list(long_min_rolls.values())[0:-1]
     long_min_rolls.reverse()
@@ -745,9 +785,12 @@ def generate_charts(df, player_names_map):
                 all_rolls_per_roll_number[roll_number] = []
             all_rolls_per_roll_number[roll_number].append(roll_value)
 
-    average_rolls = {roll: np.mean(values) for roll, values in all_rolls_per_roll_number.items()}
-    max_rolls = {roll: np.max(values) for roll, values in all_rolls_per_roll_number.items()}
-    min_rolls = {roll: np.min(values) for roll, values in all_rolls_per_roll_number.items()}
+    average_rolls = {roll: np.mean(
+        values) for roll, values in all_rolls_per_roll_number.items()}
+    max_rolls = {roll: np.max(values)
+                 for roll, values in all_rolls_per_roll_number.items()}
+    min_rolls = {roll: np.min(values)
+                 for roll, values in all_rolls_per_roll_number.items()}
 
     sorted_averages_rolls = dict(sorted(average_rolls.items()))
     sorted_max_rolls = dict(sorted(max_rolls.items()))
@@ -756,13 +799,15 @@ def generate_charts(df, player_names_map):
     fig4 = Figure(figsize=(10, 7.5), facecolor=figbg_c)
     ax4 = fig4.subplots()
 
-    ax4.plot(sorted_min_rolls.keys(), sorted_min_rolls.values(), linestyle='--', label='Minimum Roll Value', alpha=0.8, color='#9f3c3c')
+    ax4.plot(sorted_min_rolls.keys(), sorted_min_rolls.values(
+    ), linestyle='--', label='Minimum Roll Value', alpha=0.8, color='#9f3c3c')
     if min1:
         ax4.plot(range(0, len(shortest_game_rolls)), shortest_game_rolls, marker=11, linestyle='-',
                  label=f'Shortest Game (Length: {len(shortest_game_rolls)-1})', linewidth=1, color='#9f3c3c')
     else:
         ax4.add_patch(min_patch)
-    ax4.plot(sorted_max_rolls.keys(), sorted_max_rolls.values(), linestyle='--', label='Maximum Roll Value', alpha=0.8, color='#3c9f3c')
+    ax4.plot(sorted_max_rolls.keys(), sorted_max_rolls.values(
+    ), linestyle='--', label='Maximum Roll Value', alpha=0.8, color='#3c9f3c')
     if max1:
         ax4.plot(range(0, len(longest_game_rolls)), longest_game_rolls, marker=10, linestyle='-',
                  label=f'Longest Game (Length: {len(longest_game_rolls)-1})', linewidth=1, color='#3c9f3c')
@@ -771,18 +816,21 @@ def generate_charts(df, player_names_map):
     ax4.plot(sorted_averages_rolls.keys(), sorted_averages_rolls.values(), marker='o',
              linestyle='-', label='Average Roll Value', alpha=1, color=bar_c, markersize=3)
 
-    ax4.set_title('Average, Max, Min, Shortest & Longest Game Roll Values', color=label_c)
+    ax4.set_title(
+        'Average, Max, Min, Shortest & Longest Game Roll Values', color=label_c)
     ax4.set_xlabel('roll number', color=label_c)
     ax4.set_ylabel('roll value', color=label_c)
     ax4.set_facecolor(figbg_c)
     ax4.tick_params(axis='x', colors=label_c)
     ax4.tick_params(axis='y', colors=label_c)
     ax4.set_yscale('log')
-    ax4.grid(True, which="both", ls="-", color=label_c, linewidth=0.5, alpha=0.5)
+    ax4.grid(True, which="both", ls="-",
+             color=label_c, linewidth=0.5, alpha=0.5)
     ax4.spines[:].set_color(label_c)
     ax4.set_xticks(np.arange(0, max(sorted_averages_rolls.keys()) + 1, 1))
     ax4.set_ylim(1, 200000)
-    ax4.legend(labelcolor=label_c, facecolor=figbg_c, edgecolor=label_c, reverse=True)
+    ax4.legend(labelcolor=label_c, facecolor=figbg_c,
+               edgecolor=label_c, reverse=True)
 
     image_buffers = []
     for fig in [fig3, fig1, fig4, fig2]:
