@@ -742,7 +742,8 @@ class deathroll(commands.Cog):
                                      + f'Biggest loss: from **{stats["biggest_loss"]}** down to **1**, propz!\n'
                                      + f'Highest 100% roll: **{stats["max_match"]}**\n'
                                      + f'Lowest % roll: **{stats["min_ratio"]}** ({stats["min_prev_num_for_ratio"]} to {stats["min_curr_num_for_ratio"]})\n'
-                                     + f'Survived "2 after 2": **{stats["player_two_after_two_count"]}**/**{stats["player_two_after_two_count"] + stats["player_one_after_two_count"]}** times ({round(float(stats["player_two_after_two_count"]/(stats["player_two_after_two_count"] + stats["player_one_after_two_count"])*100),1)}%)\n')
+                                     + f'Survived "2 after 2": **{stats["player_two_after_two_count"]}**/**{stats["player_two_after_two_count"] + stats["player_one_after_two_count"]}** times ({round(float(stats["player_two_after_two_count"]/(stats["player_two_after_two_count"] + stats["player_one_after_two_count"])*100),1)}%)\n'
+                                     + (f'Avg. Cliff: **{stats["player_avg_cliff"]}** ({stats["player_cliff_loss_count"]} losses)\n' if stats.get("player_avg_cliff") is not None else ''))
 
         await ctx.send(embed=drPlayerStatsEmbed)
 

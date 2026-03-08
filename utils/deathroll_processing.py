@@ -100,11 +100,10 @@ def calculate_global_stats(df, guild_id):
                     global_max_prev_to_loss_num = second_last_num
                     global_max_prev_to_loss_player_id = loser_id
 
-                # --- Cliff tracking (exclude losses after a 2) ---
-                if second_last_num != 2:
-                    if loser_id not in cliff_values_per_player:
-                        cliff_values_per_player[loser_id] = []
-                    cliff_values_per_player[loser_id].append(second_last_num)
+                # --- Cliff tracking ---
+                if loser_id not in cliff_values_per_player:
+                    cliff_values_per_player[loser_id] = []
+                cliff_values_per_player[loser_id].append(second_last_num)
         except IndexError:
             pass  # Sequence was too short
 
@@ -422,6 +421,7 @@ def calculate_player_stats(df, player_id):
     biggest_loss_numbers = []
     matching_rolls_list = []
     player_roll_ratios_all_games = []
+    player_cliff_values = []
     min_ratio_so_far = float('inf')
     player_two_after_two_count = 0
     player_one_after_two_count = 0
@@ -473,6 +473,8 @@ def calculate_player_stats(df, player_id):
                 second_last_str = sequence_str.split('|')[-2]
                 second_last_num = int(second_last_str)
                 biggest_loss_numbers.append(second_last_num)
+                # Cliff tracking
+                player_cliff_values.append(second_last_num)
             except (ValueError, IndexError):
                 pass
 
@@ -494,6 +496,15 @@ def calculate_player_stats(df, player_id):
 
     stats['player_two_after_two_count'] = player_two_after_two_count
     stats['player_one_after_two_count'] = player_one_after_two_count
+
+    # Player Avg. Cliff
+    if player_cliff_values:
+        stats['player_avg_cliff'] = round(
+            sum(player_cliff_values) / len(player_cliff_values))
+        stats['player_cliff_loss_count'] = len(player_cliff_values)
+    else:
+        stats['player_avg_cliff'] = None
+        stats['player_cliff_loss_count'] = 0
 
     return stats
 
